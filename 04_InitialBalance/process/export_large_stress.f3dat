@@ -1,0 +1,39 @@
+; export near-field zone stresses from the solved large model -> small-model IDW source.
+; (separate cheap step: the solve is already saved in Large_Initial.f3sav)
+; nested-if box filter (FISH multi-term 'and' chain was the bug in run_large_init).
+program log-file 'export_large.log'
+program log on
+model restore 'Large_Initial'
+fish define export_ss
+    local fn = 'large_stress_for_small.dat'
+    local st = file.open(fn,1,1)
+    local fl = array.create(1)
+    fl(1) = 'zid x y z sxx syy szz sxy sxz syz'
+    st = file.write(fl,1)
+    local nout = 0
+    loop foreach local iz zone.list
+        local x = zone.pos.x(iz)
+        if x > 1150.0 then
+            if x < 1450.0 then
+                local y = zone.pos.y(iz)
+                if y > 750.0 then
+                    if y < 1050.0 then
+                        local z = zone.pos.z(iz)
+                        if z > 1600.0 then
+                            if z < 1900.0 then
+                                fl(1) = string(zone.id(iz))+' '+string(x)+' '+string(y)+' '+string(z)+' '+string(zone.stress.xx(iz))+' '+string(zone.stress.yy(iz))+' '+string(zone.stress.zz(iz))+' '+string(zone.stress.xy(iz))+' '+string(zone.stress.xz(iz))+' '+string(zone.stress.yz(iz))
+                                st = file.write(fl,1)
+                                nout = nout + 1
+                            end_if
+                        end_if
+                    end_if
+                end_if
+            end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('CHK5 exported '+string(nout)+' near-field zone stresses to '+fn)
+end
+[export_ss]
+program log off
+program quit

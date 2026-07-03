@@ -1,0 +1,61 @@
+**********************************************
+* Logging started at 週六 六月 27 18:08:55 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore 's4_s4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 18:05:42 2026
+Total Cycles: 31743  Super Cycles: 31743
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define _ex
+   Def>    local dmax = 0.0
+   Def>    local xmx = 0.0
+   Def>    local ymx = 0.0
+   Def>    local zmx = 0.0
+   Def>    loop foreach local gp gp.list
+   Def>        local d = gp.disp(gp)
+   Def>        local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+   Def>        if mm > dmax then
+   Def>            dmax = mm
+   Def>            local p = gp.pos(gp)
+   Def>            xmx = comp.x(p)
+   Def>            ymx = comp.y(p)
+   Def>            zmx = comp.z(p)
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('EX-MAX dmax='+string(dmax)+' m at (x='+string(xmx)+', y='+string(ymx)+', z='+string(zmx)+')')
+   Def>    ; export y~885 gp disp slice
+   Def>    local fo = file.open('s4_disp_y885.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x z dmag dz'
+   Def>    fo = file.write(a,1)
+   Def>    loop foreach local g2 gp.list
+   Def>        local p2 = gp.pos(g2)
+   Def>        if comp.y(p2) > 884.0 then
+   Def>        if comp.y(p2) < 886.0 then
+   Def>            local d2 = gp.disp(g2)
+   Def>            local m2 = math.sqrt(comp.x(d2)*comp.x(d2)+comp.y(d2)*comp.y(d2)+comp.z(d2)*comp.z(d2))
+   Def>            a(1) = string(comp.x(p2))+' '+string(comp.z(p2))+' '+string(m2)+' '+string(comp.z(d2))
+   Def>            fo = file.write(a,1)
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('EX-EXP exported s4_disp_y885.txt')
+   Def>end
+flac3d>[_ex]
+EX-MAX dmax=0.00528126 m at (x=1309.6, y=901.325, z=1758.38)
+EX-EXP exported s4_disp_y885.txt
+0 (integer)
+flac3d>[io.out('EX-DONE')]
+EX-DONE
+0 (integer)
+flac3d>program quit

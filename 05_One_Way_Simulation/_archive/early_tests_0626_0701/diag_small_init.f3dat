@@ -1,0 +1,106 @@
+; diag_small_init.f3dat -- diagnose WHY the creep diverges (Wade: it's a MODEL stability
+;   issue, not threshold). Priority per Wade: (1) UNBALANCED FORCE field (most critical --
+;   concentrated direction? = divergence root cause), (2) velocity field (sane? ~0?),
+;   (3) stress field, (4) plastic zone (+ where), (5) the inner ~0.4m elastic lining
+;   (working?). Restore Small_Initial, report overall stats + export y~885 slice.
+;   cwd = 05_One_Way_Simulation. zone.state GET form = zone.state(z,bavg) (2 args).
+program log-file 'diag_small_init.log'
+program log on
+model restore '../04_InitialBalance/Small_Initial'
+fish automatic-create on
+fish define _diag
+    ; (1)(2) unbalanced force + velocity over ALL gridpoints
+    local funbmax = 0.0
+    local fxs = 0.0
+    local fys = 0.0
+    local fzs = 0.0
+    local velmax = 0.0
+    local fxmx = 0.0
+    local fzmx = 0.0
+    loop foreach local gp gp.list
+        local fu = gp.force.unbal(gp)
+        local fx = comp.x(fu)
+        local fy = comp.y(fu)
+        local fz = comp.z(fu)
+        local fm = math.sqrt(fx*fx+fy*fy+fz*fz)
+        fxs = fxs + math.abs(fx)
+        fys = fys + math.abs(fy)
+        fzs = fzs + math.abs(fz)
+        if fm > funbmax then
+            funbmax = fm
+            local pp = gp.pos(gp)
+            fxmx = comp.x(pp)
+            fzmx = comp.z(pp)
+        end_if
+        local v = gp.vel(gp)
+        local vm = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+        if vm > velmax then
+            velmax = vm
+        end_if
+    end_loop
+    io.out('DIAG-F unbal_force MAX='+string(funbmax)+' N at (x='+string(fxmx)+',z='+string(fzmx)+') | sum|fx|='+string(fxs)+' sum|fy|='+string(fys)+' sum|fz|='+string(fzs))
+    io.out('DIAG-V velocity MAX='+string(velmax)+' m/s (equilibrium should be ~0)')
+    ; (3)(4)(5) plastic state + lining grouping (probe slot mat AND type)
+    local nrock = 0
+    local nplastic = 0
+    local nlin_mat = 0
+    local nlin_type = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            nrock = nrock + 1
+            if zone.state(z, true) > 0 then
+                nplastic = nplastic + 1
+            end_if
+        end_if
+        if zone.group(z,'mat') = 'lining' then
+            nlin_mat = nlin_mat + 1
+        end_if
+        if zone.group(z,'type') = 'lining' then
+            nlin_type = nlin_type + 1
+        end_if
+    end_loop
+    io.out('DIAG-P rock zones='+string(nrock)+' plastic(state>0)='+string(nplastic)+' ('+string(100.0*float(nplastic)/float(nrock))+'%) | lining: mat-slot='+string(nlin_mat)+' type-slot='+string(nlin_type))
+    ; --- export y~885 slice for plotting ---
+    local fg = file.open('diag_gp_y885.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x z funb fx fz vel'
+    fg = file.write(a,1)
+    loop foreach local g2 gp.list
+        local p = gp.pos(g2)
+        if comp.y(p) > 884.0 then
+        if comp.y(p) < 886.0 then
+            local fu2 = gp.force.unbal(g2)
+            local v2 = gp.vel(g2)
+            local fbm = math.sqrt(comp.x(fu2)*comp.x(fu2)+comp.y(fu2)*comp.y(fu2)+comp.z(fu2)*comp.z(fu2))
+            local vbm = math.sqrt(comp.x(v2)*comp.x(v2)+comp.y(v2)*comp.y(v2)+comp.z(v2)*comp.z(v2))
+            a(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(fbm)+' '+string(comp.x(fu2))+' '+string(comp.z(fu2))+' '+string(vbm)
+            fg = file.write(a,1)
+        end_if
+        end_if
+    end_loop
+    fg = file.close
+    local fz2 = file.open('diag_zone_y885.txt',1,1)
+    a(1) = 'x z sig1 sig3 state islin'
+    fz2 = file.write(a,1)
+    loop foreach local z2 zone.list
+        local p2 = zone.pos(z2)
+        if comp.y(p2) > 884.0 then
+        if comp.y(p2) < 886.0 then
+            local g = 0
+            if zone.group(z2,'mat') = 'lining' then
+                g = 1
+            end_if
+            if zone.group(z2,'type') = 'lining' then
+                g = 1
+            end_if
+            a(1) = string(comp.x(p2))+' '+string(comp.z(p2))+' '+string(-zone.stress.prin.x(z2))+' '+string(-zone.stress.prin.z(z2))+' '+string(zone.state(z2, true))+' '+string(g)
+            fz2 = file.write(a,1)
+        end_if
+        end_if
+    end_loop
+    fz2 = file.close
+    io.out('DIAG-EXP exported y885 gp + zone slices')
+end
+[_diag]
+[io.out('DIAG-DONE')]
+program quit

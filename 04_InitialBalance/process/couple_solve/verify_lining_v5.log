@@ -1,0 +1,86 @@
+**********************************************
+* Logging started at 週六 六月 27 08:39:56 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore 'Couple_Initial_v5'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 08:35:04 2026
+Total Cycles: 21005  Super Cycles: 21005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>[io.out('VL5-0 restored Couple_Initial_v5: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num))]
+VL5-0 restored Couple_Initial_v5: zones=424908 balls=456302 walls=4
+flac3d>fish define _vl5
+   Def>    ; (A) ball disp @y~885
+   Def>    local fb = file.open('lining_disp_v5.txt',1,1)
+   Def>    local arr = array.create(1)
+   Def>    arr(1) = 'x z dx dz dmag'
+   Def>    fb = file.write(arr,1)
+   Def>    local nb = 0
+   Def>    local dmax = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        if comp.y(p) > 884.5 then
+   Def>        if comp.y(p) < 885.5 then
+   Def>            local dx = ball.disp(b,1)
+   Def>            local dz = ball.disp(b,3)
+   Def>            local dm = math.sqrt(dx*dx+dz*dz)
+   Def>            arr(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(dx)+' '+string(dz)+' '+string(dm)
+   Def>            fb = file.write(arr,1)
+   Def>            nb = nb + 1
+   Def>            if dm > dmax then
+   Def>                dmax = dm
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fb = file.close
+   Def>    io.out('VL5-A ball disp slice n='+string(nb)+' disp_max='+string(dmax)+' m')
+   Def>    ; (B) ball-ball bond state @y~885 (pb_ten<1e10 = the D7 lining bonds, not the 1e20 coupling)
+   Def>    local fc = file.open('lining_bonds_v5.txt',1,1)
+   Def>    local arr2 = array.create(1)
+   Def>    arr2(1) = 'x z pbsig pbstate'
+   Def>    fc = file.write(arr2,1)
+   Def>    local nbb = 0
+   Def>    local nbroken = 0
+   Def>    loop foreach local c contact.list
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_ten') < 1.0e10 then
+   Def>                local cp = contact.pos(c)
+   Def>                if comp.y(cp) > 884.5 then
+   Def>                if comp.y(cp) < 885.5 then
+   Def>                    local st = contact.prop(c,'pb_state')
+   Def>                    arr2(1) = string(comp.x(cp))+' '+string(comp.z(cp))+' '+string(contact.prop(c,'pb_sigma'))+' '+string(st)
+   Def>                    fc = file.write(arr2,1)
+   Def>                    nbb = nbb + 1
+   Def>                    if st < 3 then
+   Def>                        nbroken = nbroken + 1
+   Def>                    end_if
+   Def>                end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fc = file.close
+   Def>    io.out('VL5-B ball-ball bonds slice n='+string(nbb)+' broken(state<3)='+string(nbroken))
+   Def>end
+flac3d>[_vl5]
+VL5-A ball disp slice n=9000 disp_max=1.61335e-07 m
+VL5-B ball-ball bonds slice n=44742 broken(state<3)=1
+0 (integer)
+flac3d>[io.out('VL5-DONE')]
+VL5-DONE
+0 (integer)
+flac3d>program quit

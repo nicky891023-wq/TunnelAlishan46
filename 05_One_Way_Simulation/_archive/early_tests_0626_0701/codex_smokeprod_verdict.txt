@@ -1,0 +1,9 @@
+﻿SMOKE-PROD-VERDICT: APPROVED WITH CONDITIONS
+
+Q1: Use **B'** for clean full 4-stage production. The evidence supports axial y-cap imposition as the root: Option A still leaves driven y-cap points outside `r<6m`, and the cracks are entirely end-band while mid stays clean. Reject **D** as cosmetic. Use **C** only if the deliverable is explicitly limited to `y870-900` and end bands are labeled boundary-affected.
+
+Q2: **Yes. Require MID-ONLY `wz_outter` reaction** before accepting “mid lining intact” as a deliverable. The total `wz_outter=59.25 MN` is end-contaminated. `couple_qa_funcs.fis` already has `mid_wall_force(pfx,y0,y1)` for `bf_couple` contacts, but `couple_smoke.f3dat` does not call it. Add/report `mid_wall_force('sm',866,904)` or equivalent.
+
+Q3: **Yes, proceed to stages 2-4 only after Q2 passes**, using B' for clean production or C for mid-only scope. The valid next deliverable is cumulative mid-only force plus crack pattern by stage.
+
+One caveat: I see ramp-end proof, not completed post-solve proof. `couple_smoke.log` reaches `SM-RAMP-END abort=0 mid=0 end=11573...`, but I do not see `SM-SOLVE1`, `SM-RESULT-s1`, or `cb_smoke_s1.f3sav`. Do not cite the post-ramp adaptive solve as completed unless that is rerun or recovered.

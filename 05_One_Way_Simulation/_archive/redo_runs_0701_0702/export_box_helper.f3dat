@@ -1,0 +1,33 @@
+; export_box_helper.f3dat -- defines export_box_disp(fname); call AFTER each model
+;   restore (model restore clears FISH state, so the define must be re-established).
+fish define export_box_disp(fname)
+    local st = file.open(fname,1,1)
+    local b = array.create(1)
+    b(1) = 'x y z dx dy dz'
+    st = file.write(b,1)
+    local n = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local px = comp.x(p)
+        local py = comp.y(p)
+        local pz = comp.z(p)
+        if px > 1245.0 then
+        if px < 1355.0 then
+        if py > 845.0 then
+        if py < 955.0 then
+        if pz > 1695.0 then
+        if pz < 1805.0 then
+            local d = gp.disp(g)
+            b(1) = string(px)+' '+string(py)+' '+string(pz)+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+            st = file.write(b,1)
+            n = n + 1
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('LBC exported '+string(n)+' gps -> '+fname)
+end

@@ -1,0 +1,122 @@
+; couple_drive.f3dat -- Run B (SMOKE first). Drive coupled OUTER ROCK boundary with small model's
+;   IDW-mapped per-stage cumulative disp; PFC lining (confined by RIGID w_inner, Wade's choice)
+;   force-shares via wz_outter & cracks under the squeeze. Synthesis recipe: timestep scale (dt=1),
+;   drive ONLY outer rock gps (never balls, lesson #69), ball damp 0.8, sub-step ramp + calm,
+;   FIX driven gp velocity (else solver overwrites). funcs RETURN values & are called via string()
+;   inside run_stage (lesson #74: no [func]/bare-call inside define). define AFTER restore (#78). cwd=05.
+program log-file 'couple_drive.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../04_InitialBalance/Couple_Initial'
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain on
+model mechanical timestep scale
+call 'fracture_track.fis'
+[track_init]
+[io.out('CB0 dt='+string(mech.timestep)+' zones='+string(zone.num)+' balls='+string(ball.num))]
+ball attribute damp 0.8
+
+fish define wz_now
+    local r = 0.0
+    loop foreach local w wall.list
+        if wall.name(w) = 'wz_outter' then
+            local fc = wall.force.contact(w)
+            r = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+        end_if
+    end_loop
+    wz_now = r
+end
+fish define maxbvel
+    local mv = 0.0
+    loop foreach local b ball.list
+        local v = ball.vel(b)
+        local m = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+        if m > mv then
+            mv = m
+        end_if
+    end_loop
+    maxbvel = mv
+end
+fish define interior_dmax
+    local dm = 0.0
+    loop foreach local g gp.list
+        if gp.group(g,'drive') # 'driven' then
+            local d = gp.disp(g)
+            local m = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+            if m > dm then
+                dm = m
+            end_if
+        end_if
+    end_loop
+    interior_dmax = dm
+end
+
+fish define load_targets
+    local lines = array.create(40000)
+    local st = file.open('couple_bnd_disp.txt',0,1)
+    local nn = file.read(lines, 40000)
+    st = file.close
+    global ndriven = 0
+    global nmiss = 0
+    local i = 2
+    loop while i <= nn
+        local gid = int(string.token(lines(i),1))
+        local g = gp.find(gid)
+        if g = null then
+            nmiss = nmiss + 1
+        else
+            gp.extra(g,1) = vector(string.token(lines(i),2),string.token(lines(i),3),string.token(lines(i),4))
+            gp.extra(g,2) = vector(string.token(lines(i),5),string.token(lines(i),6),string.token(lines(i),7))
+            gp.extra(g,3) = vector(string.token(lines(i),8),string.token(lines(i),9),string.token(lines(i),10))
+            gp.extra(g,4) = vector(string.token(lines(i),11),string.token(lines(i),12),string.token(lines(i),13))
+            gp.group(g,'drive') = 'driven'
+            ndriven = ndriven + 1
+        end_if
+        i = i + 1
+    end_loop
+    io.out('CB-LT driven='+string(ndriven)+' miss='+string(nmiss)+' (expect 28304)')
+    load_targets = ndriven
+end
+[load_targets]
+zone gridpoint fix velocity range group 'driven' slot 'drive'
+
+fish define run_stage(stg, nsub, ncyc_sub, solvecap)
+    ; stage increment per driven gp -> gp.extra(g,5)
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            gp.extra(g,5) = gp.extra(g, stg) - gp.disp(g)
+        end_if
+    end_loop
+    local denom = float(nsub) * float(ncyc_sub) * mech.timestep
+    local j = 1
+    loop while j <= nsub
+        loop foreach local g2 gp.list
+            if gp.group(g2,'drive') = 'driven' then
+                gp.vel(g2) = gp.extra(g2,5) / denom
+            end_if
+        end_loop
+        command
+            model cycle [ncyc_sub]
+            model calm
+        endcommand
+        io.out('   CB-sub stg'+string(stg)+' j='+string(j)+'/'+string(nsub)+' cracks='+string(crack_num)+' maxbvel='+string(maxbvel))
+        j = j + 1
+    end_loop
+    ; hold at target, equilibrate rock
+    loop foreach local g3 gp.list
+        if gp.group(g3,'drive') = 'driven' then
+            gp.vel(g3) = vector(0,0,0)
+        end_if
+    end_loop
+    command
+        model solve ratio-average 1e-4 cycles [solvecap]
+    endcommand
+    io.out('CB-STG '+string(stg)+' DONE cracks='+string(crack_num)+' wz='+string(wz_now)+'MN maxbvel='+string(maxbvel)+' interior_dmax_mm='+string(interior_dmax*1000.0))
+end
+
+; ==== SMOKE: stage 1, gentle short ramp -> validate mechanism, measure cost, watch crack trend ====
+[run_stage(1, 3, 100, 1500)]
+[io.out('CB-SMOKE-DONE stage1 cracks='+string(crack_num))]
+model save 'cb_smoke_s1'
+program quit

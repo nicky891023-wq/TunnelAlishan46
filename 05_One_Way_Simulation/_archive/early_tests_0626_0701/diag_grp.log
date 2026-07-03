@@ -1,0 +1,51 @@
+**********************************************
+* Logging started at 週一 六月 29 09:42:08 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>fish automatic-create on
+flac3d>model restore 's4_s1'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:30:08 2026
+Total Cycles: 15428  Super Cycles: 15428
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish define diag
+   Def>    local cx=1297.0
+   Def>    local cz=1747.0
+   Def>    local hist=array.create(10)
+   Def>    local i=1
+   Def>    loop while i<=10
+   Def>        hist(i)=0
+   Def>        i=i+1
+   Def>    end_loop
+   Def>    local nlin=0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.group(z,'type')='lining' then
+   Def>            nlin=nlin+1
+   Def>            local p=zone.pos(z)
+   Def>            local r=math.sqrt((comp.x(p)-cx)*(comp.x(p)-cx)+(comp.z(p)-cz)*(comp.z(p)-cz))
+   Def>            local b=int(r)+1
+   Def>            if b>10 then
+   Def>                b=10
+   Def>            end_if
+   Def>            if b<1 then
+   Def>                b=1
+   Def>            end_if
+   Def>            hist(b)=hist(b)+1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('LINING n='+string(nlin)+' radial-hist[0-1,1-2,..,9+]: '+string(hist(1))+' '+string(hist(2))+' '+string(hist(3))+' '+string(hist(4))+' '+string(hist(5))+' '+string(hist(6))+' '+string(hist(7))+' '+string(hist(8))+' '+string(hist(9))+' '+string(hist(10)))
+   Def>end
+flac3d>[diag]
+LINING n=335011 radial-hist[0-1,1-2,..,9+]: 12803 47699 61843 67779 30544 11891 8646 7194 6720 79892
+0 (integer)
+flac3d>[io.out('DIAG-GRP-DONE')]
+DIAG-GRP-DONE
+0 (integer)
+flac3d>program quit

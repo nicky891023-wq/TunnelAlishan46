@@ -1,0 +1,178 @@
+**********************************************
+* Logging started at 週一 六月 22 13:58:34 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+**********************************************
+flac3d>
+flac3d>; --- import the tet mesh (C3D4 -> 4-node tetra zones) ----------------------
+flac3d>zone import 'large_tet.inp'
+--- Updating zone connectivity......
+--- 95392 gridpoints created.
+--- 511988 zones created.
+--- 4 zone groups assigned.
+--- Importing grid from ABAQUS files completed.
+flac3d>
+flac3d>; --- copy the imported ELSET layer groups into slot 'type' (geology) -------
+flac3d>zone group 'layer1' slot 'type' range group 'layer1'
+--- Group layer1 assigned to 27379 Zones in slot type.
+flac3d>zone group 'layer2' slot 'type' range group 'layer2'
+--- Group layer2 assigned to 59649 Zones in slot type.
+flac3d>zone group 'layer3' slot 'type' range group 'layer3'
+--- Group layer3 assigned to 83804 Zones in slot type.
+flac3d>zone group 'layer4' slot 'type' range group 'layer4'
+--- Group layer4 assigned to 341156 Zones in slot type.
+flac3d>
+flac3d>; --- bookkeeping slots: material, model-region, gridpoint-region -----------
+flac3d>zone group 'rock'  slot 'mat'
+--- Group rock assigned to 511988 Zones in slot mat.
+flac3d>zone group 'm_far' slot 'model'
+--- Group m_far assigned to 511988 Zones in slot model.
+flac3d>zone gridpoint group 'gp_far'
+--- Group gp_far assigned to 95392 Gps in slot Default.
+flac3d>
+flac3d>; --- build stage: elastic placeholder cmodel (params from site, NOT faked) -
+flac3d>zone cmodel assign elastic
+flac3d>
+flac3d>; --- skin + boundary face groups by position -------------------------------
+flac3d>;   skin auto-groups live in slot 'skin'; the irregular DEM top can split into
+flac3d>;   several collections that get NUMBERED names (doc: "East1 and East2").
+flac3d>;   break-angle 89 (default 45) keeps the top contiguous; the Top1 collection
+flac3d>;   below enumerates numbered leftovers, with the range slot locked explicitly.
+flac3d>;   CAVEAT: skin names faces by DOMINANT normal -- top faces steeper than the
+flac3d>;   break angle land in side groups; the position-slab side groups (assigned
+flac3d>;   after, Default slot) overwrite rim overlaps.  Check Top1 count/area in
+flac3d>;   LARGE_TOP_CHECK after any mesh rebuild.
+flac3d>zone face skin break-angle 89
+--- 34518 surface faces assigned names in slot Skin.
+flac3d>zone face group 'Top1' slot 'Default' ...
+flac3d>     range group 'Top' or 'Top1' or 'Top2' slot 'skin'
+--- Group Top1 added to 30632 faces in slot Default.
+flac3d>zone face group 'Bottom1' range position-z 799 801
+--- Group Bottom1 added to 3886 faces in slot Default.
+flac3d>zone face group 'West1'   range position-x -1 1
+--- Group West1 added to 3439 faces in slot Default.
+flac3d>zone face group 'East1'   range position-x 1999 2001
+--- Group East1 added to 2433 faces in slot Default.
+flac3d>zone face group 'South1'  range position-y -101 -99
+--- Group South1 added to 3395 faces in slot Default.
+flac3d>zone face group 'North1'  range position-y 1999 2001
+--- Group North1 added to 1582 faces in slot Default.
+flac3d>
+flac3d>model save 'Large_Model'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/01_Large/Large_Model.f3sav.
+flac3d>
+flac3d>; --- verify -----------------------------------------------------------------
+flac3d>fish define large_check
+   Def>    local nz   = 0
+   Def>    local vmin = 1e300
+   Def>    local vsum = 0.0
+   Def>    local lc   = array.create(4)
+   Def>    loop local i (1,4)
+   Def>        lc(i) = 0
+   Def>    end_loop
+   Def>    loop foreach local z zone.list
+   Def>        nz = nz + 1
+   Def>        local v = zone.vol(z)
+   Def>        vsum = vsum + v
+   Def>        if v < vmin then
+   Def>            vmin = v
+   Def>        end_if
+   Def>        local g = zone.group(z,'type')
+   Def>        loop local j (1,4)
+   Def>            if g = 'layer'+string(j) then
+   Def>                lc(j) = lc(j) + 1
+   Def>            end_if
+   Def>        end_loop
+   Def>    end_loop
+   Def>    local ung = nz - lc(1) - lc(2) - lc(3) - lc(4)
+   Def>    local fl = array.create(1)
+   Def>    local st = file.open('Large_Model_check.txt',1,1)
+   Def>    fl(1) = 'zones '+string(nz)
+   Def>    st = file.write(fl,1)
+   Def>    loop local k (1,4)
+   Def>        fl(1) = 'layer'+string(k)+' '+string(lc(k))
+   Def>        st = file.write(fl,1)
+   Def>    end_loop
+   Def>    fl(1) = 'ungrouped '+string(ung)
+   Def>    st = file.write(fl,1)
+   Def>    fl(1) = 'vol_min '+string(vmin)
+   Def>    st = file.write(fl,1)
+   Def>    fl(1) = 'vol_sum '+string(vsum)
+   Def>    st = file.write(fl,1)
+   Def>    st = file.close
+   Def>    io.out('=== LARGE_VERIFY ===')
+   Def>    io.out('zones_total = '+string(nz))
+   Def>    loop local kk (1,4)
+   Def>        io.out('  layer'+string(kk)+' = '+string(lc(kk)))
+   Def>    end_loop
+   Def>    io.out('  ungrouped(type) = '+string(ung))
+   Def>    io.out('vol_min = '+string(vmin))
+   Def>    io.out('vol_sum = '+string(vsum))
+   Def>    io.out('LARGE_DONE')
+   Def>end
+flac3d>[large_check]
+=== LARGE_VERIFY ===
+zones_total = 511988
+  layer1 = 27379
+  layer2 = 59649
+  layer3 = 83804
+  layer4 = 341156
+  ungrouped(type) = 0
+vol_min = 20.3247
+vol_sum = 4.0894e+09
+LARGE_DONE
+0 (integer)
+flac3d>
+flac3d>; --- verify the DEM-top face collection (RUN AFTER ANY MESH REBUILD) --------
+flac3d>fish define large_top_check
+   Def>    local ntop1 = 0          ; faces collected into Default-slot 'Top1'
+   Def>    local atop1 = 0.0
+   Def>    local ns0 = 0            ; skin-slot fragmentation census
+   Def>    local ns1 = 0
+   Def>    local ns2 = 0
+   Def>    local ns3 = 0
+   Def>    loop foreach local z zone.list
+   Def>        loop local isd (1,6)
+   Def>            if zone.face.size(z,isd) > 2 then
+   Def>                if zone.face.isgroup(z,isd,'Top1','Default') then
+   Def>                    ntop1 = ntop1 + 1
+   Def>                    atop1 = atop1 + zone.face.area(z,isd)
+   Def>                end_if
+   Def>                if zone.face.isgroup(z,isd,'Top','skin') then
+   Def>                    ns0 = ns0 + 1
+   Def>                end_if
+   Def>                if zone.face.isgroup(z,isd,'Top1','skin') then
+   Def>                    ns1 = ns1 + 1
+   Def>                end_if
+   Def>                if zone.face.isgroup(z,isd,'Top2','skin') then
+   Def>                    ns2 = ns2 + 1
+   Def>                end_if
+   Def>                if zone.face.isgroup(z,isd,'Top3','skin') then
+   Def>                    ns3 = ns3 + 1
+   Def>                end_if
+   Def>            end_if
+   Def>        end_loop
+   Def>    end_loop
+   Def>    io.out('=== LARGE_TOP_CHECK ===')
+   Def>    io.out('Top1_faces(Default) = '+string(ntop1)+'  (expect > 0)')
+   Def>    io.out('Top1_area = '+string(atop1)+'  (expect >= plan 2000x2100 = 4.2e6 m^2)')
+   Def>    io.out('skin census: Top='+string(ns0)+' Top1='+string(ns1)+ ...
+   Def>           ' Top2='+string(ns2)+' Top3='+string(ns3))
+   Def>    io.out('  (Top3 > 0 -> enumeration in the collection block is TOO SHORT)')
+   Def>    io.out('LARGE_TOP_DONE')
+   Def>end
+flac3d>[large_top_check]
+=== LARGE_TOP_CHECK ===
+Top1_faces(Default) = 19783  (expect > 0)
+Top1_area = 4.68691e+06  (expect >= plan 2000x2100 = 4.2e6 m^2)
+skin census: Top=30632 Top1=0 Top2=0 Top3=0
+  (Top3 > 0 -> enumeration in the collection block is TOO SHORT)
+LARGE_TOP_DONE
+0 (integer)
+flac3d>
+flac3d>program log off
+**********************************************
+* Logging ended at 週一 六月 22 13:59:05 2026
+**********************************************

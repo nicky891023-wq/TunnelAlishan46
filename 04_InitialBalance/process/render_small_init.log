@@ -1,0 +1,44 @@
+**********************************************
+* Logging started at 週四 七月 2 15:45:08 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore 'Small_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 15:44:02 2026
+Total Cycles: 23278  Super Cycles: 23278
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish define export_slice
+   Def>    local fn = 'slice_small_init.txt'
+   Def>    local st = file.open(fn,1,1)
+   Def>    local fl = array.create(1)
+   Def>    fl(1) = 'x z szz sxx pp state'
+   Def>    st = file.write(fl,1)
+   Def>    local nout = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local y = zone.pos.y(z)
+   Def>            if y > 884.0 then
+   Def>            if y < 886.0 then
+   Def>                local x = zone.pos.x(z)
+   Def>                local zz = zone.pos.z(z)
+   Def>                fl(1) = string(x)+' '+string(zz)+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.pp(z))+' '+string(zone.state(z,1))
+   Def>                st = file.write(fl,1)
+   Def>                nout = nout + 1
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('RSI exported '+string(nout)+' zones (y884-886 slice) to '+fn)
+   Def>end
+flac3d>[export_slice]
+RSI exported 23263 zones (y884-886 slice) to slice_small_init.txt
+0 (integer)
+flac3d>program quit

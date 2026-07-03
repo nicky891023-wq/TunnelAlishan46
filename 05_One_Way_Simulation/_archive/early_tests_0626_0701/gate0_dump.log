@@ -1,0 +1,524 @@
+**********************************************
+* Logging started at 週日 六月 28 23:19:42 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>fish automatic-create on
+flac3d>model restore 's4_s1'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:30:08 2026
+Total Cycles: 15428  Super Cycles: 15428
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>call 'gate0_funcs.fis'
+flac3d>; gate0_funcs.fis -- Gate-0 dump functions (stg, pfx params). MUST be `call`ed AFTER EACH
+flac3d>;   model restore (restore clears FISH state). No return-value assignment (else param ignored).
+flac3d>fish define count_active(stg, pfx)
+   Def>    local t1=0
+   Def>    local a1=0
+   Def>    local t2=0
+   Def>    local a2=0
+   Def>    local t3=0
+   Def>    local a3=0
+   Def>    local t4=0
+   Def>    local a4=0
+   Def>    local t5=0
+   Def>    local a5=0
+   Def>    local t6=0
+   Def>    local a6=0
+   Def>    loop foreach local z zone.list
+   Def>        local lay = zone.group(z,'type')
+   Def>        local cr = 0
+   Def>        if zone.group(z,'creep') = 'CreepActive' then
+   Def>            cr = 1
+   Def>        end_if
+   Def>        if lay = 'layer1' then
+   Def>            t1 = t1 + 1
+   Def>            a1 = a1 + cr
+   Def>        end_if
+   Def>        if lay = 'layer2' then
+   Def>            t2 = t2 + 1
+   Def>            a2 = a2 + cr
+   Def>        end_if
+   Def>        if lay = 'layer3' then
+   Def>            t3 = t3 + 1
+   Def>            a3 = a3 + cr
+   Def>        end_if
+   Def>        if lay = 'layer4' then
+   Def>            t4 = t4 + 1
+   Def>            a4 = a4 + cr
+   Def>        end_if
+   Def>        if lay = 'layer5' then
+   Def>            t5 = t5 + 1
+   Def>            a5 = a5 + cr
+   Def>        end_if
+   Def>        if lay = 'layer6' then
+   Def>            t6 = t6 + 1
+   Def>            a6 = a6 + cr
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('ACTBYLAYER '+pfx+'_s'+string(stg)+' L1='+string(a1)+'/'+string(t1)+' L2='+string(a2)+'/'+string(t2)+' L3='+string(a3)+'/'+string(t3)+' L4='+string(a4)+'/'+string(t4)+' L5='+string(a5)+'/'+string(t5)+' L6='+string(a6)+'/'+string(t6))
+   Def>end
+flac3d>fish define dump_zone(stg, pfx)
+   Def>    local fname = 'z_'+pfx+'_s'+string(stg)+'.txt'
+   Def>    local fo = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'xc yc zc s1 s3 pp coh phi layer creep'
+   Def>    fo = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        local p = zone.pos(z)
+   Def>        if comp.y(p) > 884.0 then
+   Def>        if comp.y(p) < 886.0 then
+   Def>            local cs = zone.group(z,'creep')
+   Def>            local isrock = 0
+   Def>            if cs = 'CreepActive' then
+   Def>                isrock = 1
+   Def>            end_if
+   Def>            if cs = 'CreepOff' then
+   Def>                isrock = 1
+   Def>            end_if
+   Def>            if isrock = 1 then
+   Def>                local cr = 0
+   Def>                if cs = 'CreepActive' then
+   Def>                    cr = 1
+   Def>                end_if
+   Def>                local s1 = -zone.stress.prin.x(z)
+   Def>                local s3 = -zone.stress.prin.z(z)
+   Def>                local pp = zone.pp(z)
+   Def>                local cc = zone.prop(z,'cohesion')
+   Def>                local ff = zone.prop(z,'friction')
+   Def>                local lay = zone.group(z,'type')
+   Def>                a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(s1)+' '+string(s3)+' '+string(pp)+' '+string(cc)+' '+string(ff)+' '+lay+' '+string(cr)
+   Def>                fo = file.write(a,1)
+   Def>                n = n + 1
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('ZDUMP '+fname+' slice_zones='+string(n))
+   Def>end
+flac3d>fish define dump_gp(stg, pfx)
+   Def>    local fname = 'g_'+pfx+'_s'+string(stg)+'.txt'
+   Def>    local fo = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z dx dy dz'
+   Def>    fo = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        if comp.y(p) > 884.0 then
+   Def>        if comp.y(p) < 886.0 then
+   Def>            local d = gp.disp(g)
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            fo = file.write(a,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('GDUMP '+fname+' slice_gps='+string(n))
+   Def>end
+flac3d>[count_active(1,'s4')]
+ACTBYLAYER s4_s1 L1=14343/20346 L2=5812/23503 L3=9941/151327 L4=612750/618771 L5=19233/255448 L6=0/29060
+0 (integer)
+flac3d>[dump_zone(1,'s4')]
+ZDUMP z_s4_s1.txt slice_zones=23263
+0 (integer)
+flac3d>[dump_gp(1,'s4')]
+GDUMP g_s4_s1.txt slice_gps=5843
+0 (integer)
+flac3d>model restore 's4_s2'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:39:48 2026
+Total Cycles: 20517  Super Cycles: 20517
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>call 'gate0_funcs.fis'
+flac3d>; gate0_funcs.fis -- Gate-0 dump functions (stg, pfx params). MUST be `call`ed AFTER EACH
+flac3d>;   model restore (restore clears FISH state). No return-value assignment (else param ignored).
+flac3d>fish define count_active(stg, pfx)
+   Def>    local t1=0
+   Def>    local a1=0
+   Def>    local t2=0
+   Def>    local a2=0
+   Def>    local t3=0
+   Def>    local a3=0
+   Def>    local t4=0
+   Def>    local a4=0
+   Def>    local t5=0
+   Def>    local a5=0
+   Def>    local t6=0
+   Def>    local a6=0
+   Def>    loop foreach local z zone.list
+   Def>        local lay = zone.group(z,'type')
+   Def>        local cr = 0
+   Def>        if zone.group(z,'creep') = 'CreepActive' then
+   Def>            cr = 1
+   Def>        end_if
+   Def>        if lay = 'layer1' then
+   Def>            t1 = t1 + 1
+   Def>            a1 = a1 + cr
+   Def>        end_if
+   Def>        if lay = 'layer2' then
+   Def>            t2 = t2 + 1
+   Def>            a2 = a2 + cr
+   Def>        end_if
+   Def>        if lay = 'layer3' then
+   Def>            t3 = t3 + 1
+   Def>            a3 = a3 + cr
+   Def>        end_if
+   Def>        if lay = 'layer4' then
+   Def>            t4 = t4 + 1
+   Def>            a4 = a4 + cr
+   Def>        end_if
+   Def>        if lay = 'layer5' then
+   Def>            t5 = t5 + 1
+   Def>            a5 = a5 + cr
+   Def>        end_if
+   Def>        if lay = 'layer6' then
+   Def>            t6 = t6 + 1
+   Def>            a6 = a6 + cr
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('ACTBYLAYER '+pfx+'_s'+string(stg)+' L1='+string(a1)+'/'+string(t1)+' L2='+string(a2)+'/'+string(t2)+' L3='+string(a3)+'/'+string(t3)+' L4='+string(a4)+'/'+string(t4)+' L5='+string(a5)+'/'+string(t5)+' L6='+string(a6)+'/'+string(t6))
+   Def>end
+flac3d>fish define dump_zone(stg, pfx)
+   Def>    local fname = 'z_'+pfx+'_s'+string(stg)+'.txt'
+   Def>    local fo = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'xc yc zc s1 s3 pp coh phi layer creep'
+   Def>    fo = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        local p = zone.pos(z)
+   Def>        if comp.y(p) > 884.0 then
+   Def>        if comp.y(p) < 886.0 then
+   Def>            local cs = zone.group(z,'creep')
+   Def>            local isrock = 0
+   Def>            if cs = 'CreepActive' then
+   Def>                isrock = 1
+   Def>            end_if
+   Def>            if cs = 'CreepOff' then
+   Def>                isrock = 1
+   Def>            end_if
+   Def>            if isrock = 1 then
+   Def>                local cr = 0
+   Def>                if cs = 'CreepActive' then
+   Def>                    cr = 1
+   Def>                end_if
+   Def>                local s1 = -zone.stress.prin.x(z)
+   Def>                local s3 = -zone.stress.prin.z(z)
+   Def>                local pp = zone.pp(z)
+   Def>                local cc = zone.prop(z,'cohesion')
+   Def>                local ff = zone.prop(z,'friction')
+   Def>                local lay = zone.group(z,'type')
+   Def>                a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(s1)+' '+string(s3)+' '+string(pp)+' '+string(cc)+' '+string(ff)+' '+lay+' '+string(cr)
+   Def>                fo = file.write(a,1)
+   Def>                n = n + 1
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('ZDUMP '+fname+' slice_zones='+string(n))
+   Def>end
+flac3d>fish define dump_gp(stg, pfx)
+   Def>    local fname = 'g_'+pfx+'_s'+string(stg)+'.txt'
+   Def>    local fo = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z dx dy dz'
+   Def>    fo = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        if comp.y(p) > 884.0 then
+   Def>        if comp.y(p) < 886.0 then
+   Def>            local d = gp.disp(g)
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            fo = file.write(a,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('GDUMP '+fname+' slice_gps='+string(n))
+   Def>end
+flac3d>[count_active(2,'s4')]
+ACTBYLAYER s4_s2 L1=2553/20346 L2=15118/23503 L3=45515/151327 L4=537253/618771 L5=55246/255448 L6=0/29060
+0 (integer)
+flac3d>[dump_zone(2,'s4')]
+ZDUMP z_s4_s2.txt slice_zones=23263
+0 (integer)
+flac3d>[dump_gp(2,'s4')]
+GDUMP g_s4_s2.txt slice_gps=5843
+0 (integer)
+flac3d>model restore 's4_s3'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:48:09 2026
+Total Cycles: 24838  Super Cycles: 24838
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>call 'gate0_funcs.fis'
+flac3d>; gate0_funcs.fis -- Gate-0 dump functions (stg, pfx params). MUST be `call`ed AFTER EACH
+flac3d>;   model restore (restore clears FISH state). No return-value assignment (else param ignored).
+flac3d>fish define count_active(stg, pfx)
+   Def>    local t1=0
+   Def>    local a1=0
+   Def>    local t2=0
+   Def>    local a2=0
+   Def>    local t3=0
+   Def>    local a3=0
+   Def>    local t4=0
+   Def>    local a4=0
+   Def>    local t5=0
+   Def>    local a5=0
+   Def>    local t6=0
+   Def>    local a6=0
+   Def>    loop foreach local z zone.list
+   Def>        local lay = zone.group(z,'type')
+   Def>        local cr = 0
+   Def>        if zone.group(z,'creep') = 'CreepActive' then
+   Def>            cr = 1
+   Def>        end_if
+   Def>        if lay = 'layer1' then
+   Def>            t1 = t1 + 1
+   Def>            a1 = a1 + cr
+   Def>        end_if
+   Def>        if lay = 'layer2' then
+   Def>            t2 = t2 + 1
+   Def>            a2 = a2 + cr
+   Def>        end_if
+   Def>        if lay = 'layer3' then
+   Def>            t3 = t3 + 1
+   Def>            a3 = a3 + cr
+   Def>        end_if
+   Def>        if lay = 'layer4' then
+   Def>            t4 = t4 + 1
+   Def>            a4 = a4 + cr
+   Def>        end_if
+   Def>        if lay = 'layer5' then
+   Def>            t5 = t5 + 1
+   Def>            a5 = a5 + cr
+   Def>        end_if
+   Def>        if lay = 'layer6' then
+   Def>            t6 = t6 + 1
+   Def>            a6 = a6 + cr
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('ACTBYLAYER '+pfx+'_s'+string(stg)+' L1='+string(a1)+'/'+string(t1)+' L2='+string(a2)+'/'+string(t2)+' L3='+string(a3)+'/'+string(t3)+' L4='+string(a4)+'/'+string(t4)+' L5='+string(a5)+'/'+string(t5)+' L6='+string(a6)+'/'+string(t6))
+   Def>end
+flac3d>fish define dump_zone(stg, pfx)
+   Def>    local fname = 'z_'+pfx+'_s'+string(stg)+'.txt'
+   Def>    local fo = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'xc yc zc s1 s3 pp coh phi layer creep'
+   Def>    fo = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        local p = zone.pos(z)
+   Def>        if comp.y(p) > 884.0 then
+   Def>        if comp.y(p) < 886.0 then
+   Def>            local cs = zone.group(z,'creep')
+   Def>            local isrock = 0
+   Def>            if cs = 'CreepActive' then
+   Def>                isrock = 1
+   Def>            end_if
+   Def>            if cs = 'CreepOff' then
+   Def>                isrock = 1
+   Def>            end_if
+   Def>            if isrock = 1 then
+   Def>                local cr = 0
+   Def>                if cs = 'CreepActive' then
+   Def>                    cr = 1
+   Def>                end_if
+   Def>                local s1 = -zone.stress.prin.x(z)
+   Def>                local s3 = -zone.stress.prin.z(z)
+   Def>                local pp = zone.pp(z)
+   Def>                local cc = zone.prop(z,'cohesion')
+   Def>                local ff = zone.prop(z,'friction')
+   Def>                local lay = zone.group(z,'type')
+   Def>                a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(s1)+' '+string(s3)+' '+string(pp)+' '+string(cc)+' '+string(ff)+' '+lay+' '+string(cr)
+   Def>                fo = file.write(a,1)
+   Def>                n = n + 1
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('ZDUMP '+fname+' slice_zones='+string(n))
+   Def>end
+flac3d>fish define dump_gp(stg, pfx)
+   Def>    local fname = 'g_'+pfx+'_s'+string(stg)+'.txt'
+   Def>    local fo = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z dx dy dz'
+   Def>    fo = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        if comp.y(p) > 884.0 then
+   Def>        if comp.y(p) < 886.0 then
+   Def>            local d = gp.disp(g)
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            fo = file.write(a,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('GDUMP '+fname+' slice_gps='+string(n))
+   Def>end
+flac3d>[count_active(3,'s4')]
+ACTBYLAYER s4_s3 L1=2/20346 L2=59/23503 L3=235/151327 L4=4901/618771 L5=139/255448 L6=0/29060
+0 (integer)
+flac3d>[dump_zone(3,'s4')]
+ZDUMP z_s4_s3.txt slice_zones=23263
+0 (integer)
+flac3d>[dump_gp(3,'s4')]
+GDUMP g_s4_s3.txt slice_gps=5843
+0 (integer)
+flac3d>model restore 's4_s4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:54:20 2026
+Total Cycles: 29159  Super Cycles: 29159
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>call 'gate0_funcs.fis'
+flac3d>; gate0_funcs.fis -- Gate-0 dump functions (stg, pfx params). MUST be `call`ed AFTER EACH
+flac3d>;   model restore (restore clears FISH state). No return-value assignment (else param ignored).
+flac3d>fish define count_active(stg, pfx)
+   Def>    local t1=0
+   Def>    local a1=0
+   Def>    local t2=0
+   Def>    local a2=0
+   Def>    local t3=0
+   Def>    local a3=0
+   Def>    local t4=0
+   Def>    local a4=0
+   Def>    local t5=0
+   Def>    local a5=0
+   Def>    local t6=0
+   Def>    local a6=0
+   Def>    loop foreach local z zone.list
+   Def>        local lay = zone.group(z,'type')
+   Def>        local cr = 0
+   Def>        if zone.group(z,'creep') = 'CreepActive' then
+   Def>            cr = 1
+   Def>        end_if
+   Def>        if lay = 'layer1' then
+   Def>            t1 = t1 + 1
+   Def>            a1 = a1 + cr
+   Def>        end_if
+   Def>        if lay = 'layer2' then
+   Def>            t2 = t2 + 1
+   Def>            a2 = a2 + cr
+   Def>        end_if
+   Def>        if lay = 'layer3' then
+   Def>            t3 = t3 + 1
+   Def>            a3 = a3 + cr
+   Def>        end_if
+   Def>        if lay = 'layer4' then
+   Def>            t4 = t4 + 1
+   Def>            a4 = a4 + cr
+   Def>        end_if
+   Def>        if lay = 'layer5' then
+   Def>            t5 = t5 + 1
+   Def>            a5 = a5 + cr
+   Def>        end_if
+   Def>        if lay = 'layer6' then
+   Def>            t6 = t6 + 1
+   Def>            a6 = a6 + cr
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('ACTBYLAYER '+pfx+'_s'+string(stg)+' L1='+string(a1)+'/'+string(t1)+' L2='+string(a2)+'/'+string(t2)+' L3='+string(a3)+'/'+string(t3)+' L4='+string(a4)+'/'+string(t4)+' L5='+string(a5)+'/'+string(t5)+' L6='+string(a6)+'/'+string(t6))
+   Def>end
+flac3d>fish define dump_zone(stg, pfx)
+   Def>    local fname = 'z_'+pfx+'_s'+string(stg)+'.txt'
+   Def>    local fo = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'xc yc zc s1 s3 pp coh phi layer creep'
+   Def>    fo = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        local p = zone.pos(z)
+   Def>        if comp.y(p) > 884.0 then
+   Def>        if comp.y(p) < 886.0 then
+   Def>            local cs = zone.group(z,'creep')
+   Def>            local isrock = 0
+   Def>            if cs = 'CreepActive' then
+   Def>                isrock = 1
+   Def>            end_if
+   Def>            if cs = 'CreepOff' then
+   Def>                isrock = 1
+   Def>            end_if
+   Def>            if isrock = 1 then
+   Def>                local cr = 0
+   Def>                if cs = 'CreepActive' then
+   Def>                    cr = 1
+   Def>                end_if
+   Def>                local s1 = -zone.stress.prin.x(z)
+   Def>                local s3 = -zone.stress.prin.z(z)
+   Def>                local pp = zone.pp(z)
+   Def>                local cc = zone.prop(z,'cohesion')
+   Def>                local ff = zone.prop(z,'friction')
+   Def>                local lay = zone.group(z,'type')
+   Def>                a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(s1)+' '+string(s3)+' '+string(pp)+' '+string(cc)+' '+string(ff)+' '+lay+' '+string(cr)
+   Def>                fo = file.write(a,1)
+   Def>                n = n + 1
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('ZDUMP '+fname+' slice_zones='+string(n))
+   Def>end
+flac3d>fish define dump_gp(stg, pfx)
+   Def>    local fname = 'g_'+pfx+'_s'+string(stg)+'.txt'
+   Def>    local fo = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z dx dy dz'
+   Def>    fo = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        if comp.y(p) > 884.0 then
+   Def>        if comp.y(p) < 886.0 then
+   Def>            local d = gp.disp(g)
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            fo = file.write(a,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('GDUMP '+fname+' slice_gps='+string(n))
+   Def>end
+flac3d>[count_active(4,'s4')]
+ACTBYLAYER s4_s4 L1=230/20346 L2=915/23503 L3=8419/151327 L4=410928/618771 L5=22887/255448 L6=0/29060
+0 (integer)
+flac3d>[dump_zone(4,'s4')]
+ZDUMP z_s4_s4.txt slice_zones=23263
+0 (integer)
+flac3d>[dump_gp(4,'s4')]
+GDUMP g_s4_s4.txt slice_gps=5843
+0 (integer)
+flac3d>[io.out('GATE0-DUMP-DONE s4')]
+GATE0-DUMP-DONE s4
+0 (integer)
+flac3d>program quit

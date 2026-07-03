@@ -1,0 +1,119 @@
+; test_lining_softening.f3dat -- lower stiffness FAILED (lining stress is load-controlled, stays
+;   57->65MPa over-stressed). The lining must YIELD to cap the stress. Strain-softening MC:
+;   peak c=11.9MPa/phi30/tension4.12 (from shot_fc/ft), softening to a residual (avoid collapse).
+;   Lining yields at the concrete strength -> caps stress + sheds load to rock -> convergence
+;   grows + lining physical (= cracks). restore small_ep. cwd = 05.
+program log-file 'test_lining_softening.log'
+program log on
+model restore 'small_ep'
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain off
+fish automatic-create on
+zone water density [rho_w]
+[io.out('SS-0 restored small_ep; lining -> strain-softening')]
+
+; softening tables (property vs accumulated plastic strain); residual keeps some support (no collapse)
+table 'tc' add (0.0, 11.9e6) (0.005, 4.0e6) (0.1, 4.0e6)
+table 'tt' add (0.0, 4.12e6) (0.002, 0.6e6) (0.1, 0.6e6)
+zone cmodel assign strain-softening range group 'lining' slot 'type'
+zone property bulk [shot_E/(3.0*(1.0-2.0*shot_v))] shear [shot_E/(2.0*(1.0+shot_v))] cohesion 11.9e6 friction 30.0 dilation 0.0 tension 4.12e6 table-cohesion 'tc' table-tension 'tt' range group 'lining' slot 'type'
+[io.out('SS-1 lining = strain-softening (c11.9->4, ten4.12->0.6)')]
+
+fish define lin_stress
+    local smax = 0.0
+    local tmax = 0.0
+    local nyield = 0
+    loop foreach local z zone.list
+        if zone.group(z,'type') = 'lining' then
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            if s1 > smax then
+                smax = s1
+            end_if
+            if (-s3) > tmax then
+                tmax = -s3
+            end_if
+            if zone.state(z, true) > 0 then
+                nyield = nyield + 1
+            end_if
+        end_if
+    end_loop
+    global lin_smax = smax
+    global lin_tmax = tmax
+    global lin_ny = nyield
+end
+fish define dwall
+    local dm = 0.0
+    loop foreach local gp gp.list
+        local p = gp.pos(gp)
+        local dx = comp.x(p)-1299.0
+        local dz = comp.z(p)-1747.0
+        if math.sqrt(dx*dx+dz*dz) < 5.0 then
+            local d = gp.disp(gp)
+            local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+            if mm > dm then
+                dm = mm
+            end_if
+        end_if
+    end_loop
+    dwall = dm
+end
+[global threhold = 0.4]
+fish define do_threshold
+    local na = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pmean = (s1 + s3)/2.0 - pore
+            local q = (s1 - s3)/2.0
+            local c = zone.prop(z,'cohesion')
+            local phi = zone.prop(z,'friction')
+            local q_th = threhold*c + pmean*threhold*math.tan(phi*math.degrad)
+            if q >= q_th then
+                zone.prop(z,'viscosity-kelvin')  = eta_k
+                zone.prop(z,'viscosity-maxwell') = eta_m
+                zone.group(z,'creep') = 'CreepActive'
+                na = na + 1
+            else
+                zone.prop(z,'viscosity-kelvin')  = 1e100
+                zone.prop(z,'viscosity-maxwell') = 1e100
+                zone.group(z,'creep') = 'CreepOff'
+            end_if
+        end_if
+    end_loop
+    global n_active = na
+end
+
+model solve ratio-average 1e-5 cycles 50000
+[lin_stress]
+[io.out('SS-2 after re-solve (lining yields): lin_comp='+string(lin_smax/1e6)+'MPa lin_ten='+string(lin_tmax/1e6)+'MPa yielded='+string(lin_ny)+' (was 57/13.75 elastic)')]
+
+zone water plane origin (1297, 885, 1807) normal (0,0,1)
+model calm
+model solve ratio-average 1e-5 cycles 50000
+[setKstrains]
+[do_threshold]
+[setKstrains]
+zone gridpoint initialize displacement 0 0 0
+zone gridpoint initialize velocity 0 0 0
+[io.out('SS-EQ HIGH-water 0.4 active='+string(n_active))]
+model creep active on
+model creep timestep fix [crp_dt]
+fish define run_ss(d0, d1, dd)
+    local d = d0 + dd
+    loop while d <= (d1 + 0.1)
+        command
+            model solve time-total [d*86400.0]
+        endcommand
+        lin_stress
+        io.out('   SS day='+string(d)+' wall_conv='+string(dwall)+' lin_comp='+string(lin_smax/1e6)+'MPa lin_ten='+string(lin_tmax/1e6)+'MPa yielded='+string(lin_ny))
+        d = d + dd
+    endloop
+end
+[run_ss(0.0, 60.0, 10.0)]
+model save 'ss_60day'
+[io.out('SS-DONE softening: wall_conv bigger? lin_comp capped near 41.2? (vs elastic 82MPa/2.5mm)')]
+program log off
+program quit

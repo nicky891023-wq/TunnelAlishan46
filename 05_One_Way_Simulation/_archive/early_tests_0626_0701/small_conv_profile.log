@@ -1,0 +1,90 @@
+**********************************************
+* Logging started at 週二 六月 30 02:48:51 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore 's4_s4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:54:20 2026
+Total Cycles: 29159  Super Cycles: 29159
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define sconv
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    global na = 0
+   Def>    global nb = 0
+   Def>    global nc = 0
+   Def>    global nd = 0
+   Def>    local sa = 0.0
+   Def>    local sb = 0.0
+   Def>    local sc = 0.0
+   Def>    local sd = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local yy = comp.y(p)
+   Def>        if yy >= 880.0 then
+   Def>        if yy <= 890.0 then
+   Def>            local rx = comp.x(p)-cx
+   Def>            local rz = comp.z(p)-cz
+   Def>            local rr = math.sqrt(rx*rx+rz*rz)
+   Def>            local d = gp.disp(g)
+   Def>            local ri = -(comp.x(d)*rx/rr + comp.z(d)*rz/rr)
+   Def>            if rr >= 5.0 then
+   Def>            if rr < 10.0 then
+   Def>                sa=sa+ri
+   Def>                na=na+1
+   Def>            end_if
+   Def>            end_if
+   Def>            if rr >= 10.0 then
+   Def>            if rr < 16.0 then
+   Def>                sb=sb+ri
+   Def>                nb=nb+1
+   Def>            end_if
+   Def>            end_if
+   Def>            if rr >= 16.0 then
+   Def>            if rr < 22.0 then
+   Def>                sc=sc+ri
+   Def>                nc=nc+1
+   Def>            end_if
+   Def>            end_if
+   Def>            if rr >= 22.0 then
+   Def>            if rr < 30.0 then
+   Def>                sd=sd+ri
+   Def>                nd=nd+1
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local ma=0.0
+   Def>    local mb=0.0
+   Def>    local mc=0.0
+   Def>    local md=0.0
+   Def>    if na>0 then
+   Def>        ma=sa/float(na)
+   Def>    end_if
+   Def>    if nb>0 then
+   Def>        mb=sb/float(nb)
+   Def>    end_if
+   Def>    if nc>0 then
+   Def>        mc=sc/float(nc)
+   Def>    end_if
+   Def>    if nd>0 then
+   Def>        md=sd/float(nd)
+   Def>    end_if
+   Def>    io.out('SMALL-CONV s4_s4 radial-inward mean(mm) vs r: r5-10='+string(ma*1000.0)+'(n'+string(na)+') r10-16='+string(mb*1000.0)+'(n'+string(nb)+') r16-22(coupled-box)='+string(mc*1000.0)+'(n'+string(nc)+') r22-30='+string(md*1000.0)+'(n'+string(nd)+')')
+   Def>end
+flac3d>[sconv]
+SMALL-CONV s4_s4 radial-inward mean(mm) vs r: r5-10=0.0343919(n6949) r10-16=0.35931(n1705) r16-22(coupled-box)=0.485124(n739) r22-30=0.441966(n528)
+0 (integer)
+flac3d>[io.out('SMALL-CONV-DONE')]
+SMALL-CONV-DONE
+0 (integer)
+flac3d>program quit

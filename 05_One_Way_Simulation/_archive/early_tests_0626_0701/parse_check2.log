@@ -1,0 +1,132 @@
+**********************************************
+* Logging started at 週日 六月 28 15:14:36 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model new
+flac3d>model deterministic on
+flac3d>model precision 1
+flac3d>model random 10000
+flac3d>fish automatic-create on
+flac3d>[global crack_num = 0]
+flac3d>fish define wz_now
+   Def>    local r = 0.0
+   Def>    loop foreach local w wall.list
+*** FISH symbols cannot use a '.' character.
+    From line 8 of source C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/parse_check2.f3dat.
+    While processing line 6 of file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/parse_check2.f3dat.
+**********************************************
+* Logging started at 週日 六月 28 15:17:18 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model new
+flac3d>program load module "module3dcontact005_64.dll"
+--- module3d plugin file module3dcontact005_64.dll already loaded.
+flac3d>program load module "module3dpfc005_64.dll"
+--- module3d plugin file module3dpfc005_64.dll already loaded.
+flac3d>program load module "module3dwallzone005_64.dll"
+--- module3d plugin file module3dwallzone005_64.dll already loaded.
+flac3d>model deterministic on
+flac3d>model precision 1
+flac3d>model random 10000
+flac3d>fish automatic-create on
+flac3d>[global crack_num = 0]
+flac3d>fish define wz_now
+   Def>    local r = 0.0
+   Def>    loop foreach local w wall.list
+   Def>        if wall.name(w) = 'wz_outter' then
+   Def>            local fc = wall.force.contact(w)
+   Def>            r = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+   Def>        end_if
+   Def>    end_loop
+   Def>    wz_now = r
+   Def>end
+flac3d>fish define maxbvel
+   Def>    local mv = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local v = ball.vel(b)
+   Def>        local m = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+   Def>        if m > mv then
+   Def>            mv = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    maxbvel = mv
+   Def>end
+flac3d>fish define interior_dmax
+   Def>    local dm = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') # 'driven' then
+   Def>            local d = gp.disp(g)
+   Def>            local m = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+   Def>            if m > dm then
+   Def>                dm = m
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    interior_dmax = dm
+   Def>end
+flac3d>fish define load_targets
+   Def>    local lines = array.create(40000)
+   Def>    local st = file.open('couple_bnd_disp.txt',0,1)
+   Def>    local nn = file.read(lines, 40000)
+   Def>    st = file.close
+   Def>    global ndriven = 0
+   Def>    global nmiss = 0
+   Def>    local i = 2
+   Def>    loop while i <= nn
+   Def>        local gid = int(string.token(lines(i),1))
+   Def>        local g = gp.find(gid)
+   Def>        if g = null then
+   Def>            nmiss = nmiss + 1
+   Def>        else
+   Def>            gp.extra(g,1) = vector(string.token(lines(i),2),string.token(lines(i),3),string.token(lines(i),4))
+   Def>            gp.extra(g,2) = vector(string.token(lines(i),5),string.token(lines(i),6),string.token(lines(i),7))
+   Def>            gp.extra(g,3) = vector(string.token(lines(i),8),string.token(lines(i),9),string.token(lines(i),10))
+   Def>            gp.extra(g,4) = vector(string.token(lines(i),11),string.token(lines(i),12),string.token(lines(i),13))
+   Def>            gp.group(g,'drive') = 'driven'
+   Def>            ndriven = ndriven + 1
+   Def>        end_if
+   Def>        i = i + 1
+   Def>    end_loop
+   Def>    io.out('PC-LT nn='+string(nn)+' driven='+string(ndriven)+' miss='+string(nmiss))
+   Def>    load_targets = ndriven
+   Def>end
+flac3d>fish define run_stage(stg, nsub, ncyc_sub, solvecap)
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            gp.extra(g,5) = gp.extra(g, stg) - gp.disp(g)
+   Def>        end_if
+   Def>    end_loop
+   Def>    local denom = float(nsub) * float(ncyc_sub) * mech.timestep
+   Def>    local j = 1
+   Def>    loop while j <= nsub
+   Def>        loop foreach local g2 gp.list
+   Def>            if gp.group(g2,'drive') = 'driven' then
+   Def>                gp.vel(g2) = gp.extra(g2,5) / denom
+   Def>            end_if
+   Def>        end_loop
+   Def>        command
+   Def>            model cycle [ncyc_sub]
+   Def>        endcommand
+   Def>        io.out('   sub j='+string(j)+' mbv='+string(maxbvel))
+   Def>        j = j + 1
+   Def>    end_loop
+   Def>end
+flac3d>[load_targets]
+PC-LT nn=28305 driven=0 miss=28304
+0 (integer)
+flac3d>[io.out('PARSE-OK ndriven='+string(load_targets))]
+PC-LT nn=28305 driven=0 miss=28304
+PARSE-OK ndriven=0
+flac3d>program quit

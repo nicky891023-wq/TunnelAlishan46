@@ -1,0 +1,60 @@
+program log-file 'arch_conv.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'cb_full_s4'
+fish automatic-create on
+fish define arch_conv
+    local cx = 1297.0
+    local cz = 1747.5
+    global cu_up = 0.0
+    global cu_bot = 0.0
+    global mx_up = 0.0
+    global mx_bot = 0.0
+    local nu = 0
+    local nb = 0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        local yy = comp.y(p)
+        if yy >= 870.0 then
+        if yy <= 900.0 then
+            local rx = comp.x(p)-cx
+            local rz = comp.z(p)-cz
+            local rr = math.sqrt(rx*rx+rz*rz)
+            if rr > 0.5 then
+                local ang = math.atan2(rz, rx)/math.degrad
+                if ang < 0.0 then
+                    ang = 360.0 + ang
+                end_if
+                local d = ball.disp(b)
+                local ri = -(comp.x(d)*rx/rr + comp.z(d)*rz/rr)
+                if ang <= 180.0 then
+                    cu_up = cu_up + ri
+                    nu = nu + 1
+                    if ri > mx_up then
+                        mx_up = ri
+                    end_if
+                else
+                    cu_bot = cu_bot + ri
+                    nb = nb + 1
+                    if ri > mx_bot then
+                        mx_bot = ri
+                    end_if
+                end_if
+            end_if
+        end_if
+        end_if
+    end_loop
+    local mu = 0.0
+    local mb = 0.0
+    if nu > 0 then
+        mu = cu_up/float(nu)
+    end_if
+    if nb > 0 then
+        mb = cu_bot/float(nb)
+    end_if
+    io.out('ARCH-CONV upper(ang0-180,sidewall-crown) n='+string(nu)+' radial_inward mean='+string(mu*1000.0)+'mm max='+string(mx_up*1000.0)+'mm | bottom n='+string(nb)+' mean='+string(mb*1000.0)+'mm max='+string(mx_bot*1000.0)+'mm')
+end
+[arch_conv]
+[io.out('ARCH-CONV-DONE')]
+program quit

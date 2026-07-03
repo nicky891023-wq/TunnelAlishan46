@@ -1,0 +1,35 @@
+; gate1_lining.f3dat -- Phase 1: small-model lining reaction + tunnel-wall convergence per stage.
+;   CALL gate1_funcs.fis after EACH restore (restore clears FISH state, lesson #79).
+program log-file 'gate1_lining.log'
+program log on
+fish automatic-create on
+model restore 's4_s1'
+call 'gate1_funcs.fis'
+[lining_react(1,'s4')]
+[conv_at(1,'s4', 1297.0, 1752.0, 'crown')]
+[conv_at(1,'s4', 1303.0, 1747.0, 'springR')]
+[conv_at(1,'s4', 1291.0, 1747.0, 'springL')]
+[conv_at(1,'s4', 1297.0, 1743.0, 'invert')]
+model restore 's4_s2'
+call 'gate1_funcs.fis'
+[lining_react(2,'s4')]
+[conv_at(2,'s4', 1297.0, 1752.0, 'crown')]
+[conv_at(2,'s4', 1303.0, 1747.0, 'springR')]
+[conv_at(2,'s4', 1291.0, 1747.0, 'springL')]
+[conv_at(2,'s4', 1297.0, 1743.0, 'invert')]
+model restore 's4_s3'
+call 'gate1_funcs.fis'
+[lining_react(3,'s4')]
+[conv_at(3,'s4', 1297.0, 1752.0, 'crown')]
+[conv_at(3,'s4', 1303.0, 1747.0, 'springR')]
+[conv_at(3,'s4', 1291.0, 1747.0, 'springL')]
+[conv_at(3,'s4', 1297.0, 1743.0, 'invert')]
+model restore 's4_s4'
+call 'gate1_funcs.fis'
+[lining_react(4,'s4')]
+[conv_at(4,'s4', 1297.0, 1752.0, 'crown')]
+[conv_at(4,'s4', 1303.0, 1747.0, 'springR')]
+[conv_at(4,'s4', 1291.0, 1747.0, 'springL')]
+[conv_at(4,'s4', 1297.0, 1743.0, 'invert')]
+[io.out('GATE1-DONE small lining reaction + convergence')]
+program quit

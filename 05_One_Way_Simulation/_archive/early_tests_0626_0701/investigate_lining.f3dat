@@ -1,0 +1,132 @@
+; investigate_lining.f3dat -- Wade's hypothesis: the inner ELASTIC lining (shot_E=25GPa, never
+;   yields) gives UNBOUNDED reaction -> over-supports -> caps the tunnel convergence at ~mm.
+;   Check: (a) does the lining stress rise unbounded as the tunnel converges (over-support)?
+;   (b) is the rock converging INWARD toward the tunnel? (c) is the stress field sane?
+;   threshold 0.4 (Wade), high water. restore small_ep. cwd = 05.
+program log-file 'investigate_lining.log'
+program log on
+model restore 'small_ep'
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain off
+fish automatic-create on
+zone water density [rho_w]
+[io.out('IL-0 restored small_ep + water density')]
+
+fish define dwall      ; max |disp| within r<5m (tunnel-wall convergence)
+    local dm = 0.0
+    loop foreach local gp gp.list
+        local p = gp.pos(gp)
+        local dx = comp.x(p)-1299.0
+        local dz = comp.z(p)-1747.0
+        if math.sqrt(dx*dx+dz*dz) < 5.0 then
+            local d = gp.disp(gp)
+            local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+            if mm > dm then
+                dm = mm
+            end_if
+        end_if
+    end_loop
+    dwall = dm
+end
+fish define lin_stress   ; max compression (sig1) + max tension (-sig3) in the lining ring
+    local smax = 0.0
+    local tmax = 0.0
+    local nl = 0
+    loop foreach local z zone.list
+        if zone.group(z,'type') = 'lining' then
+            nl = nl + 1
+            local s1 = -zone.stress.prin.x(z)   ; compression+
+            local s3 = -zone.stress.prin.z(z)
+            if s1 > smax then
+                smax = s1
+            end_if
+            if (-s3) > tmax then
+                tmax = -s3                       ; tension magnitude
+            end_if
+        end_if
+    end_loop
+    global lin_n = nl
+    global lin_smax = smax
+    global lin_tmax = tmax
+end
+[global threhold = 0.4]
+fish define do_threshold
+    local na = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pmean = (s1 + s3)/2.0 - pore
+            local q = (s1 - s3)/2.0
+            local c = zone.prop(z,'cohesion')
+            local phi = zone.prop(z,'friction')
+            local q_th = threhold*c + pmean*threhold*math.tan(phi*math.degrad)
+            if q >= q_th then
+                zone.prop(z,'viscosity-kelvin')  = eta_k
+                zone.prop(z,'viscosity-maxwell') = eta_m
+                zone.group(z,'creep') = 'CreepActive'
+                na = na + 1
+            else
+                zone.prop(z,'viscosity-kelvin')  = 1e100
+                zone.prop(z,'viscosity-maxwell') = 1e100
+                zone.group(z,'creep') = 'CreepOff'
+            end_if
+        end_if
+    end_loop
+    global n_active = na
+end
+[lin_stress]
+[io.out('IL-LIN0 lining zones='+string(lin_n)+' initial: max_comp='+string(lin_smax/1e6)+'MPa max_ten='+string(lin_tmax/1e6)+'MPa (shot_fc=41.2 shot_ft=4.12)')]
+
+zone water plane origin (1297, 885, 1807) normal (0,0,1)
+model calm
+model solve ratio-average 1e-5 cycles 40000
+[setKstrains]
+[do_threshold]
+[setKstrains]
+zone gridpoint initialize displacement 0 0 0
+zone gridpoint initialize velocity 0 0 0
+[io.out('IL-EQ HIGH-water 0.4 active='+string(n_active))]
+model creep active on
+model creep timestep fix [crp_dt]
+fish define run_il(d0, d1, dd)
+    local d = d0 + dd
+    loop while d <= (d1 + 0.1)
+        command
+            model solve time-total [d*86400.0]
+        endcommand
+        lin_stress
+        io.out('   IL day='+string(d)+' wall_conv='+string(dwall)+' lin_comp='+string(lin_smax/1e6)+'MPa lin_ten='+string(lin_tmax/1e6)+'MPa (active='+string(n_active)+')')
+        d = d + dd
+    endloop
+end
+[run_il(0.0, 60.0, 10.0)]
+model save 'il_60day'
+[io.out('IL-DONE lining over-support? lin_comp rising unbounded vs shot_fc 41.2MPa?')]
+; export y885: stress + disp + lining flag for stress-field + convergence inspection
+fish define _exp
+    local fo = file.open('il_y885.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x z sig1 sig3 dmag dx dz islin'
+    fo = file.write(a,1)
+    loop foreach local z zone.list
+        local p = zone.pos(z)
+        if comp.y(p) > 884.0 then
+        if comp.y(p) < 886.0 then
+            local g = 0
+            if zone.group(z,'type') = 'lining' then
+                g = 1
+            end_if
+            ; nearest gp disp (zone centroid approx via first gp)
+            a(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(-zone.stress.prin.x(z))+' '+string(-zone.stress.prin.z(z))+' 0 0 0 '+string(g)
+            fo = file.write(a,1)
+        end_if
+        end_if
+    end_loop
+    fo = file.close
+    io.out('IL-EXP exported il_y885.txt (stress + lining flag)')
+end
+[_exp]
+program log off
+program quit

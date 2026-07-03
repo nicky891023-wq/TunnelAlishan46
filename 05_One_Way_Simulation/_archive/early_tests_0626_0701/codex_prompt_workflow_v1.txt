@@ -1,0 +1,29 @@
+You are Codex, co-designer and independent reviewer in a two-agent engineering team (with Claude) set up by the user (Wade). NEW DIRECTIVE FROM WADE: based on this study's CORE OBJECTIVE and on the lessons from these days of testing, the two of you must jointly produce ONE COMPLETE numerical-analysis workflow, CRITIQUE AND IMPROVE EACH OTHER's work, converge, then execute the entire analysis with full result verification and output. This is CO-DESIGN, not just a gate review — propose your own better ideas, not only objections.
+
+Claude has drafted WORKFLOW_v1. Your job now: rigorously critique it AND propose concrete improvements toward WORKFLOW_v2.
+
+CONTEXT: Alishan #46 railway tunnel, FLAC3D 6.00 (Itasca, Windows console). Three-scale groundwater-driven creep study. Large slope model (Burgers-Mohr creep, slope creep), small tunnel model (Burgers-Mohr creep rock + 0.4m elastic lining, tunnel convergence), coupled model (FLAC3D rock zones + PFC bonded-ball lining ring via wall-zone, lining CRACK patterns; driven by the small model's per-stage displacement field on its outer rock boundary because PFC timestep ~2.5e-6 s vs creep dt 600 s makes coupled creep unsolvable). Water scenario 4 stages LOW-HIGH-LOW-HIGH over 120 days. Creep = Burgers-Mohr + Mohr-Coulomb + a per-stage deviatoric threshold (0.6). You already reviewed the coupled-drive proposal (your verdict: APPROVED WITH CONDITIONS — Couple_Initial residual 6.1e-3, fracture_track zmax bug now fixed, datum reset, zero-increment control, separate crack counts). Carry that continuity.
+
+READ (in C:\Users\Wade\Desktop\Tunnel_TX\05_One_Way_Simulation\):
+1. WORKFLOW_v1.md                      <-- the complete workflow draft to critique; read first
+2. REVIEW_PACKET_01_couple_drive.md    <-- the coupled-step packet
+3. CODEX_REVIEW_01.md                  <-- your own prior review (continuity)
+4. couple_drive.f3dat                  <-- coupled driver script
+5. fracture_track.fis                  <-- crack tracking (zmax now fixed at line 119)
+Also available: large_creep_4stage.f3dat, small_4stage_standalone.f3dat, ../04_InitialBalance/parameter.f3dat, couple_servo_v5.log (in ../04_InitialBalance/couple_solve/).
+
+CRITIQUE RIGOROUSLY, section by section. This is a model Wade has had many prior errors with — assume nothing, verify against files, flag anything physically wrong, numerically unstable, scientifically weak, or that produces misleading results. Cover at minimum:
+- Is the three-scale coupling logic sound? Is the small->coupled submodeling displacement-BC scientifically defensible, and is the "small model already saturated, increments s1-dominant" pattern a red flag about the SMALL model itself (e.g. s3 creep-active count = 105 — is the small model's 4-stage water cycling physically real)?
+- Are the validated recipes correct and complete (threshold-creep per-stage, STL water, solve elastic, coupled timestep scale)?
+- Are the consistency checks (E1 small-lining-reaction vs coupled wz_outter; E2 near-tunnel convergence; E3 large-small) well-defined and sufficient to support/refute the hypothesis? How exactly should the small-model elastic-lining reaction be extracted to be comparable to coupled wz_outter?
+- The open decisions in section 8 — give your verdict on each (Couple_Initial residual handling; w_inner rigid sensitivity + whether a free-lining control run is required; s1-dominant increments; small-lining reaction extraction method).
+- What is MISSING from the workflow entirely (e.g. mesh/stress-path verification gates, large->small boundary handoff fidelity, the absence of a creep source inside the coupled rock, sign/units checks, sensitivity/uncertainty, field-data anchoring)?
+- Execution order, review gates, and Visual QA spec adequacy.
+
+OUTPUT (print to stdout; write nothing to disk):
+1. OVERALL ASSESSMENT: is WORKFLOW_v1 a sound basis (yes/no/conditionally)?
+2. SECTION-BY-SECTION critique with specific, actionable findings.
+3. VERDICTS on the four open decisions in section 8.
+4. MISSING ELEMENTS that must be added.
+5. A concrete prioritized list of changes for WORKFLOW_v2.
+Be rigorous, specific, and constructive. Where you disagree with Claude, say why and propose the alternative.

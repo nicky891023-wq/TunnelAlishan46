@@ -1,0 +1,10 @@
+program log-file 'test_gate1.log'
+program log on
+fish automatic-create on
+model restore 's4_s1'
+call 'gate1_funcs.fis'
+[lining_react(1,'s4')]
+[conv_at(1,'s4', 1297.0, 1752.0, 'crown')]
+[conv_at(1,'s4', 1303.0, 1747.0, 'springR')]
+[io.out('TEST-GATE1-DONE')]
+program quit

@@ -1,0 +1,1152 @@
+flac3d>program log off
+**********************************************
+* Logging ended at ¶g¤T ¤C¤ë 1 20:37:00 2026
+**********************************************
+**********************************************
+* Logging started at ¶g¤T ¤C¤ë 1 21:10:48 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../04_InitialBalance/Small_Initial'   ; rock MC + lining + in-situ deformation KEPT (datum = undeformed, NOT zeroed at in-situ -- Wade rule #2)
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on ¶g¤T ¤C¤ë 1 13:22:40 2026
+Total Cycles: 26482  Super Cycles: 26482
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>call '../04_InitialBalance/parameter.f3dat'           ; E_S_*/co_S_*/fr_S_*, eta_m/eta_k, crp_dt, shot_*, _bk/_gk, rho_w, grav
+flac3d>; ============================================================================
+flac3d>; parameter.f3dat -- Alishan #46 UNIFIED material parameters (Wade-ruled, 2026-06-22)
+flac3d>; Large(4-layer) / Small(6-layer) rock + lining(D7) + coupled PFC(D7 calib).
+flac3d>;
+flac3d>; Unification rulings (Wade):
+flac3d>;   * nu = 0.25 single value (static MC + creep bulk same source).
+flac3d>;   * E is PER-LAYER (not uniform): lithology-based within Hoek-Diederichs
+flac3d>;     rock-mass range (sandstone 3-8, sandshale 1-3 GPa; colluvium/weathered soft).
+flac3d>;     -> GSI/E have NO field data: per-layer E are documented-range central
+flac3d>;        judgements, GSI-basis TODO (D3). c/phi are GSI-reduced placeholders.
+flac3d>;   * Burgers creep: shear-maxwell = shear-kelvin = the layer ELASTIC G,
+flac3d>;     bulk = the layer elastic K  (instantaneous static==creep, no spurious soften).
+flac3d>;   * viscosity-maxwell eta_m = 6.0e15 Pa.s ; viscosity-kelvin eta_k = 2.4e13 Pa.s.
+flac3d>;   * creep threshold ratio = 0.6 :  q_th = 0.6*(c*cos(phi)+p'*sin(phi)).
+flac3d>;   * creep timestep = 600 s (fixed).
+flac3d>;   * layer4 sandshale(WET): c = 100 kPa, phi = 30 deg (Wade).
+flac3d>; Units: SI (Pa, kg/m3, deg, m, Pa.s).  Sign: compression negative.
+flac3d>; ============================================================================
+flac3d>
+flac3d>; ---------- global / environment ----------
+flac3d>[global nu     = 0.25]            ; single Poisson, all rock layers
+flac3d>[global K0     = 0.7]             ; lateral stress ratio (placeholder, no field basis)
+flac3d>[global grav   = 9.81]            ; m/s2
+flac3d>[global poro   = 0.1]             ; porosity n
+flac3d>[global satr   = 0.1]             ; saturation S
+flac3d>[global rho_w  = 1000.0]          ; water density kg/m3
+flac3d>[global pmb    = 1.0e-5]          ; FLAC mobility coeff m2/(Pa.s); near-tunnel x100
+flac3d>[global ten_r  = 1.0e5]           ; rock tension cutoff 100 kPa (all layers)
+flac3d>
+flac3d>; ---------- elastic helpers (nu=0.25 -> G=E/2.5, K=E/1.5) ----------
+flac3d>fish define _gk(ee)
+   Def>    _gk = ee / (2.0*(1.0+nu))     ; shear  G
+   Def>end
+flac3d>fish define _bk(ee)
+   Def>    _bk = ee / (3.0*(1.0-2.0*nu)) ; bulk   K
+   Def>end
+flac3d>
+flac3d>; ====================== LARGE model : 4 layers ======================
+flac3d>; layer1 colluvium / layer2 ssh / layer3 bedrock / layer4 basement
+flac3d>[global E_L_1 = 0.5e9 ]
+flac3d>[global co_L_1 = 1.9e5]
+flac3d>[global fr_L_1 = 29.1]
+flac3d>[global den_L_1 = 2150.0]
+flac3d>[global E_L_2 = 2.0e9 ]
+flac3d>[global co_L_2 = 2.9e5]
+flac3d>[global fr_L_2 = 35.1]
+flac3d>[global den_L_2 = 2630.0]
+flac3d>[global E_L_3 = 5.0e9 ]
+flac3d>[global co_L_3 = 4.7e5]
+flac3d>[global fr_L_3 = 44.3]
+flac3d>[global den_L_3 = 2600.0]
+flac3d>[global E_L_4 = 7.0e9 ]
+flac3d>[global co_L_4 = 8.0e5]
+flac3d>[global fr_L_4 = 51.5]
+flac3d>[global den_L_4 = 2600.0]
+flac3d>
+flac3d>; ====================== SMALL model : 6 layers ======================
+flac3d>; l1 weathered-ss / l2 ss+sandshale / l3 ss+shale / l4 sandshale(WET) / l5 sandshale / l6 basement
+flac3d>[global E_S_1 = 1.0e9 ]
+flac3d>[global co_S_1 = 1.9e5 ]
+flac3d>[global fr_S_1 = 29.1]
+flac3d>[global den_S_1 = 2600.0]
+flac3d>[global E_S_2 = 2.0e9 ]
+flac3d>[global co_S_2 = 2.9e5 ]
+flac3d>[global fr_S_2 = 35.1]
+flac3d>[global den_S_2 = 2630.0]
+flac3d>[global E_S_3 = 3.5e9 ]
+flac3d>[global co_S_3 = 4.7e5 ]
+flac3d>[global fr_S_3 = 44.3]
+flac3d>[global den_S_3 = 2630.0]
+flac3d>[global E_S_4 = 1.5e9 ]
+flac3d>[global co_S_4 = 1.0e5 ]   ; WET, Wade c100/phi30
+flac3d>[global fr_S_4 = 30.0]
+flac3d>[global den_S_4 = 2630.0]
+flac3d>[global E_S_5 = 3.0e9 ]
+flac3d>[global co_S_5 = 8.0e5 ]
+flac3d>[global fr_S_5 = 51.5]
+flac3d>[global den_S_5 = 2630.0]
+flac3d>[global E_S_6 = 7.0e9 ]
+flac3d>[global co_S_6 = 20.6e5]
+flac3d>[global fr_S_6 = 56.3]
+flac3d>[global den_S_6 = 2600.0]
+flac3d>
+flac3d>; ---------- creep (Burgers-Mohr) : per-layer G_m=G_k=G(E,nu), bulk=K(E,nu) ----------
+flac3d>[global eta_m = 6.0e15]           ; viscosity-maxwell (Wade)
+flac3d>[global eta_k = 2.4e13]           ; viscosity-kelvin (proven)
+flac3d>[global crp_threshold = 0.6]      ; q_th = 0.6*(c*cosphi + p'*sinphi)
+flac3d>[global crp_dt = 600.0]           ; creep timestep (s) (Wade)
+flac3d>
+flac3d>; ---------- lining (R.C. continuum, D7 DECIDED) ----------
+flac3d>[global shot_E   = 25e9]
+flac3d>[global shot_v   = 0.2]
+flac3d>[global shot_t   = 0.40]
+flac3d>[global shot_den = 2400.0]
+flac3d>[global shot_fc  = 41.2e6]
+flac3d>[global shot_ft  = 4.12e6]
+flac3d>
+flac3d>; ---------- coupled PFC lining BPM micro (D7 FINAL_CALIB) ----------
+flac3d>[global pfc_emod    = 9.65e9]     ; linear deformability
+flac3d>[global pfc_kratio  = 1.0]
+flac3d>[global pfc_pb_emod = 5.88e9]     ; parallel-bond deformability
+flac3d>[global pfc_pb_krat = 0.6]
+flac3d>[global pfc_pb_ten  = 2.10e6]     ; Pa
+flac3d>[global pfc_pb_coh  = 2.30e7]     ; Pa
+flac3d>[global pfc_pb_fa   = 25.0]       ; deg
+flac3d>[global pfc_bondgap = 0.03]       ; m  (= cmat proximity)
+flac3d>[global pfc_ball_den  = 2400.0]
+flac3d>[global pfc_ball_damp = 0.7]
+flac3d>[global pfc_fric      = 0.5]
+flac3d>[global pfc_bf_strong = 1.0e20]   ; ball-facet pb (unbreakable coupling, NOT material)
+flac3d>
+flac3d>[io.out('=== parameter.f3dat loaded : nu='+string(nu)+' K0='+string(K0)+' eta_m='+string(eta_m)+' crp_dt='+string(crp_dt)+' ===')]
+=== parameter.f3dat loaded : nu=0.25 K0=0.7 eta_m=6e+15 crp_dt=600 ===
+flac3d>[global eta_m = 1.0e15]                                ; Wade: eta_m override 6e15 -> 1e15 (SMALL only; 1e14 diverged in HIGH water stage2, this is the milder middle value)
+flac3d>call 'C:/Program Files/Itasca/Flac3d600/datafiles/Creep/SetKStrains.f3fis'   ; defines setKstrains (prototype_small_creep.f3dat L27)
+flac3d>fish define setKstrains
+   Def>    local p_z = zone.head
+   Def>    loop while p_z # null
+   Def>        local iflag = 0
+   Def>        if zone.model(p_z) = 'burgers' then
+   Def>            iflag = 1
+   Def>        endif
+   Def>        if zone.model(p_z) = 'burgers-mohr' then
+   Def>            iflag = 1
+   Def>        endif
+   Def>        if iflag = 1 then
+   Def>            local kg2 = 2.0 * zone.prop(p_z, 'shear-kelvin')
+   Def>            if kg2 > 0.0 then
+   Def>                local sig0 = (zone.stress.xx(p_z) + zone.stress.yy(p_z) + zone.stress.zz(p_z))/3.0
+   Def>                zone.prop(p_z,'strain-kelvin-xx') = (zone.stress.xx(p_z) - sig0) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-yy') = (zone.stress.yy(p_z) - sig0) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-zz') = (zone.stress.zz(p_z) - sig0) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-xy') = zone.stress.xy(p_z) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-xz') = zone.stress.xz(p_z) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-yz') = zone.stress.yz(p_z) / kg2
+   Def>            endif
+   Def>        endif
+   Def>        p_z = z.next(p_z)
+   Def>    endloop
+   Def>end
+flac3d>model largestrain off                                 ; small/creep model = largestrain off (prototype L12; NOT the coupled 'on')
+flac3d>model configure creep                                 ; enable creep timestepping (prototype L13)
+--- Process creep configured
+flac3d>fish automatic-create on
+flac3d>zone water density [rho_w]                             ; MANDATORY for effective stress (small_4stage_standalone.f3dat L13)
+flac3d>[io.out('SD-0 restored Small_Initial + creep configured; zones='+string(zone.num)+' gps='+string(gp.num))]
+SD-0 restored Small_Initial + creep configured; zones=1433466 gps=269452
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; 1) SWITCH ROCK TO BURGERS-MOHR (6 layers). Creep OFF until each stage turns it
+flac3d>;    on. bulk=_bk(E), shear-maxwell=shear-kelvin=_gk(E) so static==creep
+flac3d>;    instantaneous stiffness (parameter.f3dat L11-12). viscosity-maxwell/kelvin
+flac3d>;    seeded eta_m/eta_k; do_threshold re-gates them per stage. ROCK ONLY (slot
+flac3d>;    'mat' group 'rock'); lining/shell untouched.
+flac3d>;    Pattern: prototype_small_creep.f3dat L18-24 (uses _bk/_gk form per task).
+flac3d>; ----------------------------------------------------------------------------
+flac3d>zone cmodel assign burgers-mohr range group 'rock' slot 'mat'
+flac3d>zone property bulk [_bk(E_S_1)] shear-maxwell [_gk(E_S_1)] shear-kelvin [_gk(E_S_1)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 20346 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 20346 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 20346 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 20346 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 20346 zones using the burgers-mohr model.
+--- Property cohesion set in 20346 zones using the burgers-mohr model.
+--- Property friction set in 20346 zones using the burgers-mohr model.
+--- Property tension set in 20346 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_2)] shear-maxwell [_gk(E_S_2)] shear-kelvin [_gk(E_S_2)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 23503 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 23503 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 23503 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 23503 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 23503 zones using the burgers-mohr model.
+--- Property cohesion set in 23503 zones using the burgers-mohr model.
+--- Property friction set in 23503 zones using the burgers-mohr model.
+--- Property tension set in 23503 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_3)] shear-maxwell [_gk(E_S_3)] shear-kelvin [_gk(E_S_3)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 151327 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 151327 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 151327 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 151327 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 151327 zones using the burgers-mohr model.
+--- Property cohesion set in 151327 zones using the burgers-mohr model.
+--- Property friction set in 151327 zones using the burgers-mohr model.
+--- Property tension set in 151327 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_4)] shear-maxwell [_gk(E_S_4)] shear-kelvin [_gk(E_S_4)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 618771 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 618771 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 618771 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 618771 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 618771 zones using the burgers-mohr model.
+--- Property cohesion set in 618771 zones using the burgers-mohr model.
+--- Property friction set in 618771 zones using the burgers-mohr model.
+--- Property tension set in 618771 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_5)] shear-maxwell [_gk(E_S_5)] shear-kelvin [_gk(E_S_5)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+--- Property bulk set in 255448 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 255448 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 255448 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 255448 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 255448 zones using the burgers-mohr model.
+--- Property cohesion set in 255448 zones using the burgers-mohr model.
+--- Property friction set in 255448 zones using the burgers-mohr model.
+--- Property tension set in 255448 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_6)] shear-maxwell [_gk(E_S_6)] shear-kelvin [_gk(E_S_6)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+--- Property bulk set in 29060 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 29060 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 29060 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 29060 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 29060 zones using the burgers-mohr model.
+--- Property cohesion set in 29060 zones using the burgers-mohr model.
+--- Property friction set in 29060 zones using the burgers-mohr model.
+--- Property tension set in 29060 zones using the burgers-mohr model.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>[io.out('SD-1 burgers-mohr assigned on 6 rock layers (lining/shell stay elastic-RC)')]
+SD-1 burgers-mohr assigned on 6 rock layers (lining/shell stay elastic-RC)
+0 (integer)
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; 1b) ENSURE the dkt-csth shell exists on the cavity wall.
+flac3d>;     The task premise is that Small_Initial already carries the shell. If this
+flac3d>;     restore is the SOLID-lining Small_Initial (run_small_init.f3dat builds the
+flac3d>;     0.40 m lining as elastic ZONES, group 'lining' slot 'mat'), this block
+flac3d>;     converts it once: null the solid lining -> mark exposed cavity faces ->
+flac3d>;     create the shell. If a shell already exists, _need_shell stays 0 and the
+flac3d>;     block is skipped. Grounding: diag_shell.f3dat APPROACH-B (null+skin+by-face)
+flac3d>;     and SMALL_SHELL_script.md.  [VERIFY] which Small_Initial flavour is on disk;
+flac3d>;     if the shell is already wished-in-place, this block no-ops correctly.
+flac3d>; ----------------------------------------------------------------------------
+flac3d>fish define _shell_count
+   Def>    local ns = 0
+   Def>    loop foreach local s struct.list
+   Def>        if struct.type(s) = 'shell' then
+   Def>            ns = ns + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    _shell_count = ns
+   Def>end
+flac3d>fish define build_shell_if_needed
+   Def>    local n0 = _shell_count
+   Def>    if n0 = 0 then
+   Def>        command
+   Def>            zone cmodel assign null range group 'lining' slot 'type'   ; null lining (slot 'type', matches proven small_insitu_v3 / small_shell_create)
+   Def>            structure shell create by-face element-type=dkt-csth range group 'rock' slot 'mat' position-x 1251 1349 position-y 851 949 position-z 1701 1799   ; VERIFIED clean single-layer D-shape cavity-wall shell (qa_shells_thin.png)
+   Def>            structure shell property isotropic ([shot_E], [shot_v]) thickness [shot_t] density [shot_den]   ; 25 GPa / 0.2 / 0.40 m / 2400
+   Def>        endcommand
+   Def>        io.out('SD-1b created dkt-csth shell on cavity wall; shells='+string(_shell_count))
+   Def>    else
+   Def>        io.out('SD-1b shell already present in Small_Initial; shells='+string(n0)+' (no create)')
+   Def>    end_if
+   Def>end
+flac3d>[build_shell_if_needed]
+SD-1b shell already present in Small_Initial; shells=69828 (no create)
+0 (integer)
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; 2) DIAGNOSTIC / REPORTING FISH ---------------------------------------------
+flac3d>; ----------------------------------------------------------------------------
+flac3d>fish define dmax_all
+   Def>    local dm = 0.0
+   Def>    loop foreach local gp gp.list
+   Def>        local d = gp.disp(gp)
+   Def>        local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+   Def>        if mm > dm then
+   Def>            dm = mm
+   Def>        end_if
+   Def>    end_loop
+   Def>    dmax_all = dm
+   Def>end
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; 3) THRESHOLD-GATED CREEP (corrected MC envelope; rock only).
+flac3d>;    q_th = 0.6*(c*cos(phi) + p'*sin(phi))  -- s4_rerun_convhist.f3dat L32-58.
+flac3d>;    NOT the old tan form (~15.5% over-trigger). p' = effective mean (pore subtracted).
+flac3d>; ----------------------------------------------------------------------------
+flac3d>[global threhold = 0.6]
+flac3d>fish define do_threshold
+   Def>    local na = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.group(z,'mat') = 'rock' then
+   Def>            local s1 = -zone.stress.prin.x(z)
+   Def>            local s3 = -zone.stress.prin.z(z)
+   Def>            local pore = zone.pp(z)
+   Def>            local pmean = (s1 + s3)/2.0 - pore
+   Def>            local q = (s1 - s3)/2.0
+   Def>            local c = zone.prop(z,'cohesion')
+   Def>            local phi = zone.prop(z,'friction')
+   Def>            local q_th = threhold*(c*math.cos(phi*math.degrad) + pmean*math.sin(phi*math.degrad))   ; corrected MC envelope (parameter.f3dat L14)
+   Def>            if q >= q_th then
+   Def>                zone.prop(z,'viscosity-kelvin')  = eta_k
+   Def>                zone.prop(z,'viscosity-maxwell') = eta_m
+   Def>                zone.group(z,'creep') = 'CreepActive'
+   Def>                na = na + 1
+   Def>            else
+   Def>                zone.prop(z,'viscosity-kelvin')  = 1e100
+   Def>                zone.prop(z,'viscosity-maxwell') = 1e100
+   Def>                zone.group(z,'creep') = 'CreepOff'
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    global n_active = na
+   Def>end
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; 4) SHELL E-REDUCTION-ON-YIELD DAMAGE (two-cap, monotonic, stress-capped).
+flac3d>;    demand = max(sigma_c/fc, sigma_t/ft); E_new = E_old/demand with floor 2.5 GPa,
+flac3d>;    max 50% drop/event, eps 1% chatter guard, MONOTONIC. SHELL_LINING_recipe.md
+flac3d>;    STEP 3 (verbatim). Caps fc=41.2 MPa / ft=4.12 MPa (parameter.f3dat L95-96).
+flac3d>;    Called at creep-segment boundaries (NOT per-cycle on 1.4M zones).
+flac3d>; ----------------------------------------------------------------------------
+flac3d>[global sigCap_c = shot_fc]        ; 41.2e6 compression cap
+flac3d>[global sigCap_t = shot_ft]        ; 4.12e6 tension cap
+flac3d>[global E_floor  = 2.5e9]          ; residual cracked-RC modulus floor
+flac3d>[global drop_max = 0.5]            ; <=50% E reduction per event
+flac3d>[global dmg_eps  = 0.01]           ; 1% over-cap tolerance (anti-chatter)
+flac3d>; RECORD-ONLY (E-reduction is force-controlled here -- cannot cap shell stress;
+flac3d>; verified by test_shell_E_command/smoke_shell_damage: set-E drops stress only
+flac3d>; pre-solve, the strain compensates on re-solve back to force/area. So the shell
+flac3d>; stays E0 (bounds convergence; drive supplies the ~10-20cm magnitude) and we RECORD
+flac3d>; the over-stressed (cracking) shells as the lining CRACK PATTERN. n_shell_red = the
+flac3d>; count of shells over the tension cap (4.12MPa) or compression cap (41.2MPa).
+flac3d>fish define shell_damage
+   Def>    command
+   Def>        structure shell recover surface (0,1,0)
+   Def>        structure shell recover stress depth-factor 0
+   Def>    endcommand
+   Def>    local ncrk_t = 0
+   Def>    local ncrk_c = 0
+   Def>    local maxt = 0.0
+   Def>    local maxc = 0.0
+   Def>    loop foreach local s struct.list
+   Def>        if struct.type(s) = 'shell' then
+   Def>            local sc = 0.0
+   Def>            local st = 0.0
+   Def>            loop local k (0,3)
+   Def>                local smin = struct.shell.stress.prin.x(s,k)   ; min principal (most compressive, signed)
+   Def>                if -smin > sc then
+   Def>                    sc = -smin
+   Def>                end_if
+   Def>                local smax = struct.shell.stress.prin.z(s,k)   ; max principal (most tensile, signed)
+   Def>                if smax > st then
+   Def>                    st = smax
+   Def>                end_if
+   Def>            end_loop
+   Def>            if st > sigCap_t then
+   Def>                ncrk_t = ncrk_t + 1
+   Def>            end_if
+   Def>            if sc > sigCap_c then
+   Def>                ncrk_c = ncrk_c + 1
+   Def>            end_if
+   Def>            if st > maxt then
+   Def>                maxt = st
+   Def>            end_if
+   Def>            if sc > maxc then
+   Def>                maxc = sc
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    global n_shell_red = ncrk_t + ncrk_c     ; cracking-shell count (tension OR compression over cap)
+   Def>    global n_crk_tension = ncrk_t
+   Def>    global n_crk_compress = ncrk_c
+   Def>    global shell_maxt = maxt
+   Def>    global shell_maxc = maxc
+   Def>end
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; 5) Y860-910 CROWN/SIDEWALL CONVERGENCE (diameter closure, in-situ day-0 datum).
+flac3d>;    s4_rerun_convhist.f3dat L60-205 (verbatim). vclose/hclose = sentinel y885
+flac3d>;    continuous histories; band_conv = y860-910 band average for J/C. NEGATIVE =
+flac3d>;    closing. NOT zeroed at day 0 -- datum is the in-situ displacement.
+flac3d>; ----------------------------------------------------------------------------
+flac3d>fish define find_conv_gps
+   Def>    global g_crown = null
+   Def>    global g_invert = null
+   Def>    global g_sprR = null
+   Def>    global g_sprL = null
+   Def>    local bc = 1e20
+   Def>    local bi = 1e20
+   Def>    local br = 1e20
+   Def>    local bl = 1e20
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local yy = comp.y(p)
+   Def>        if yy > 884.0 then
+   Def>        if yy < 886.0 then
+   Def>            local dcr = (comp.x(p)-1297.0)*(comp.x(p)-1297.0)+(comp.z(p)-1752.0)*(comp.z(p)-1752.0)
+   Def>            if dcr < bc then
+   Def>                bc = dcr
+   Def>                g_crown = g
+   Def>            end_if
+   Def>            local din = (comp.x(p)-1297.0)*(comp.x(p)-1297.0)+(comp.z(p)-1743.0)*(comp.z(p)-1743.0)
+   Def>            if din < bi then
+   Def>                bi = din
+   Def>                g_invert = g
+   Def>            end_if
+   Def>            local dsr = (comp.x(p)-1303.0)*(comp.x(p)-1303.0)+(comp.z(p)-1747.0)*(comp.z(p)-1747.0)
+   Def>            if dsr < br then
+   Def>                br = dsr
+   Def>                g_sprR = g
+   Def>            end_if
+   Def>            local dsl = (comp.x(p)-1291.0)*(comp.x(p)-1291.0)+(comp.z(p)-1747.0)*(comp.z(p)-1747.0)
+   Def>            if dsl < bl then
+   Def>                bl = dsl
+   Def>                g_sprL = g
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('CONV-GPS crown_dist='+string(math.sqrt(bc))+' invert_dist='+string(math.sqrt(bi))+' sprR_dist='+string(math.sqrt(br))+' sprL_dist='+string(math.sqrt(bl)))
+   Def>end
+flac3d>fish define vclose
+   Def>    vclose = (comp.z(gp.disp(g_crown)) - comp.z(gp.disp(g_invert)))*1000.0
+   Def>end
+flac3d>fish define hclose
+   Def>    hclose = (comp.x(gp.disp(g_sprR)) - comp.x(gp.disp(g_sprL)))*1000.0
+   Def>end
+flac3d>fish define report_conv(tag)
+   Def>    io.out('CONV '+tag+' vert_closure='+string(vclose)+'mm horiz_closure='+string(hclose)+'mm | crown_dz='+string(comp.z(gp.disp(g_crown))*1000.0)+' invert_dz='+string(comp.z(gp.disp(g_invert))*1000.0)+' sprR_dx='+string(comp.x(gp.disp(g_sprR))*1000.0)+' sprL_dx='+string(comp.x(gp.disp(g_sprL))*1000.0))
+   Def>end
+flac3d>fish define band_conv(tag)
+   Def>    local scr = 0.0
+   Def>    local ncr = 0
+   Def>    local mxcr = -1e20
+   Def>    local mncr = 1e20
+   Def>    local sin = 0.0
+   Def>    local nin = 0
+   Def>    local mxin = -1e20
+   Def>    local mnin = 1e20
+   Def>    local ssr = 0.0
+   Def>    local nsr = 0
+   Def>    local ssl = 0.0
+   Def>    local nsl = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local yy = comp.y(p)
+   Def>        if yy >= 860.0 then
+   Def>        if yy <= 910.0 then
+   Def>            local rx = comp.x(p)-1297.0
+   Def>            local rz = comp.z(p)-1747.5
+   Def>            local rr = math.sqrt(rx*rx+rz*rz)
+   Def>            if rr >= 4.5 then
+   Def>            if rr <= 5.5 then
+   Def>                local ang = math.atan2(rz,rx)/math.degrad
+   Def>                if ang < 0.0 then
+   Def>                    ang = 360.0+ang
+   Def>                end_if
+   Def>                local d = gp.disp(g)
+   Def>                local dzv = comp.z(d)
+   Def>                local dxv = comp.x(d)
+   Def>                if ang >= 75.0 then
+   Def>                if ang <= 105.0 then
+   Def>                    scr = scr + dzv
+   Def>                    ncr = ncr + 1
+   Def>                    if dzv > mxcr then
+   Def>                        mxcr = dzv
+   Def>                    end_if
+   Def>                    if dzv < mncr then
+   Def>                        mncr = dzv
+   Def>                    end_if
+   Def>                end_if
+   Def>                end_if
+   Def>                if ang >= 255.0 then
+   Def>                if ang <= 285.0 then
+   Def>                    sin = sin + dzv
+   Def>                    nin = nin + 1
+   Def>                    if dzv > mxin then
+   Def>                        mxin = dzv
+   Def>                    end_if
+   Def>                    if dzv < mnin then
+   Def>                        mnin = dzv
+   Def>                    end_if
+   Def>                end_if
+   Def>                end_if
+   Def>                if ang >= 345.0 then
+   Def>                    ssr = ssr + dxv
+   Def>                    nsr = nsr + 1
+   Def>                end_if
+   Def>                if ang <= 15.0 then
+   Def>                    ssr = ssr + dxv
+   Def>                    nsr = nsr + 1
+   Def>                end_if
+   Def>                if ang >= 165.0 then
+   Def>                if ang <= 195.0 then
+   Def>                    ssl = ssl + dxv
+   Def>                    nsl = nsl + 1
+   Def>                end_if
+   Def>                end_if
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local mcr = 0.0
+   Def>    if ncr > 0 then
+   Def>        mcr = scr/float(ncr)
+   Def>    end_if
+   Def>    local mvin = 0.0
+   Def>    if nin > 0 then
+   Def>        mvin = sin/float(nin)
+   Def>    end_if
+   Def>    local msr = 0.0
+   Def>    if nsr > 0 then
+   Def>        msr = ssr/float(nsr)
+   Def>    end_if
+   Def>    local msl = 0.0
+   Def>    if nsl > 0 then
+   Def>        msl = ssl/float(nsl)
+   Def>    end_if
+   Def>    local vert = (mcr - mvin)*1000.0
+   Def>    local horiz = (msr - msl)*1000.0
+   Def>    global band_vert = vert
+   Def>    global band_horiz = horiz
+   Def>    io.out('BAND-CONV '+tag+' vert_closure='+string(vert)+'mm horiz_closure='+string(horiz)+'mm | crown_dz mean='+string(mcr*1000.0)+' [min'+string(mncr*1000.0)+',max'+string(mxcr*1000.0)+'] invert_dz mean='+string(mvin*1000.0)+' [min'+string(mnin*1000.0)+',max'+string(mxin*1000.0)+'] | n(cr/in/sr/sl)='+string(ncr)+'/'+string(nin)+'/'+string(nsr)+'/'+string(nsl))
+   Def>end
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; 6) LOAD THE LARGE-DRIVEN BOX-FACE TARGETS (small_drive.txt, from small_idw.py).
+flac3d>;    Per-stage CUMULATIVE displacement -> gp.extra(g,1..4); tag 'driven' slot 'drive';
+flac3d>;    FIX their velocity so the solver cannot overwrite the imposed motion.
+flac3d>;    Pattern: couple_drive.f3dat load_targets L55-82 (here: 'id d1x..d4z').
+flac3d>; ----------------------------------------------------------------------------
+flac3d>fish define load_targets
+   Def>    local lines = array.create(60000)
+   Def>    local st = file.open('small_drive_residual.txt',0,1)   ; DEFORMATIONAL residual (rigid translation+rotation removed): the box's pure strain field = the true tunnel-squeezing drive (FULL field is ~99% rigid translation, which does not deform the tunnel)
+   Def>    local nn = file.read(lines, 60000)
+   Def>    st = file.close
+   Def>    global ndriven = 0
+   Def>    global nmiss = 0
+   Def>    local i = 2                                          ; skip header line 1
+   Def>    loop while i <= nn
+   Def>        local gid = int(string.token(lines(i),1))
+   Def>        local g = gp.find(gid)
+   Def>        if g = null then
+   Def>            nmiss = nmiss + 1
+   Def>        else
+   Def>            gp.extra(g,1) = vector(string.token(lines(i),2),string.token(lines(i),3),string.token(lines(i),4))
+   Def>            gp.extra(g,2) = vector(string.token(lines(i),5),string.token(lines(i),6),string.token(lines(i),7))
+   Def>            gp.extra(g,3) = vector(string.token(lines(i),8),string.token(lines(i),9),string.token(lines(i),10))
+   Def>            gp.extra(g,4) = vector(string.token(lines(i),11),string.token(lines(i),12),string.token(lines(i),13))
+   Def>            gp.group(g,'drive') = 'driven'
+   Def>            ndriven = ndriven + 1
+   Def>        end_if
+   Def>        i = i + 1
+   Def>    end_loop
+   Def>    io.out('SD-LT driven='+string(ndriven)+' miss='+string(nmiss))
+   Def>    load_targets = ndriven
+   Def>end
+flac3d>[load_targets]
+SD-LT driven=14946 miss=0
+14946 (integer)
+flac3d>zone gridpoint fix velocity range group 'driven' slot 'drive'   ; FIX so solver can't overwrite imposed motion (couple_drive.f3dat L82)
+--- Fix velocity         specified in 12619 gridpoints.
+flac3d>[io.out('SD-2 box-face targets loaded + driven gp velocity fixed')]
+SD-2 box-face targets loaded + driven gp velocity fixed
+0 (integer)
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; 7) DRIVE_AND_CREEP(stg, nsub, ncyc_sub, d0, d1, dd) -- one full stage.
+flac3d>;    (1) per-gp increment to this stage's cumulative target gp.extra(g,stg)
+flac3d>;    (2) sub-step velocity ramp + model calm (mechanical, creep off)
+flac3d>;    (3) hold (vel=0), re-equilibrate in burgers-mohr stiffness (ratio-average,
+flac3d>;        NOT elastic -- Wade rule #3); setKstrains; do_threshold; setKstrains;
+flac3d>;        shell_damage (post-drive, pre-creep)
+flac3d>;    (4) threshold-gated creep over the stage days (crp_dt fixed timestep),
+flac3d>;        shell_damage at each dd-day creep-segment boundary
+flac3d>;    Pattern: couple_drive.f3dat run_stage L84-116 + SHELL_LINING_recipe.md STEP 4b.
+flac3d>;    NOTE: funcs called bare INSIDE a define (setKstrains/do_threshold/shell_damage)
+flac3d>;    are plain FISH calls -- valid; only TOP-LEVEL invocation needs [..] (lesson #74).
+flac3d>; ----------------------------------------------------------------------------
+flac3d>fish define drive_and_creep(stg, nsub, ncyc_sub, d0, d1, dd)
+   Def>    ; (1) increment per driven gp = stage cumulative target - current disp
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            gp.extra(g,5) = gp.extra(g, stg) - gp.disp(g)
+   Def>        end_if
+   Def>    end_loop
+   Def>    local denom = float(nsub) * float(ncyc_sub) * mech.timestep
+   Def>    ; (2) sub-step ramp (mechanical cycles, creep already off here)
+   Def>    local j = 1
+   Def>    loop while j <= nsub
+   Def>        loop foreach local g2 gp.list
+   Def>            if gp.group(g2,'drive') = 'driven' then
+   Def>                gp.vel(g2) = gp.extra(g2,5) / denom
+   Def>            end_if
+   Def>        end_loop
+   Def>        command
+   Def>            model cycle [ncyc_sub]
+   Def>            model calm
+   Def>        endcommand
+   Def>        io.out('   SD-sub stg'+string(stg)+' j='+string(j)+'/'+string(nsub)+' dmax='+string(dmax_all))
+   Def>        j = j + 1
+   Def>    end_loop
+   Def>    ; (3) hold target, re-equilibrate rock in burgers-mohr stiffness
+   Def>    loop foreach local g3 gp.list
+   Def>        if gp.group(g3,'drive') = 'driven' then
+   Def>            gp.vel(g3) = vector(0,0,0)
+   Def>        end_if
+   Def>    end_loop
+   Def>    command
+   Def>        model solve ratio-average 1e-5 cycles 40000
+   Def>    endcommand
+   Def>    setKstrains                                  ; re-set Kelvin strain to NEW post-drive stress (FLAC creep gotcha; prototype L96)
+   Def>    do_threshold                                 ; gate creep on the boundary-squeezed stress state
+   Def>    setKstrains                                  ; re-set again after viscosity flip
+   Def>    shell_damage                                 ; update shell E post-drive, pre-creep
+   Def>    io.out('   SD-stg'+string(stg)+' post-drive eq: active='+string(n_active)+' shell_reduced='+string(n_shell_red)+' dmax='+string(dmax_all))
+   Def>    ; (4) threshold-gated creep over the stage days
+   Def>    command
+   Def>        model creep active on
+   Def>        model creep timestep fix [crp_dt]
+   Def>    endcommand
+   Def>    local d = d0 + dd
+   Def>    loop while d <= (d1 + 0.1)
+   Def>        do_threshold                             ; per-increment threshold (multi-thread safe; NOT per-cycle)
+   Def>        global cur_day = d
+   Def>        command
+   Def>            model solve time-total [d*86400.0]
+   Def>        endcommand
+   Def>        shell_damage                             ; recover shell stress + count cracking shells at the creep-segment boundary
+   Def>        io.out('   SD-creep stg'+string(stg)+' day='+string(d)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+'mm dmax='+string(dmax_all)+' active='+string(n_active)+' crk(t/c)='+string(n_crk_tension)+'/'+string(n_crk_compress)+' shellMaxT='+string(shell_maxt/1e6)+'MPa')
+   Def>        d = d + dd
+   Def>    end_loop
+   Def>    command
+   Def>        model creep active off
+   Def>        zone gridpoint initialize velocity 0 0 0   ; zero ONLY velocity between stages (Wade rule #2; disp stays cumulative)
+   Def>    endcommand
+   Def>end
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; 8) HISTORIES (real physical time + continuous closure + markers).
+flac3d>;    s4_rerun_convhist.f3dat L219-229.
+flac3d>; ----------------------------------------------------------------------------
+flac3d>[global cur_day = 0.0]
+flac3d>[global n_active = 0]
+flac3d>[global n_shell_red = 0]
+flac3d>[find_conv_gps]
+CONV-GPS crown_dist=0.273887 invert_dist=0.0527194 sprR_dist=0.040415 sprL_dist=0.320232
+0 (integer)
+flac3d>model history name 'ctime'    creep time-total
+--- Created history ctime creep total time
+flac3d>fish  history name 'vclose'   @vclose
+--- Created history vclose
+flac3d>fish  history name 'hclose'   @hclose
+--- Created history hclose
+flac3d>zone  history name 'crown_dz'  displacement-z position (1297, 885, 1752)
+--- Created history crown_dz Z Displacement at (1297,885,1752)
+flac3d>zone  history name 'invert_dz' displacement-z position (1297, 885, 1743)
+--- Created history invert_dz Z Displacement at (1297,885,1743)
+flac3d>zone  history name 'sprR_dx'   displacement-x position (1303, 885, 1747)
+--- Created history sprR_dx X Displacement at (1303,885,1747)
+flac3d>zone  history name 'sprL_dx'   displacement-x position (1291, 885, 1747)
+--- Created history sprL_dx X Displacement at (1291,885,1747)
+flac3d>fish  history name 'phys_day'  @cur_day
+--- Created history phys_day
+flac3d>fish  history name 'nactive'   @n_active
+--- Created history nactive
+flac3d>fish  history name 'nshellred' @n_shell_red
+--- Created history nshellred
+flac3d>
+flac3d>; --- DAY-0 IN-SITU DATUM (convergence curve must START here, NOT at 0) ---
+flac3d>[report_conv('S0-INSITU-DATUM')]
+CONV S0-INSITU-DATUM vert_closure=-13.973mm horiz_closure=-10.9859mm | crown_dz=-9.89657 invert_dz=4.07646 sprR_dx=-8.89823 sprL_dx=2.08764
+0 (integer)
+flac3d>[band_conv('S0-INSITU-DATUM')]
+BAND-CONV S0-INSITU-DATUM vert_closure=-12.4508mm horiz_closure=-11.9114mm | crown_dz mean=-8.7027 [min-12.6546,max-1.99179] invert_dz mean=3.74813 [min1.33927,max6.29375] | n(cr/in/sr/sl)=614/511/2178/383
+0 (integer)
+flac3d>[io.out('SD-CHK STAGE0 day=0 dmax='+string(dmax_all)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+' band_vert='+string(band_vert)+'mm active='+string(n_active)+' shellred='+string(n_shell_red))]
+SD-CHK STAGE0 day=0 dmax=0.0221766 vclose=-13.973mm hclose=-10.9859 band_vert=-12.4508mm active=0 shellred=0
+flac3d>
+flac3d>; ============================================================================
+flac3d>; 9) FOUR STAGES, water LOW-HIGH-LOW-HIGH, CUMULATIVE displacement (Wade rule #2:
+flac3d>;    NEVER zero disp; zero ONLY velocity between stages -- handled inside
+flac3d>;    drive_and_creep). nsub=3 ncyc_sub=100 (couple_drive smoke ramp), dd=5 day step.
+flac3d>; ============================================================================
+flac3d>
+flac3d>; === STAGE 1: drive->large s1, LOW water z1724 (0-30 days) ===
+flac3d>zone water plane origin (1297, 885, 1724) normal (0,0,1)
+flac3d>[global threhold = 0.6]                          ; STAGE1 €æª(Wade 2026-07-01 éæ®µé)
+flac3d>[drive_and_creep(1, 3, 100, 0.0, 30.0, 5.0)]
+flac3d>model cycle [ncyc_sub]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      26582 00:00:00:17       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-01 21:11:32
+flac3d>model calm
+   SD-sub stg1 j=1/3 dmax=0.0221767
+flac3d>model cycle [ncyc_sub]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      26682 00:00:00:17       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-01 21:11:50
+flac3d>model calm
+   SD-sub stg1 j=2/3 dmax=0.0221766
+flac3d>model cycle [ncyc_sub]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      26782 00:00:00:17       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-01 21:12:08
+flac3d>model calm
+   SD-sub stg1 j=3/3 dmax=0.0221765
+flac3d>model solve ratio-average 1e-5 cycles 40000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+        1      26783 4.4921e-06 00:00:00:00     40000            1.0000e-05             
+--- Limit ratio-average of 1.0000e-05 met in process(es): mech Zone Main (4.4921e-06),mech Struct Main (4.4921e-06).
+--- Cycling ended at: 2026-07-01 21:12:08
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-stg1 post-drive eq: active=796460 shell_reduced=0 dmax=0.0221765
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      27503 6.00000E+02  4.320000e+05 00:00:02:02                                   4.320000e+05             
+--- Limit time-total of 4.320000e+05 met in process(es): creep (4.320000e+05).
+--- Cycling ended at: 2026-07-01 21:14:39
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg1 day=5 vclose=-14.223mm hclose=-11.5654mm dmax=0.0223989 active=796460 crk(t/c)=0/0 shellMaxT=4.09876MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      28223 6.00000E+02  8.640000e+05 00:00:02:02                                   8.640000e+05             
+--- Limit time-total of 8.640000e+05 met in process(es): creep (8.640000e+05).
+--- Cycling ended at: 2026-07-01 21:16:48
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg1 day=10 vclose=-14.4217mm hclose=-12.236mm dmax=0.0229569 active=672815 crk(t/c)=10/0 shellMaxT=6.55432MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      28943 6.00000E+02  1.296000e+06 00:00:02:02                                   1.296000e+06             
+--- Limit time-total of 1.296000e+06 met in process(es): creep (1.296000e+06).
+--- Cycling ended at: 2026-07-01 21:18:57
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg1 day=15 vclose=-14.6201mm hclose=-12.8012mm dmax=0.0235271 active=539273 crk(t/c)=38/0 shellMaxT=8.38287MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      29663 6.00000E+02  1.728000e+06 00:00:02:02                                   1.728000e+06             
+--- Limit time-total of 1.728000e+06 met in process(es): creep (1.728000e+06).
+--- Cycling ended at: 2026-07-01 21:21:06
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg1 day=20 vclose=-14.765mm hclose=-13.3397mm dmax=0.0239514 active=416254 crk(t/c)=61/0 shellMaxT=9.6038MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      30383 6.00000E+02  2.160000e+06 00:00:02:02                                   2.160000e+06             
+--- Limit time-total of 2.160000e+06 met in process(es): creep (2.160000e+06).
+--- Cycling ended at: 2026-07-01 21:23:15
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg1 day=25 vclose=-14.9128mm hclose=-13.6699mm dmax=0.0242006 active=290320 crk(t/c)=83/0 shellMaxT=10.5211MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      31103 6.00000E+02  2.592000e+06 00:00:02:02                                   2.592000e+06             
+--- Limit time-total of 2.592000e+06 met in process(es): creep (2.592000e+06).
+--- Cycling ended at: 2026-07-01 21:25:24
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg1 day=30 vclose=-14.9917mm hclose=-13.9593mm dmax=0.0244774 active=216689 crk(t/c)=100/0 shellMaxT=11.234MPa
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 206341 gridpoints.
+0 (integer)
+flac3d>[report_conv('S1-END')]
+CONV S1-END vert_closure=-14.9917mm horiz_closure=-13.9593mm | crown_dz=-11.4327 invert_dz=3.55893 sprR_dx=-10.2357 sprL_dx=3.72365
+0 (integer)
+flac3d>[band_conv('S1-END')]
+BAND-CONV S1-END vert_closure=-13.5859mm horiz_closure=-14.5847mm | crown_dz mean=-9.96614 [min-13.9291,max-2.81126] invert_dz mean=3.61972 [min1.55323,max6.94088] | n(cr/in/sr/sl)=614/511/2178/383
+0 (integer)
+flac3d>model save 'sd_s1'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/sd_s1.f3sav.
+flac3d>[io.out('SD-CHK STAGE1 day=30 dmax='+string(dmax_all)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+' band_vert='+string(band_vert)+'mm active='+string(n_active)+' shellred='+string(n_shell_red))]
+SD-CHK STAGE1 day=30 dmax=0.0244774 vclose=-14.9917mm hclose=-13.9593 band_vert=-13.5859mm active=216689 shellred=100
+flac3d>
+flac3d>; === STAGE 2: drive->large s2, HIGH water z1807 (30-60 days) ===
+flac3d>zone water plane origin (1297, 885, 1807) normal (0,0,1)
+flac3d>[global threhold = 0.4]                          ; STAGE2 €æª(
+flac3d>[drive_and_creep(2, 3, 100, 30.0, 60.0, 5.0)]
+flac3d>model cycle [ncyc_sub]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      31203 00:00:00:17       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-01 21:25:48
+flac3d>model calm
+   SD-sub stg2 j=1/3 dmax=0.0245048
+flac3d>model cycle [ncyc_sub]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      31303 00:00:00:17       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-01 21:26:06
+flac3d>model calm
+   SD-sub stg2 j=2/3 dmax=0.024531
+flac3d>model cycle [ncyc_sub]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      31403 00:00:00:17       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-01 21:26:23
+flac3d>model calm
+   SD-sub stg2 j=3/3 dmax=0.0245563
+flac3d>model solve ratio-average 1e-5 cycles 40000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+     1504      32907 9.9954e-06 00:00:04:15     40000            1.0000e-05             
+--- Limit ratio-average of 1.0000e-05 met in process(es): mech Zone Main (9.9954e-06),mech Struct Main (9.9954e-06).
+--- Cycling ended at: 2026-07-01 21:30:39
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-stg2 post-drive eq: active=1036084 shell_reduced=1022 dmax=0.0254584
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      33627 6.00000E+02  3.024000e+06 00:00:02:04                                   3.024000e+06             
+--- Limit time-total of 3.024000e+06 met in process(es): creep (3.024000e+06).
+--- Cycling ended at: 2026-07-01 21:33:14
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg2 day=35 vclose=-15.1266mm hclose=-13.7944mm dmax=0.0366171 active=1036084 crk(t/c)=2577/0 shellMaxT=19.2156MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      34347 6.00000E+02  3.456000e+06 00:00:02:03                                   3.456000e+06             
+--- Limit time-total of 3.456000e+06 met in process(es): creep (3.456000e+06).
+--- Cycling ended at: 2026-07-01 21:35:24
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg2 day=40 vclose=-15.429mm hclose=-14.7928mm dmax=0.034962 active=868574 crk(t/c)=2972/0 shellMaxT=22.4859MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      35067 6.00000E+02  3.888000e+06 00:00:02:02                                   3.888000e+06             
+--- Limit time-total of 3.888000e+06 met in process(es): creep (3.888000e+06).
+--- Cycling ended at: 2026-07-01 21:37:33
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg2 day=45 vclose=-15.6021mm hclose=-15.2262mm dmax=0.0349866 active=773221 crk(t/c)=3454/0 shellMaxT=24.2925MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      35787 6.00000E+02  4.320000e+06 00:00:02:05                                   4.320000e+06             
+--- Limit time-total of 4.320000e+06 met in process(es): creep (4.320000e+06).
+--- Cycling ended at: 2026-07-01 21:39:45
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg2 day=50 vclose=-15.709mm hclose=-15.7208mm dmax=0.035281 active=665911 crk(t/c)=3816/0 shellMaxT=25.4224MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      36507 6.00000E+02  4.752000e+06 00:00:02:05                                   4.752000e+06             
+--- Limit time-total of 4.752000e+06 met in process(es): creep (4.752000e+06).
+--- Cycling ended at: 2026-07-01 21:41:57
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg2 day=55 vclose=-15.8174mm hclose=-16.066mm dmax=0.0355391 active=578547 crk(t/c)=4181/0 shellMaxT=26.071MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      37227 6.00000E+02  5.184000e+06 00:00:02:05                                   5.184000e+06             
+--- Limit time-total of 5.184000e+06 met in process(es): creep (5.184000e+06).
+--- Cycling ended at: 2026-07-01 21:44:09
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg2 day=60 vclose=-15.8767mm hclose=-16.449mm dmax=0.035729 active=490126 crk(t/c)=4438/0 shellMaxT=26.6634MPa
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 206341 gridpoints.
+0 (integer)
+flac3d>[report_conv('S2-END')]
+CONV S2-END vert_closure=-15.8767mm horiz_closure=-16.449mm | crown_dz=-12.4651 invert_dz=3.41163 sprR_dx=-12.6822 sprL_dx=3.76681
+0 (integer)
+flac3d>[band_conv('S2-END')]
+BAND-CONV S2-END vert_closure=-14.4846mm horiz_closure=-17.9805mm | crown_dz mean=-10.707 [min-14.371,max-2.9575] invert_dz mean=3.77758 [min1.97432,max7.12532] | n(cr/in/sr/sl)=614/511/2178/383
+0 (integer)
+flac3d>model save 'sd_s2'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/sd_s2.f3sav.
+flac3d>[io.out('SD-CHK STAGE2 day=60 dmax='+string(dmax_all)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+' band_vert='+string(band_vert)+'mm active='+string(n_active)+' shellred='+string(n_shell_red))]
+SD-CHK STAGE2 day=60 dmax=0.035729 vclose=-15.8767mm hclose=-16.449 band_vert=-14.4846mm active=490126 shellred=4438
+flac3d>
+flac3d>; === STAGE 3: drive->large s3, LOW water z1724 (60-90 days) ===
+flac3d>zone water plane origin (1297, 885, 1724) normal (0,0,1)
+flac3d>[global threhold = 0.3]                          ; STAGE3 €æª(é)
+flac3d>[drive_and_creep(3, 3, 100, 60.0, 90.0, 5.0)]
+flac3d>model cycle [ncyc_sub]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      37327 00:00:00:17       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-01 21:44:34
+flac3d>model calm
+   SD-sub stg3 j=1/3 dmax=0.0357296
+flac3d>model cycle [ncyc_sub]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      37427 00:00:00:17       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-01 21:44:52
+flac3d>model calm
+   SD-sub stg3 j=2/3 dmax=0.0357304
+flac3d>model cycle [ncyc_sub]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      37527 00:00:00:17       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-01 21:45:10
+flac3d>model calm
+   SD-sub stg3 j=3/3 dmax=0.0357312
+flac3d>model solve ratio-average 1e-5 cycles 40000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+        1      37528 8.8639e-06 00:00:00:00     40000            1.0000e-05             
+--- Limit ratio-average of 1.0000e-05 met in process(es): mech Zone Main (8.8639e-06),mech Struct Main (8.8639e-06).
+--- Cycling ended at: 2026-07-01 21:45:10
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-stg3 post-drive eq: active=182213 shell_reduced=4444 dmax=0.0357312
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      38248 6.00000E+02  5.616000e+06 00:00:02:05                                   5.616000e+06             
+--- Limit time-total of 5.616000e+06 met in process(es): creep (5.616000e+06).
+--- Cycling ended at: 2026-07-01 21:47:54
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg3 day=65 vclose=-15.9243mm hclose=-16.675mm dmax=0.0358057 active=182213 crk(t/c)=4562/0 shellMaxT=26.8648MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      38968 6.00000E+02  6.048000e+06 00:00:02:04                                   6.048000e+06             
+--- Limit time-total of 6.048000e+06 met in process(es): creep (6.048000e+06).
+--- Cycling ended at: 2026-07-01 21:50:08
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg3 day=70 vclose=-15.923mm hclose=-16.9269mm dmax=0.0360157 active=135132 crk(t/c)=4681/0 shellMaxT=26.9235MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      39688 6.00000E+02  6.480000e+06 00:00:02:04                                   6.480000e+06             
+--- Limit time-total of 6.480000e+06 met in process(es): creep (6.480000e+06).
+--- Cycling ended at: 2026-07-01 21:52:22
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg3 day=75 vclose=-15.9155mm hclose=-17.1249mm dmax=0.0360999 active=116939 crk(t/c)=4750/0 shellMaxT=26.9585MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      40408 6.00000E+02  6.912000e+06 00:00:02:05                                   6.912000e+06             
+--- Limit time-total of 6.912000e+06 met in process(es): creep (6.912000e+06).
+--- Cycling ended at: 2026-07-01 21:54:36
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg3 day=80 vclose=-15.9097mm hclose=-17.2844mm dmax=0.0361452 active=90823 crk(t/c)=4797/0 shellMaxT=26.9837MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      41128 6.00000E+02  7.344000e+06 00:00:02:05                                   7.344000e+06             
+--- Limit time-total of 7.344000e+06 met in process(es): creep (7.344000e+06).
+--- Cycling ended at: 2026-07-01 21:56:50
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg3 day=85 vclose=-15.9037mm hclose=-17.4305mm dmax=0.0362142 active=72595 crk(t/c)=4829/0 shellMaxT=26.9957MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      41848 6.00000E+02  7.776000e+06 00:00:02:04                                   7.776000e+06             
+--- Limit time-total of 7.776000e+06 met in process(es): creep (7.776000e+06).
+--- Cycling ended at: 2026-07-01 21:59:03
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg3 day=90 vclose=-15.8979mm hclose=-17.5583mm dmax=0.036248 active=58147 crk(t/c)=4851/0 shellMaxT=27.0045MPa
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 206341 gridpoints.
+0 (integer)
+flac3d>[report_conv('S3-END')]
+CONV S3-END vert_closure=-15.8979mm horiz_closure=-17.5583mm | crown_dz=-12.5504 invert_dz=3.34758 sprR_dx=-13.5737 sprL_dx=3.98457
+0 (integer)
+flac3d>[band_conv('S3-END')]
+BAND-CONV S3-END vert_closure=-14.5596mm horiz_closure=-18.7695mm | crown_dz mean=-10.7836 [min-14.3716,max-3.05551] invert_dz mean=3.77603 [min2.0001,max7.42725] | n(cr/in/sr/sl)=614/511/2178/383
+0 (integer)
+flac3d>model save 'sd_s3'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/sd_s3.f3sav.
+flac3d>[io.out('SD-CHK STAGE3 day=90 dmax='+string(dmax_all)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+' band_vert='+string(band_vert)+'mm active='+string(n_active)+' shellred='+string(n_shell_red))]
+SD-CHK STAGE3 day=90 dmax=0.036248 vclose=-15.8979mm hclose=-17.5583 band_vert=-14.5596mm active=58147 shellred=4851
+flac3d>
+flac3d>; === STAGE 4: drive->large s4, HIGH water z1807 (90-120 days) ===
+flac3d>zone water plane origin (1297, 885, 1807) normal (0,0,1)
+flac3d>[global threhold = 0.1]                          ; STAGE4 €æª(€ä½ æ¿€
+flac3d>[drive_and_creep(4, 3, 100, 90.0, 120.0, 5.0)]
+flac3d>model cycle [ncyc_sub]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      41948 00:00:00:17       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-01 21:59:28
+flac3d>model calm
+   SD-sub stg4 j=1/3 dmax=0.0362479
+flac3d>model cycle [ncyc_sub]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      42048 00:00:00:17       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-01 21:59:46
+flac3d>model calm
+   SD-sub stg4 j=2/3 dmax=0.0362479
+flac3d>model cycle [ncyc_sub]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      42148 00:00:00:17       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-01 22:00:04
+flac3d>model calm
+   SD-sub stg4 j=3/3 dmax=0.0362479
+flac3d>model solve ratio-average 1e-5 cycles 40000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+        1      42149 2.1270e-06 00:00:00:00     40000            1.0000e-05             
+--- Limit ratio-average of 1.0000e-05 met in process(es): mech Zone Main (2.1270e-06),mech Struct Main (2.1270e-06).
+--- Cycling ended at: 2026-07-01 22:00:05
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-stg4 post-drive eq: active=1098380 shell_reduced=4850 dmax=0.0362479
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      42869 6.00000E+02  8.208000e+06 00:00:02:04                                   8.208000e+06             
+--- Limit time-total of 8.208000e+06 met in process(es): creep (8.208000e+06).
+--- Cycling ended at: 2026-07-01 22:02:38
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg4 day=95 vclose=-16.2081mm hclose=-17.5067mm dmax=0.0363836 active=1098380 crk(t/c)=5040/0 shellMaxT=29.1058MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      43589 6.00000E+02  8.640000e+06 00:00:02:04                                   8.640000e+06             
+--- Limit time-total of 8.640000e+06 met in process(es): creep (8.640000e+06).
+--- Cycling ended at: 2026-07-01 22:04:49
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg4 day=100 vclose=-16.3993mm hclose=-18.0272mm dmax=0.0377546 active=1097920 crk(t/c)=5376/0 shellMaxT=31.2018MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      44309 6.00000E+02  9.072000e+06 00:00:02:04                                   9.072000e+06             
+--- Limit time-total of 9.072000e+06 met in process(es): creep (9.072000e+06).
+--- Cycling ended at: 2026-07-01 22:06:59
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg4 day=105 vclose=-16.4066mm hclose=-18.9296mm dmax=0.0400539 active=1089814 crk(t/c)=5706/0 shellMaxT=32.9763MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      45029 6.00000E+02  9.504000e+06 00:00:02:04                                   9.504000e+06             
+--- Limit time-total of 9.504000e+06 met in process(es): creep (9.504000e+06).
+--- Cycling ended at: 2026-07-01 22:09:10
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg4 day=110 vclose=-16.6002mm hclose=-19.184mm dmax=0.0406413 active=1067170 crk(t/c)=5971/0 shellMaxT=34.47MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      45749 6.00000E+02  9.936000e+06 00:00:02:04                                   9.936000e+06             
+--- Limit time-total of 9.936000e+06 met in process(es): creep (9.936000e+06).
+--- Cycling ended at: 2026-07-01 22:11:21
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg4 day=115 vclose=-16.7654mm hclose=-19.4015mm dmax=0.0407239 active=1043605 crk(t/c)=6122/0 shellMaxT=36.0165MPa
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      46469 6.00000E+02  1.036800e+07 00:00:02:04                                   1.036800e+07             
+--- Limit time-total of 1.036800e+07 met in process(es): creep (1.036800e+07).
+--- Cycling ended at: 2026-07-01 22:13:32
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+   SD-creep stg4 day=120 vclose=-16.856mm hclose=-19.9348mm dmax=0.0413071 active=1013137 crk(t/c)=6371/0 shellMaxT=37.2394MPa
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 206341 gridpoints.
+0 (integer)
+flac3d>[report_conv('S4-END')]
+CONV S4-END vert_closure=-16.856mm horiz_closure=-19.9348mm | crown_dz=-14.0668 invert_dz=2.78919 sprR_dx=-19.3645 sprL_dx=0.570294
+0 (integer)
+flac3d>[band_conv('S4-END')]
+BAND-CONV S4-END vert_closure=-15.823mm horiz_closure=-21.5018mm | crown_dz mean=-12.2435 [min-15.7966,max-3.8814] invert_dz mean=3.57948 [min0.654673,max7.43085] | n(cr/in/sr/sl)=614/511/2178/383
+0 (integer)
+flac3d>model save 'sd_s4'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/sd_s4.f3sav.
+flac3d>[io.out('SD-CHK STAGE4 day=120 dmax='+string(dmax_all)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+' band_vert='+string(band_vert)+'mm active='+string(n_active)+' shellred='+string(n_shell_red))]
+SD-CHK STAGE4 day=120 dmax=0.0413071 vclose=-16.856mm hclose=-19.9348 band_vert=-15.823mm active=1013137 shellred=6371
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; 10) EXPORT CONVERGENCE HISTORY -> sd_convhist.txt
+flac3d>;     (vclose/hclose/ctime + sentinel point histories + phys_day + nactive +
+flac3d>;      nshellred). s4_rerun_convhist.f3dat L315.
+flac3d>; ----------------------------------------------------------------------------
+flac3d>history export 'vclose' 'hclose' 'ctime' 'crown_dz' 'invert_dz' 'sprR_dx' 'sprL_dx' 'phys_day' 'nactive' 'nshellred' file 'sd_convhist.txt' truncate
+--- History contents written to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/sd_convhist.txt.
+flac3d>[io.out('SD-DONE 120-day large-driven 4-stage complete; final cumulative dmax='+string(dmax_all)+' m  vclose='+string(vclose)+'mm hclose='+string(hclose)+'mm')]
+SD-DONE 120-day large-driven 4-stage complete; final cumulative dmax=0.0413071 m  vclose=-16.856mm hclose=-19.9348mm
+flac3d>program log off
+**********************************************
+* Logging ended at ¶g¤T ¤C¤ë 1 22:13:39 2026
+**********************************************

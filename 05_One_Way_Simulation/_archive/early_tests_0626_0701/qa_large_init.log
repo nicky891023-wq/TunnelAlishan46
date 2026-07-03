@@ -1,0 +1,130 @@
+**********************************************
+* Logging started at 週二 六月 30 19:59:44 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../04_InitialBalance/Large_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週一 六月 22 17:10:41 2026
+Total Cycles: 7482  Super Cycles: 7482
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('QAL-0 restored Large_Initial zones='+string(zone.num)+' gps='+string(gp.num))]
+QAL-0 restored Large_Initial zones=511988 gps=95392
+flac3d>fish define qa_large
+   Def>    local nplas = 0
+   Def>    local szmn = 1e30
+   Def>    local szmx = -1e30
+   Def>    local bz = array.create(5)
+   Def>    local bx = array.create(5)
+   Def>    local bn = array.create(5)
+   Def>    local k = 1
+   Def>    loop while k <= 5
+   Def>        bz(k) = 0.0
+   Def>        bx(k) = 0.0
+   Def>        bn(k) = 0
+   Def>        k = k + 1
+   Def>    end_loop
+   Def>    ; ONE zone pass: plastic + szz range + z-bin profile
+   Def>    loop foreach local z zone.list
+   Def>        if zone.state(z,1) # 0 then
+   Def>            nplas = nplas + 1
+   Def>        end_if
+   Def>        local s = zone.stress.zz(z)
+   Def>        if s < szmn then
+   Def>            szmn = s
+   Def>        end_if
+   Def>        if s > szmx then
+   Def>            szmx = s
+   Def>        end_if
+   Def>        local j = int((zone.pos.z(z)-800.0)/240.0) + 1
+   Def>        if j < 1 then
+   Def>            j = 1
+   Def>        end_if
+   Def>        if j > 5 then
+   Def>            j = 5
+   Def>        end_if
+   Def>        bz(j) = bz(j) + s
+   Def>        bx(j) = bx(j) + zone.stress.xx(z)
+   Def>        bn(j) = bn(j) + 1
+   Def>    end_loop
+   Def>    ; ONE gp pass: max vel + BC counts
+   Def>    local mv = 0.0
+   Def>    local fx = 0
+   Def>    local fz = 0
+   Def>    loop foreach local g gp.list
+   Def>        local v = gp.vel(g)
+   Def>        local m = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+   Def>        if m > mv then
+   Def>            mv = m
+   Def>        end_if
+   Def>        if gp.fix.x(g) then
+   Def>            fx = fx + 1
+   Def>        end_if
+   Def>        if gp.fix.z(g) then
+   Def>            fz = fz + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('QAL-STATE plastic_zones='+string(nplas)+'/'+string(zone.num)+' max_gp_vel='+string(mv)+' szz[min='+string(szmn)+',max='+string(szmx)+']')
+   Def>    io.out('QAL-BC fixed_x_gps='+string(fx)+' fixed_z_gps='+string(fz))
+   Def>    local jj = 1
+   Def>    loop while jj <= 5
+   Def>        if bn(jj) > 0 then
+   Def>            local mz = bz(jj)/float(bn(jj))
+   Def>            local mxx = bx(jj)/float(bn(jj))
+   Def>            local k0 = 0.0
+   Def>            if mz # 0.0 then
+   Def>                k0 = mxx/mz
+   Def>            end_if
+   Def>            io.out('QAL-PROFILE zbin'+string(jj)+' z['+string(800+(jj-1)*240)+'-'+string(800+jj*240)+'] szz='+string(mz)+' sxx='+string(mxx)+' K0='+string(k0)+' n='+string(bn(jj)))
+   Def>        end_if
+   Def>        jj = jj + 1
+   Def>    end_loop
+   Def>end
+flac3d>[qa_large]
+QAL-STATE plastic_zones=101598/511988 max_gp_vel=4.84158e-07 szz[min=-3.25661e+07,max=88223.3]
+QAL-BC fixed_x_gps=5037 fixed_z_gps=2026
+QAL-PROFILE zbin1 z[800-1040] szz=-2.20601e+07 sxx=-1.54387e+07 K0=0.699848 n=35086
+QAL-PROFILE zbin2 z[1040-1280] szz=-1.27912e+07 sxx=-9.65164e+06 K0=0.754553 n=41340
+QAL-PROFILE zbin3 z[1280-1520] szz=-3.6841e+06 sxx=-4.17608e+06 K0=1.13354 n=128708
+QAL-PROFILE zbin4 z[1520-1760] szz=-2.67149e+06 sxx=-2.30571e+06 K0=0.863082 n=188198
+QAL-PROFILE zbin5 z[1760-2000] szz=-1.31727e+06 sxx=-824963 K0=0.626267 n=118656
+0 (integer)
+flac3d>; slice export SUBSAMPLED (every 8th zone in y860-910)
+flac3d>fish define exp_slice
+   Def>    local st = file.open('qa_large_slice.txt',1,1)
+   Def>    local b = array.create(1)
+   Def>    b(1) = 'x z szz sxx state'
+   Def>    file.write(b,1)
+   Def>    local n = 0
+   Def>    local cnt = 0
+   Def>    loop foreach local z zone.list
+   Def>        local yc = zone.pos.y(z)
+   Def>        if yc > 860.0 then
+   Def>        if yc < 910.0 then
+   Def>            cnt = cnt + 1
+   Def>            if cnt > -1 then
+   Def>                local p = zone.pos(z)
+   Def>                b(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.state(z,1))
+   Def>                file.write(b,1)
+   Def>                n = n + 1
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local cl = file.close
+   Def>    io.out('QAL-SLICE exported '+string(n)+' zones (y860-910, every 3rd) -> qa_large_slice.txt')
+   Def>end
+flac3d>[exp_slice]
+QAL-SLICE exported 20507 zones (y860-910, every 3rd) -> qa_large_slice.txt
+0 (integer)
+flac3d>[io.out('QAL-DONE')]
+QAL-DONE
+0 (integer)
+flac3d>program quit

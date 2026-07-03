@@ -1,0 +1,42 @@
+﻿COUPLING-FIELD-VERDICT: Cause C is confirmed. The imposed boundary residual is not an effective tunnel-convergence load. It barely enters the rock mass and produces zero radial inward movement at the tunnel band, so the lining is not under-loaded because of a `free-w_inner` artifact first; it is under-loaded because the transferred drive field is not delivering radial convergence to the lining.
+
+1. The residual likely fails for one or more of these reasons:
+- The best-fit rigid-body removal may be stripping out the low-order convergent component even though RMS residual remains large.
+- The remaining residual may be mostly tangential, axial, shear-like, or spatially oscillatory, so it has high magnitude but little net inward radial work.
+- The coupled boundary is too far from the tunnel for this displacement mode; the rock attenuates it before it reaches r10-15 m.
+- The parent small-model field at that reach may simply not contain meaningful tunnel-wall convergence for s1->s4.
+
+The key test is vector decomposition, not RMS magnitude. For every mapped boundary point, compute:
+
+```text
+u_full = parent_s4 - parent_s1
+u_removed = translation + rotation
+u_res = u_full - u_removed
+
+u_radial_inward = -dot(u, e_r)
+u_tangential = dot(u, e_theta)
+u_axial = dot(u, e_y)
+```
+
+Report mean, median, RMS, signed area-weighted sum, and inward/outward balance for `u_full`, `u_removed`, and `u_res`. If `u_removed` contains most of the signed inward radial component, then yes, the rigid-body fit removed the part that would have loaded the tunnel. If `u_full` itself has little inward radial component at the parent boundary and tunnel wall, then the regional model is not giving this reach a convergence demand.
+
+2. The correct coupling field depends on what the parent model says at the tunnel wall. I would rank the options this way:
+
+- First diagnostic: quantify parent-model tunnel-wall convergence increment s1->s4. This is mandatory before changing the transfer method.
+- If the parent tunnel wall converges meaningfully: current far-boundary residual transfer is invalid for lining-force prediction. Use either a closer coupling boundary, around r8-10 m, or prescribe the parent tunnel-wall convergence / interface displacement directly.
+- If the convergence is mostly in the removed mode: try translation-only removal next. Full no-rigid-removal is useful as a bound, but I would not make it the production result unless you can show the absolute motion is physically meaningful and not coordinate/frame mismatch.
+- If the parent tunnel wall does not converge meaningfully: accept low additional lining load for this reach, and document that the regional water/creep field did not impose radial tunnel closure here.
+
+3. For Wade’s core goal, the defensible path is:
+
+```text
+parent s1->s4 tunnel-wall convergence
+        ↓
+compare to parent boundary radial component
+        ↓
+compare full / translation-only / translation+rotation residual components
+        ↓
+choose transfer that preserves the parent tunnel-wall convergence
+```
+
+So yes: first quantify the small-model’s own tunnel-wall convergence increment s1->s4. That becomes the target load metric. The coupled model should reproduce that convergence at the lining-rock interface within tolerance before its lining force and crack pattern are treated as meaningful.

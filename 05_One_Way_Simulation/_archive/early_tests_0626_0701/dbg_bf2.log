@@ -1,0 +1,61 @@
+**********************************************
+* Logging started at 週一 六月 29 16:52:46 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore 'cb_control0'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週一 六月 29 12:50:33 2026
+Total Cycles: 25677  Super Cycles: 25677
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define dbg
+   Def>    local ncoup = 0
+   Def>    local nlin = 0
+   Def>    local ymin = 1e20
+   Def>    local ymax = -1e20
+   Def>    local nmid = 0
+   Def>    loop foreach local c contact.list
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            local pt = contact.prop(c,'pb_ten')
+   Def>            if pt >= 1.0e10 then
+   Def>                ncoup = ncoup + 1
+   Def>                local p = contact.pos(c)
+   Def>                local yy = comp.y(p)
+   Def>                if yy < ymin then
+   Def>                    ymin = yy
+   Def>                end_if
+   Def>                if yy > ymax then
+   Def>                    ymax = yy
+   Def>                end_if
+   Def>                if yy >= 866.0 then
+   Def>                    if yy <= 904.0 then
+   Def>                        nmid = nmid + 1
+   Def>                    end_if
+   Def>                end_if
+   Def>            else
+   Def>                nlin = nlin + 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('DBG2 coupling(pb_ten>=1e10)='+string(ncoup)+' lining(pb_ten<1e10)='+string(nlin)+' coup_y['+string(ymin)+','+string(ymax)+'] coup_mid866-904='+string(nmid))
+   Def>end
+flac3d>[dbg]
+DBG2 coupling(pb_ten>=1e10)=62556 lining(pb_ten<1e10)=2268263 coup_y[860.03,909.972] coup_mid866-904=47806
+0 (integer)
+flac3d>[io.out('DBG2-DONE')]
+DBG2-DONE
+0 (integer)
+flac3d>program quit

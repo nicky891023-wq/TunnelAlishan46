@@ -1,0 +1,72 @@
+; ============================================================================
+; export_small_bnd.f3dat -- export the SMALL-model box-face gridpoint LOCATIONS
+;   (id x y z) to small_bnd.txt, so small_idw.py can IDW-map the large model's
+;   per-stage cumulative displacement (lg_bc_s1..4.txt) onto them. The 6 box
+;   faces are x=1250/1350, y=850/950, z=1700/1800 (Small_Model.f3dat L62-67;
+;   run_small_init.f3dat L47-52 fixes exactly these +-1 m bands). Output format
+;   = 'id x y z' (matches the couple_bnd.txt header couple_idw.py:22 reads).
+;   Run BEFORE small_idw.py.  cwd = 05_One_Way_Simulation.
+;   (Standalone; can also be appended to small_shell_insitu.f3dat after the save.)
+; ============================================================================
+program log-file 'export_small_bnd.log'
+program log on
+model restore '../04_InitialBalance/Small_Initial'   ; undeformed-datum small model (in-situ kept)
+fish automatic-create on
+[io.out('SMBN-0 restored Small_Initial; gps='+string(gp.num))]
+
+fish define export_small_bnd
+    local fo = file.open('small_bnd.txt',1,1)        ; mode 1 = write, type 1 = text (couple_idw.py:22 style)
+    local a = array.create(1)
+    a(1) = 'id x y z'
+    fo = file.write(a,1)
+    local cnt = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local px = comp.x(p)
+        local py = comp.y(p)
+        local pz = comp.z(p)
+        local onbox = 0
+        ; --- the 6 box faces, +-1 m bands (same bands run_small_init.f3dat L47-52 fixes) ---
+        if px >= 1249.0 then
+        if px <= 1251.0 then
+            onbox = 1
+        end_if
+        end_if
+        if px >= 1349.0 then
+        if px <= 1351.0 then
+            onbox = 1
+        end_if
+        end_if
+        if py >= 849.0 then
+        if py <= 851.0 then
+            onbox = 1
+        end_if
+        end_if
+        if py >= 949.0 then
+        if py <= 951.0 then
+            onbox = 1
+        end_if
+        end_if
+        if pz >= 1699.0 then
+        if pz <= 1701.0 then
+            onbox = 1
+        end_if
+        end_if
+        if pz >= 1799.0 then
+        if pz <= 1801.0 then
+            onbox = 1
+        end_if
+        end_if
+        if onbox = 1 then
+            a(1) = string(gp.id(g))+' '+string(px)+' '+string(py)+' '+string(pz)
+            fo = file.write(a,1)
+            cnt = cnt + 1
+        end_if
+    end_loop
+    fo = file.close
+    io.out('SMBN exported '+string(cnt)+' box-face gridpoints -> small_bnd.txt')
+end
+[export_small_bnd]
+[io.out('SMBN-DONE')]
+program log off
+program quit

@@ -1,0 +1,392 @@
+**********************************************
+* Logging started at 週三 七月 1 02:13:45 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>fish automatic-create on
+flac3d>model restore 'lg_s1'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週三 七月 1 02:02:04 2026
+Total Cycles: 13982  Super Cycles: 13982
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>call 'export_box_helper.f3dat'
+flac3d>; export_box_helper.f3dat -- defines export_box_disp(fname); call AFTER each model
+flac3d>;   restore (model restore clears FISH state, so the define must be re-established).
+flac3d>fish define export_box_disp(fname)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local b = array.create(1)
+   Def>    b(1) = 'x y z dx dy dz'
+   Def>    st = file.write(b,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local px = comp.x(p)
+   Def>        local py = comp.y(p)
+   Def>        local pz = comp.z(p)
+   Def>        if px > 1245.0 then
+   Def>        if px < 1355.0 then
+   Def>        if py > 845.0 then
+   Def>        if py < 955.0 then
+   Def>        if pz > 1695.0 then
+   Def>        if pz < 1805.0 then
+   Def>            local d = gp.disp(g)
+   Def>            b(1) = string(px)+' '+string(py)+' '+string(pz)+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            st = file.write(b,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('LBC exported '+string(n)+' gps -> '+fname)
+   Def>end
+flac3d>[export_box_disp('lg_bc_s1.txt')]
+LBC exported 605 gps -> lg_bc_s1.txt
+0 (integer)
+flac3d>model restore 'lg_s2'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週三 七月 1 02:04:44 2026
+Total Cycles: 19763  Super Cycles: 19763
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>call 'export_box_helper.f3dat'
+flac3d>; export_box_helper.f3dat -- defines export_box_disp(fname); call AFTER each model
+flac3d>;   restore (model restore clears FISH state, so the define must be re-established).
+flac3d>fish define export_box_disp(fname)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local b = array.create(1)
+   Def>    b(1) = 'x y z dx dy dz'
+   Def>    st = file.write(b,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local px = comp.x(p)
+   Def>        local py = comp.y(p)
+   Def>        local pz = comp.z(p)
+   Def>        if px > 1245.0 then
+   Def>        if px < 1355.0 then
+   Def>        if py > 845.0 then
+   Def>        if py < 955.0 then
+   Def>        if pz > 1695.0 then
+   Def>        if pz < 1805.0 then
+   Def>            local d = gp.disp(g)
+   Def>            b(1) = string(px)+' '+string(py)+' '+string(pz)+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            st = file.write(b,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('LBC exported '+string(n)+' gps -> '+fname)
+   Def>end
+flac3d>[export_box_disp('lg_bc_s2.txt')]
+LBC exported 605 gps -> lg_bc_s2.txt
+0 (integer)
+flac3d>model restore 'lg_s3'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週三 七月 1 02:06:45 2026
+Total Cycles: 24085  Super Cycles: 24085
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>call 'export_box_helper.f3dat'
+flac3d>; export_box_helper.f3dat -- defines export_box_disp(fname); call AFTER each model
+flac3d>;   restore (model restore clears FISH state, so the define must be re-established).
+flac3d>fish define export_box_disp(fname)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local b = array.create(1)
+   Def>    b(1) = 'x y z dx dy dz'
+   Def>    st = file.write(b,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local px = comp.x(p)
+   Def>        local py = comp.y(p)
+   Def>        local pz = comp.z(p)
+   Def>        if px > 1245.0 then
+   Def>        if px < 1355.0 then
+   Def>        if py > 845.0 then
+   Def>        if py < 955.0 then
+   Def>        if pz > 1695.0 then
+   Def>        if pz < 1805.0 then
+   Def>            local d = gp.disp(g)
+   Def>            b(1) = string(px)+' '+string(py)+' '+string(pz)+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            st = file.write(b,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('LBC exported '+string(n)+' gps -> '+fname)
+   Def>end
+flac3d>[export_box_disp('lg_bc_s3.txt')]
+LBC exported 605 gps -> lg_bc_s3.txt
+0 (integer)
+flac3d>model restore 'lg_s4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週三 七月 1 02:08:54 2026
+Total Cycles: 28663  Super Cycles: 28663
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>call 'export_box_helper.f3dat'
+flac3d>; export_box_helper.f3dat -- defines export_box_disp(fname); call AFTER each model
+flac3d>;   restore (model restore clears FISH state, so the define must be re-established).
+flac3d>fish define export_box_disp(fname)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local b = array.create(1)
+   Def>    b(1) = 'x y z dx dy dz'
+   Def>    st = file.write(b,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local px = comp.x(p)
+   Def>        local py = comp.y(p)
+   Def>        local pz = comp.z(p)
+   Def>        if px > 1245.0 then
+   Def>        if px < 1355.0 then
+   Def>        if py > 845.0 then
+   Def>        if py < 955.0 then
+   Def>        if pz > 1695.0 then
+   Def>        if pz < 1805.0 then
+   Def>            local d = gp.disp(g)
+   Def>            b(1) = string(px)+' '+string(py)+' '+string(pz)+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            st = file.write(b,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('LBC exported '+string(n)+' gps -> '+fname)
+   Def>end
+flac3d>[export_box_disp('lg_bc_s4.txt')]
+LBC exported 605 gps -> lg_bc_s4.txt
+0 (integer)
+flac3d>[io.out('LBC-DONE all 4 stages exported')]
+LBC-DONE all 4 stages exported
+0 (integer)
+flac3d>program quit
+**********************************************
+* Logging started at 週三 七月 1 21:09:24 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>fish automatic-create on
+flac3d>model restore 'lg_s1'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週三 七月 1 21:00:28 2026
+Total Cycles: 13982  Super Cycles: 13982
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>call 'export_box_helper.f3dat'
+flac3d>; export_box_helper.f3dat -- defines export_box_disp(fname); call AFTER each model
+flac3d>;   restore (model restore clears FISH state, so the define must be re-established).
+flac3d>fish define export_box_disp(fname)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local b = array.create(1)
+   Def>    b(1) = 'x y z dx dy dz'
+   Def>    st = file.write(b,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local px = comp.x(p)
+   Def>        local py = comp.y(p)
+   Def>        local pz = comp.z(p)
+   Def>        if px > 1245.0 then
+   Def>        if px < 1355.0 then
+   Def>        if py > 845.0 then
+   Def>        if py < 955.0 then
+   Def>        if pz > 1695.0 then
+   Def>        if pz < 1805.0 then
+   Def>            local d = gp.disp(g)
+   Def>            b(1) = string(px)+' '+string(py)+' '+string(pz)+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            st = file.write(b,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('LBC exported '+string(n)+' gps -> '+fname)
+   Def>end
+flac3d>[export_box_disp('lg_bc_s1.txt')]
+LBC exported 605 gps -> lg_bc_s1.txt
+0 (integer)
+flac3d>model restore 'lg_s2'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週三 七月 1 21:03:20 2026
+Total Cycles: 19763  Super Cycles: 19763
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>call 'export_box_helper.f3dat'
+flac3d>; export_box_helper.f3dat -- defines export_box_disp(fname); call AFTER each model
+flac3d>;   restore (model restore clears FISH state, so the define must be re-established).
+flac3d>fish define export_box_disp(fname)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local b = array.create(1)
+   Def>    b(1) = 'x y z dx dy dz'
+   Def>    st = file.write(b,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local px = comp.x(p)
+   Def>        local py = comp.y(p)
+   Def>        local pz = comp.z(p)
+   Def>        if px > 1245.0 then
+   Def>        if px < 1355.0 then
+   Def>        if py > 845.0 then
+   Def>        if py < 955.0 then
+   Def>        if pz > 1695.0 then
+   Def>        if pz < 1805.0 then
+   Def>            local d = gp.disp(g)
+   Def>            b(1) = string(px)+' '+string(py)+' '+string(pz)+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            st = file.write(b,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('LBC exported '+string(n)+' gps -> '+fname)
+   Def>end
+flac3d>[export_box_disp('lg_bc_s2.txt')]
+LBC exported 605 gps -> lg_bc_s2.txt
+0 (integer)
+flac3d>model restore 'lg_s3'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週三 七月 1 21:05:43 2026
+Total Cycles: 24543  Super Cycles: 24543
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>call 'export_box_helper.f3dat'
+flac3d>; export_box_helper.f3dat -- defines export_box_disp(fname); call AFTER each model
+flac3d>;   restore (model restore clears FISH state, so the define must be re-established).
+flac3d>fish define export_box_disp(fname)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local b = array.create(1)
+   Def>    b(1) = 'x y z dx dy dz'
+   Def>    st = file.write(b,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local px = comp.x(p)
+   Def>        local py = comp.y(p)
+   Def>        local pz = comp.z(p)
+   Def>        if px > 1245.0 then
+   Def>        if px < 1355.0 then
+   Def>        if py > 845.0 then
+   Def>        if py < 955.0 then
+   Def>        if pz > 1695.0 then
+   Def>        if pz < 1805.0 then
+   Def>            local d = gp.disp(g)
+   Def>            b(1) = string(px)+' '+string(py)+' '+string(pz)+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            st = file.write(b,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('LBC exported '+string(n)+' gps -> '+fname)
+   Def>end
+flac3d>[export_box_disp('lg_bc_s3.txt')]
+LBC exported 605 gps -> lg_bc_s3.txt
+0 (integer)
+flac3d>model restore 'lg_s4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週三 七月 1 21:08:41 2026
+Total Cycles: 30569  Super Cycles: 30569
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>call 'export_box_helper.f3dat'
+flac3d>; export_box_helper.f3dat -- defines export_box_disp(fname); call AFTER each model
+flac3d>;   restore (model restore clears FISH state, so the define must be re-established).
+flac3d>fish define export_box_disp(fname)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local b = array.create(1)
+   Def>    b(1) = 'x y z dx dy dz'
+   Def>    st = file.write(b,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local px = comp.x(p)
+   Def>        local py = comp.y(p)
+   Def>        local pz = comp.z(p)
+   Def>        if px > 1245.0 then
+   Def>        if px < 1355.0 then
+   Def>        if py > 845.0 then
+   Def>        if py < 955.0 then
+   Def>        if pz > 1695.0 then
+   Def>        if pz < 1805.0 then
+   Def>            local d = gp.disp(g)
+   Def>            b(1) = string(px)+' '+string(py)+' '+string(pz)+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            st = file.write(b,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('LBC exported '+string(n)+' gps -> '+fname)
+   Def>end
+flac3d>[export_box_disp('lg_bc_s4.txt')]
+LBC exported 605 gps -> lg_bc_s4.txt
+0 (integer)
+flac3d>[io.out('LBC-DONE all 4 stages exported')]
+LBC-DONE all 4 stages exported
+0 (integer)
+flac3d>program quit

@@ -1,0 +1,56 @@
+program log-file 'diag_convhist.log'
+program log on
+model restore 'small_ep'
+fish automatic-create on
+fish define find_conv_gps
+    global g_crown = null
+    global g_invert = null
+    global g_sprR = null
+    global g_sprL = null
+    local bc = 1e20
+    local bi = 1e20
+    local br = 1e20
+    local bl = 1e20
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local yy = comp.y(p)
+        if yy > 884.0 then
+        if yy < 886.0 then
+            local dcr = (comp.x(p)-1297.0)*(comp.x(p)-1297.0)+(comp.z(p)-1752.0)*(comp.z(p)-1752.0)
+            if dcr < bc then
+                bc = dcr
+                g_crown = g
+            end_if
+            local din = (comp.x(p)-1297.0)*(comp.x(p)-1297.0)+(comp.z(p)-1743.0)*(comp.z(p)-1743.0)
+            if din < bi then
+                bi = din
+                g_invert = g
+            end_if
+            local dsr = (comp.x(p)-1303.0)*(comp.x(p)-1303.0)+(comp.z(p)-1747.0)*(comp.z(p)-1747.0)
+            if dsr < br then
+                br = dsr
+                g_sprR = g
+            end_if
+            local dsl = (comp.x(p)-1291.0)*(comp.x(p)-1291.0)+(comp.z(p)-1747.0)*(comp.z(p)-1747.0)
+            if dsl < bl then
+                bl = dsl
+                g_sprL = g
+            end_if
+        end_if
+        end_if
+    end_loop
+    io.out('CONV-GPS crown_dist='+string(math.sqrt(bc))+' invert_dist='+string(math.sqrt(bi))+' sprR_dist='+string(math.sqrt(br))+' sprL_dist='+string(math.sqrt(bl)))
+end
+fish define report_conv(tag)
+    local dcr = gp.disp(g_crown)
+    local din = gp.disp(g_invert)
+    local dr  = gp.disp(g_sprR)
+    local dl  = gp.disp(g_sprL)
+    local vert  = (comp.z(dcr) - comp.z(din))*1000.0
+    local horiz = (comp.x(dr) - comp.x(dl))*1000.0
+    io.out('CONV '+tag+' vert_closure='+string(vert)+'mm horiz_closure='+string(horiz)+'mm | crown_dz='+string(comp.z(dcr)*1000.0)+' invert_dz='+string(comp.z(din)*1000.0)+' sprR_dx='+string(comp.x(dr)*1000.0)+' sprL_dx='+string(comp.x(dl)*1000.0))
+end
+[find_conv_gps]
+[report_conv('DIAG-restored-state')]
+[io.out('DIAG-CONVHIST-DONE')]
+program quit

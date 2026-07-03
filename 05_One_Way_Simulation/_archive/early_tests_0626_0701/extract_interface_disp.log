@@ -1,0 +1,96 @@
+**********************************************
+* Logging started at 週二 六月 30 13:37:40 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore 's4_s4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:54:20 2026
+Total Cycles: 29159  Super Cycles: 29159
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>; extract small-model gp displacement at the lining-rock interface (r~4.7-5.3m), y-band, full vector
+flac3d>; -> couple_interface_disp_s4.txt (id x y z dx dy dz) for IDW onto coupled interface. + sector ovalization.
+flac3d>fish define extract_iface
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    local fo = file.open('couple_interface_disp_s4.txt',1,1)
+   Def>    local buf = array.create(1)
+   Def>    buf(1) = 'x y z dx dy dz'
+   Def>    file.write(buf,1)
+   Def>    local cnt = 0
+   Def>    local sect = array.create(12)
+   Def>    local scnt = array.create(12)
+   Def>    local kk = 1
+   Def>    loop while kk <= 12
+   Def>        sect(kk) = 0.0
+   Def>        scnt(kk) = 0
+   Def>        kk = kk + 1
+   Def>    end_loop
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local yy = comp.y(p)
+   Def>        if yy >= 870.0 then
+   Def>        if yy <= 900.0 then
+   Def>            local rx = comp.x(p)-cx
+   Def>            local rz = comp.z(p)-cz
+   Def>            local rr = math.sqrt(rx*rx+rz*rz)
+   Def>            if rr >= 4.7 then
+   Def>            if rr <= 5.3 then
+   Def>                local d = gp.disp(g)
+   Def>                buf(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>                file.write(buf,1)
+   Def>                cnt = cnt + 1
+   Def>                local ang = math.atan2(rz,rx)/math.degrad
+   Def>                if ang < 0.0 then
+   Def>                    ang = 360.0+ang
+   Def>                end_if
+   Def>                local s = int(ang/30.0)+1
+   Def>                if s > 12 then
+   Def>                    s = 12
+   Def>                end_if
+   Def>                local ri = -(comp.x(d)*rx/rr + comp.z(d)*rz/rr)
+   Def>                sect(s) = sect(s) + ri
+   Def>                scnt(s) = scnt(s) + 1
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('IFACE extracted '+string(cnt)+' interface gps (r4.7-5.3, y870-900) -> couple_interface_disp_s4.txt')
+   Def>    local j = 1
+   Def>    loop while j <= 12
+   Def>        local m = 0.0
+   Def>        if scnt(j) > 0 then
+   Def>            m = sect(j)/float(scnt(j))
+   Def>        end_if
+   Def>        io.out('   IFACE-SECT '+string((j-1)*30)+'-'+string(j*30)+'deg radial_inward_mean='+string(m*1000.0)+'mm (n'+string(scnt(j))+')')
+   Def>        j = j + 1
+   Def>    end_loop
+   Def>end
+flac3d>[extract_iface]
+IFACE extracted 5604 interface gps (r4.7-5.3, y870-900) -> couple_interface_disp_s4.txt
+   IFACE-SECT 0-30deg radial_inward_mean=0.191801mm (n824)
+   IFACE-SECT 30-60deg radial_inward_mean=0.186397mm (n444)
+   IFACE-SECT 60-90deg radial_inward_mean=0.0308601mm (n253)
+   IFACE-SECT 90-120deg radial_inward_mean=-0.311793mm (n144)
+   IFACE-SECT 120-150deg radial_inward_mean=-0.313315mm (n110)
+   IFACE-SECT 150-180deg radial_inward_mean=0.551715mm (n84)
+   IFACE-SECT 180-210deg radial_inward_mean=1.9706mm (n104)
+   IFACE-SECT 210-240deg radial_inward_mean=2.25231mm (n144)
+   IFACE-SECT 240-270deg radial_inward_mean=1.51916mm (n199)
+   IFACE-SECT 270-300deg radial_inward_mean=0.584712mm (n264)
+   IFACE-SECT 300-330deg radial_inward_mean=-0.728184mm (n1522)
+   IFACE-SECT 330-360deg radial_inward_mean=-0.254619mm (n1512)
+0 (integer)
+flac3d>[io.out('IFACE-DONE')]
+IFACE-DONE
+0 (integer)
+flac3d>program quit

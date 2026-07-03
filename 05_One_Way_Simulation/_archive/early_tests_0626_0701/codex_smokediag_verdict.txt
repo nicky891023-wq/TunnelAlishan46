@@ -1,0 +1,7 @@
+﻿SMOKE-DIAG-VERDICT: APPROVED WITH CONDITIONS
+
+Q1: Use **A**. The files support the diagnosis: `couple_export_bnd.f3dat:37-53` exports all six outer-box faces, including both y caps, and `couple_smoke_diag.f3dat:50-70` then fixes every imported target as velocity-driven. The end-only pure-tension crack arcs are therefore a boundary artifact, not a mid-tunnel lining response. Do not use **C** as a deliverable fix. Do not require **B** unless A still leaves strong y-cap artifacts; roller y-caps would be a sensitivity/fallback, not the primary submodel BC.
+
+Q2: `r<6 m` is a reasonable first exclusion if it fully clears the lining/contact/core region plus at least about one zone of rock outside the lining radius. Make it geometry-based, not a magic number. Condition: after regenerating `couple_bnd.txt` + IDW targets, verify no y-cap driven gps remain in the near-tunnel cut-face region, and inspect a radius bin around the new cutoff. If cracks or force spikes move to the `r≈6 m` annulus, add a short radial taper or increase the exclusion radius and rerun.
+
+Q3: Yes. After the BC fix, drive full stage 1 and then stages 2-4. The current 13% result only proves the old smoke run was stopped by y-end damage; it does not establish mid-tunnel capacity. The accepted deliverable should be the post-fix mid-tunnel force/crack history, with end-band counts reported separately and excluded from interpretation.

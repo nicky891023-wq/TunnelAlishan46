@@ -1,0 +1,73 @@
+program log-file 'small_conv_profile.log'
+program log on
+model restore 's4_s4'
+fish automatic-create on
+fish define sconv
+    local cx = 1297.0
+    local cz = 1747.5
+    global na = 0
+    global nb = 0
+    global nc = 0
+    global nd = 0
+    local sa = 0.0
+    local sb = 0.0
+    local sc = 0.0
+    local sd = 0.0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local yy = comp.y(p)
+        if yy >= 880.0 then
+        if yy <= 890.0 then
+            local rx = comp.x(p)-cx
+            local rz = comp.z(p)-cz
+            local rr = math.sqrt(rx*rx+rz*rz)
+            local d = gp.disp(g)
+            local ri = -(comp.x(d)*rx/rr + comp.z(d)*rz/rr)
+            if rr >= 5.0 then
+            if rr < 10.0 then
+                sa=sa+ri
+                na=na+1
+            end_if
+            end_if
+            if rr >= 10.0 then
+            if rr < 16.0 then
+                sb=sb+ri
+                nb=nb+1
+            end_if
+            end_if
+            if rr >= 16.0 then
+            if rr < 22.0 then
+                sc=sc+ri
+                nc=nc+1
+            end_if
+            end_if
+            if rr >= 22.0 then
+            if rr < 30.0 then
+                sd=sd+ri
+                nd=nd+1
+            end_if
+            end_if
+        end_if
+        end_if
+    end_loop
+    local ma=0.0
+    local mb=0.0
+    local mc=0.0
+    local md=0.0
+    if na>0 then
+        ma=sa/float(na)
+    end_if
+    if nb>0 then
+        mb=sb/float(nb)
+    end_if
+    if nc>0 then
+        mc=sc/float(nc)
+    end_if
+    if nd>0 then
+        md=sd/float(nd)
+    end_if
+    io.out('SMALL-CONV s4_s4 radial-inward mean(mm) vs r: r5-10='+string(ma*1000.0)+'(n'+string(na)+') r10-16='+string(mb*1000.0)+'(n'+string(nb)+') r16-22(coupled-box)='+string(mc*1000.0)+'(n'+string(nc)+') r22-30='+string(md*1000.0)+'(n'+string(nd)+')')
+end
+[sconv]
+[io.out('SMALL-CONV-DONE')]
+program quit

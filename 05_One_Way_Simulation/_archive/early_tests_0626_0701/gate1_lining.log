@@ -1,0 +1,40 @@
+**********************************************
+* Logging started at 週一 六月 29 09:15:51 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>fish automatic-create on
+flac3d>model restore 's4_s1'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:30:08 2026
+Total Cycles: 15428  Super Cycles: 15428
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>call 'gate1_funcs.fis'
+flac3d>; gate1_funcs.fis -- Phase 1: small-model lining reaction (virtual interface traction over lining
+flac3d>;   OUTER faces) + tunnel-wall convergence at reference points (Gate-0 C6: not global dmax).
+flac3d>;   CALL after EACH restore (restore clears FISH state). pfx/stg params, no return-value assignment.
+flac3d>;   tunnel axis along y at (cx,cz)=(1297,1747.5). lining = group 'lining' slot 'type' (elastic).
+flac3d>fish define lining_react(stg, pfx)
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    local fnx = 0.0
+   Def>    local fny = 0.0
+   Def>    local fnz = 0.0
+   Def>    local frad = 0.0      ; net radial-directed force magnitude (inward+) integrated
+   Def>    local aout = 0.0
+   Def>    local nlin = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.group(z,'type') = 'lining' then
+   Def>            nlin = nlin + 1
+   Def>            ; outer face = max radial-centroid face of this lining zone
+   Def>            local nf = zone.face.size(z)
+                  ^
+*** Fish: Incorrect number of arguments.
+    From line 18 of source C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/gate1_funcs.fis.
+    While processing line 5 of file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/gate1_funcs.fis.

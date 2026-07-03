@@ -1,0 +1,407 @@
+Perfect! I now have a comprehensive understanding. Let me compile the final synthesis document:
+
+## VALIDATED THRESHOLD-CREEP + FLUID WORKFLOW: COMPLETE RECIPE
+
+### KEY FILE REFERENCES
+- **Primary threshold-creep reference**: `C:/Users/Wade/Desktop/Wade_TD_SCI/FLAC/code/CreepSupport/CreepFISH/WadeCreepSupport.f3dat`
+- **Multi-depth validation**: `C:/Users/Wade/Desktop/Wade_TD_SCI/FLAC/code/DepthThreshold/{100m,300m,900m}/Threshold0{2,4,6}.f3dat`
+- **Chapter4 validation**: `C:/Users/Wade/Desktop/Wade_TD_SCI/FLAC/Chapter4/TYPE{1,2A,2B,3A,3B}/Creep.f3dat` + `Plot.f3dat`
+- **Fluid+water reference**: `C:/Users/Wade/Desktop/Wade_TD_SCI/FLAC/code/Simulation/Itasca/flac3d600/datafiles/Dynamic/DamFoundationWet/AddWater.f3dat`
+- **Complex multi-stage example**: `C:/Users/Wade/Desktop/Wade_TD_SCI/FLAC/code/Simulation/Itasca/flac3d600/datafiles/ExampleApplications/BracedExcavation/BracedExcavation-cy.f3dat` (lines 1-101)
+
+---
+
+### MODEL SETUP: BURGERS-MOHR + CREEP + FLUID
+
+#### 1. MODEL CONFIGURATION (Modeling.f3dat pattern)
+```
+model new
+model largestrain off
+model configure creep              ; Enable creep capability
+model creep active off             ; OFF until threshold FISH is added
+model configure fluid              ; Optional: if water table needed
+```
+
+#### 2. CONSTITUTIVE MODEL & PROPERTIES (Burgers-Mohr with viscous parameters)
+```
+[global Gm   = 0.5e9]          ; Shear modulus (Maxwell element)
+[global Gk   = 0.5e9]          ; Shear modulus (Kelvin element)
+[global etak = 2.4e12]         ; Kelvin viscosity (Pa·s)
+[global etam = 1.2e15]         ; Maxwell viscosity (Pa·s)
+[global nu   = 0.33]           ; Poisson's ratio
+
+zone cmodel burgers-mohr range group 'rock'
+zone property bulk [Gm*(2*(1+nu))/(3*(1-2*nu))] shear-maxwell [Gm] range group 'rock'
+zone property shear-kelvin [Gk] viscosity-kelvin [etak] viscosity-maxwell [etam] range group 'rock'
+zone property cohesion <c_val> friction <phi_deg> tension <tension_val> range group 'rock'
+```
+**Note**: Classic Burgers visco-elastoplastic coupling: Maxwell (viscoelastic) in series with Mohr-Coulomb, Kelvin (viscoelastic) in parallel with MC. Kelvin controls primary creep, Maxwell controls steady creep.
+
+#### 3. INITIAL EQUILIBRIUM (Modeling.f3dat)
+```
+model gravity 9.81
+zone initialize density 2500
+zone initialize-stresses overburden [-1e6*(Depth-Bz-Lz)*2.5/100] ratio [K]
+model history mechanical time-total
+model history creep      time-total
+model solve ratio 1e-6
+zone gridpoint initialize displacement (0,0,0)
+zone gridpoint initialize velocity (0,0,0)
+model save 'initial'
+```
+
+---
+
+### THE THRESHOLD FISH: COMPLETE VALIDATED CODE
+
+Event 23 = **SOLVED callback** (fires after each model step/cycle, used to apply custom logic each solve event).
+
+#### Full Threshold Definition (WadeCreepSupport.f3dat verbatim):
+```fish
+[threhold = 0.6]  ; Tunable reduction factor (0.4, 0.5, 0.6 tested)
+
+fish define threshold
+    loop foreach z zone.list
+        if zone.group(z) = "rock"
+            ; Effective stress (subtracting pore pressure)
+            local sig1 = -zone.stress.prin.x(z)
+            local sig3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pmean = (sig1 + sig3)/2 - pore
+            
+            ; Deviatoric stress (half the difference of principal stresses)
+            local q = (sig1 - sig3)/2
+            
+            ; Zone material properties
+            local c = zone.prop(z, 'cohesion')
+            local phi = zone.prop(z, 'friction')
+            
+            ; Reduced failure envelope (threshold-scaled)
+            local ceff   = threhold * c
+            local phieff = threhold * math.tan(phi * math.degrad)
+            local q_threshold = ceff + pmean * phieff
+            
+            ; Creep activation: if q >= q_threshold, creep ON
+            if q >= q_threshold
+                zone.prop(z, 'viscosity-kelvin')  = [etak]
+                zone.prop(z, 'viscosity-maxwell') = [etam]
+                zone.group(z) = "CreepActive"
+            else
+                ; Creep OFF: set viscosities to very high (1e100)
+                zone.prop(z, 'viscosity-kelvin')  = 1e100
+                zone.prop(z, 'viscosity-maxwell') = 1e100
+                zone.group(z) = "CreepOff"
+            endif
+        endif
+    endloop
+end
+
+; Register callback at event 23 (each solved cycle)
+fish callback add @threshold 23
+```
+
+**Physical interpretation**: q = deviatoric stress (shear intensity); q_threshold = Mohr-Coulomb envelope scaled by 0.6×. When stress-state (q, pmean) crosses the threshold, viscosities drop from 1e100 (frozen) to etak/etam (active), enabling creep deformation. Water rise lowers pmean (via increased pore pressure), shrinking the threshold, thus triggering creep.
+
+---
+
+### WATER TABLE / PORE PRESSURE SETUP (if used)
+
+#### Fluid Model Configuration (DamFoundationWet.f3dat pattern):
+```
+model configure fluid
+zone fluid cmodel isotropic
+zone fluid property porosity 0.3 permeability 1e-8
+zone initialize fluid-density 1000
+zone gridpoint initialize fluid-modulus 1000.0
+zone gridpoint initialize saturation 1.0
+zone gridpoint initialize fluid-tension 0
+```
+
+#### Water Table Boundary Conditions (two STLs: low + high):
+```
+; Low water table (pressure gradient + fixed point)
+zone face apply pore-pressure=<pp_low> gradient (0,0,-1e4) range group 'water-boundary-low'
+
+; High water table (rises, e.g., 5 m higher)
+zone face apply pore-pressure=<pp_high> gradient (0,0,-1e4) range group 'water-boundary-high'
+
+; Free pore-pressure surfaces
+zone gridpoint free pore-pressure range <face_group>
+```
+
+#### Steady-State Flow (before mechanical solve):
+```
+model fluid active on
+model mech active off
+model solve fluid ratio-flow 1.0e-5        ; Reach new equilibrium
+model save 'fluid-equilibrated'
+```
+
+---
+
+### CREEP TIME-STEPPING CYCLE: COMPLETE WORKFLOW
+
+#### Per-Stage Structure (Threshold02/04/06.f3dat + Chapter4 Creep.f3dat):
+
+**Stage initialization**:
+```
+model creep active on
+fish automatic-create on  ; Auto-register global vars
+model creep timestep fix [time_step_seconds]  ; e.g., 300 s
+```
+
+**Multi-stage creep loop (Threshold02 pattern)**:
+```fish
+[real_totaltime = 3600*24*1500]    ; Total days → seconds (1500 days)
+[time_step = 300]                  ; Per-step increment (seconds)
+[check_segment = 5]                ; Save at 5 checkpoints
+
+fish define creep(ts, tts, cs)
+    loop n (1, cs)
+        savename = string(n)
+        command
+            model creep timestep fix [ts]
+            model solve creep time-total [tts*n]
+            model save @savename
+            zone gridpoint initialize velocity (0,0,0)  ; ZERO velocity each stage
+        endcommand
+    endloop
+end
+
+@creep([time_step], [real_totaltime/check_segment], [check_segment])
+model save 'final'
+```
+
+**Per-stage time formula**: 
+- `model solve creep time-total [X]` = solve TO absolute cumulative time X (not increment). 
+- E.g., stage 1 solves to 300 days, stage 2 to 600 days, stage 3 to 900 days, etc.
+
+#### Velocity Zeroing Pattern (after each stage):
+```
+model solve creep time-total [tts*n]
+zone gridpoint initialize velocity (0,0,0)  ; CRITICAL: reset velocity after each stage
+model save @savename
+```
+**Rationale**: Prevents velocity "ratcheting" between stages; new stage starts from zero velocity baseline.
+
+---
+
+### STAGED WATER-LEVEL WORKFLOW (120-day example: low→high→low→high)
+
+#### Complete 4-stage sequence (0-30d / 30-60d / 60-90d / 90-120d):
+```fish
+; Stage 1: Low water table (0-30 days)
+fish callback add @threshold 23
+zone face apply pore-pressure=<pp_low> gradient (0,0,-1e4) range group 'water-boundary'
+model solve fluid ratio-flow 1.0e-5  ; Reach steady-state
+model creep timestep fix 300
+model solve creep time-total [3600*24*30]
+zone gridpoint initialize velocity (0,0,0)
+model save 'step1_30d_lowwater'
+
+; Stage 2: High water table (30-60 days) — CHANGE WATER LEVEL
+zone face apply pore-pressure=<pp_high> gradient (0,0,-1e4) range group 'water-boundary'
+model solve fluid ratio-flow 1.0e-5  ; Re-equilibrate flow
+zone gridpoint initialize displacement (0,0,0)  ; OPTIONAL: reset displacements if tracing incremental
+model solve creep time-total [3600*24*60]  ; Cumulative to 60 days
+zone gridpoint initialize velocity (0,0,0)
+model save 'step2_60d_highwater'
+
+; Stage 3: Low water table (60-90 days)
+zone face apply pore-pressure=<pp_low> gradient (0,0,-1e4) range group 'water-boundary'
+model solve fluid ratio-flow 1.0e-5
+zone gridpoint initialize displacement (0,0,0)
+model solve creep time-total [3600*24*90]
+zone gridpoint initialize velocity (0,0,0)
+model save 'step3_90d_lowwater'
+
+; Stage 4: High water table (90-120 days)
+zone face apply pore-pressure=<pp_high> gradient (0,0,-1e4) range group 'water-boundary'
+model solve fluid ratio-flow 1.0e-5
+zone gridpoint initialize displacement (0,0,0)
+model solve creep time-total [3600*24*120]
+zone gridpoint initialize velocity (0,0,0)
+model save 'step4_120d_highwater'
+```
+
+#### Displacement vs Velocity Zeroing:
+- **`zone gridpoint initialize velocity (0,0,0)`** = ALWAYS zero after each stage (prevent carry-over). 
+- **`zone gridpoint initialize displacement (0,0,0)`** = OPTIONAL; use if you want to track incremental motion per stage (not cumulative). Wade's code sometimes includes this, sometimes doesn't—depends on whether you want absolute (cumulative) or incremental (per-stage) displacement tracking.
+
+---
+
+### EXPECTED PHYSICS VALIDATION (Wade's predictions)
+
+With threshold 0.6:
+- **0-30d (low water)**: Almost no creep → `disp-time ≈ flat` (stress well below threshold).
+- **30-60d (high water)**: Water rises → pore pressure ↑ → pmean ↓ → Mohr circle grows → crosses reduced envelope **q = 0.6(c + pmean·tan(φ))** → **creep activates** → `disp rises steadily`.
+- **60-90d (low water)**: Water falls → pmean ↑ → threshold recovers → stress recedes → creep slows.
+- **90-120d (high water)**: Water rises again → pmean ↓ → creep reactivates → `disp accelerates`.
+
+**Coupled scale**: Ideally same trend (0-30d bond-break ~zero, 30-60d clear bond-break due to increased lining displacement from creeping slope, 60-90d stabilizes, 90-120d accelerates).
+
+---
+
+### CONVERGENCE & NUMERICAL STABILITY
+
+#### Creep solving:
+```
+model creep timestep fix 300          ; Use fixed timestep (s)
+; OR
+model creep timestep auto             ; Auto-adjust (less stable in water-level jumps)
+```
+
+#### Mechanical equilibrium (non-creep solving):
+```
+model solve ratio 1e-6                ; Tight unbalanced-force ratio
+model cycle 300                       ; Or: manual cycles
+```
+
+#### Flow equilibrium (before water-level change):
+```
+model fluid active on
+model mech active off
+model solve fluid ratio-flow 1.0e-5   ; Tight flow convergence
+```
+
+#### Addressing unbalanced-force divergence at water-level change:
+- **Do NOT change water level mid-solve**. Sequence: (1) `model solve fluid ...`, (2) change boundary, (3) `model solve fluid ...` again, (4) then `model solve creep ...`.
+- **If mech diverges**: Reduce timestep, or call `model calm` (resets kinetic energy) before next water stage.
+
+---
+
+### MONITORING & HISTORIES
+
+#### Stress tracking (sensor.f3dat pattern):
+```fish
+fish def stressmidroof(r, theta, l)   
+    local x = r*math.sin(theta*math.degrad)
+    local y = l
+    local z = r*math.cos(theta*math.degrad)
+    local zone = zone.near(x,y,z)
+    sxxmidroof = -1*zone.stress.xx(zone)
+    ; ... collect sxxmidroof, syymidroof, szzmidroof, sxymidroof, sxzmidroof, syzmidroof
+end
+
+[stressmidroof(Rz, 0, By/2)]  ; Crown
+[stressmidroof(Rz, 90, By/2)] ; Sidewall
+fish history @sxxmidroof
+fish history @syymidroof
+; ... etc
+```
+
+#### Displacement tracking (tunnel crown & sidewall):
+```
+zone history name='dis-crown'  displacement-z position (0, [By/2], [Rz])
+zone history name='dis-side'   displacement-x position ([Rx], [By/2], 0)
+zone history name='dis-floor'  displacement-z position (0, [By/2], [-Rz])
+```
+
+#### Global creep time:
+```
+model history creep time-total
+```
+
+---
+
+### GOTCHAS & VALIDATION NOTES
+
+1. **Event 23 = "solved" callback**: Fires every cycle/step after mechanical/creep solve. Wade relies on this to re-evaluate threshold each step.
+
+2. **Pore pressure → effective stress**: Always use `pmean = (sig1 + sig3)/2 - pore` (NOT zone.stress.mean). The threshold checks *effective* stress.
+
+3. **Threshold is tunable**: Wade tested 0.2, 0.4, 0.5, 0.6. Higher = stricter (creep activates later); lower = more permissive. **0.6 is Wade's validated default**.
+
+4. **Burgers-mohr property order** (critical):
+   ```
+   zone cmodel burgers-mohr
+   zone property bulk ... shear-maxwell [Gm]
+   zone property shear-kelvin [Gk] viscosity-kelvin [etak] viscosity-maxwell [etam]
+   ```
+   **Both bulk and shear-maxwell must be set together**; then shear-kelvin + viscosities.
+
+5. **Water level changes do NOT auto-equilibrate pore pressure**: You must call `model solve fluid ...` explicitly after changing `zone face apply pore-pressure`.
+
+6. **Displacement/velocity zeroing between stages**: Wade uses `zone gridpoint initialize velocity (0,0,0)` after every stage. Displacement zeroing is optional (used if tracking incremental per-stage, not cumulative).
+
+7. **Coupled model wall-zone facet degeneration**: Gradual loading (many small excavation steps) prevents facet collapse. One-shot excavation + creep can degenerate facets → **use staged excavation in Excavation.f3dat** before Creep.f3dat.
+
+8. **Shell support feedback**: Wade's `@shell_failure` and `@shell_stress` FISHs (callback event 12) manage support stiffness degradation under high stress. These are *in addition to* the threshold creep callback (event 23).
+
+---
+
+### COMPLETE SCRIPT SKELETON FOR TUNNEL_TX 05
+
+```
+; ============= STAGE 1: LOAD 04 INITIAL ============
+model restore 'Large_Initial'  ; Or Small_Initial / Couple_Initial
+
+; ============= SETUP CREEP & FLUID ============
+model configure creep
+model configure fluid
+[etak = 2.4e12]
+[etam = 1.2e15]
+
+; ============= THRESHOLD FISH (EVENT 23) ============
+[threhold = 0.6]
+fish define threshold
+    loop foreach z zone.list
+        if zone.group(z) = "rock"
+            local sig1 = -zone.stress.prin.x(z)
+            local sig3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pmean = (sig1 + sig3)/2 - pore
+            local q = (sig1 - sig3)/2
+            local c = zone.prop(z, 'cohesion')
+            local phi = zone.prop(z, 'friction')
+            local ceff = threhold * c
+            local phieff = threhold * math.tan(phi * math.degrad)
+            local q_threshold = ceff + pmean * phieff
+            if q >= q_threshold
+                zone.prop(z, 'viscosity-kelvin') = [etak]
+                zone.prop(z, 'viscosity-maxwell') = [etam]
+                zone.group(z) = "CreepActive"
+            else
+                zone.prop(z, 'viscosity-kelvin') = 1e100
+                zone.prop(z, 'viscosity-maxwell') = 1e100
+                zone.group(z) = "CreepOff"
+            endif
+        endif
+    endloop
+end
+fish callback add @threshold 23
+
+; ============= STAGE 1: LOW WATER (0-30d) ============
+zone face apply pore-pressure=<pp_low> gradient (0,0,-1e4) range group 'water-low-stl'
+model solve fluid ratio-flow 1.0e-5
+model creep active on
+model creep timestep fix 300
+model solve creep time-total [3600*24*30]
+zone gridpoint initialize velocity (0,0,0)
+model save 'step1_30d'
+
+; ============= STAGE 2: HIGH WATER (30-60d) ============
+zone face apply pore-pressure=<pp_high> gradient (0,0,-1e4) range group 'water-high-stl'
+model solve fluid ratio-flow 1.0e-5
+model solve creep time-total [3600*24*60]
+zone gridpoint initialize velocity (0,0,0)
+model save 'step2_60d'
+
+; ============= STAGE 3: LOW WATER (60-90d) ============
+zone face apply pore-pressure=<pp_low> gradient (0,0,-1e4) range group 'water-low-stl'
+model solve fluid ratio-flow 1.0e-5
+model solve creep time-total [3600*24*90]
+zone gridpoint initialize velocity (0,0,0)
+model save 'step3_90d'
+
+; ============= STAGE 4: HIGH WATER (90-120d) ============
+zone face apply pore-pressure=<pp_high> gradient (0,0,-1e4) range group 'water-high-stl'
+model solve fluid ratio-flow 1.0e-5
+model solve creep time-total [3600*24*120]
+zone gridpoint initialize velocity (0,0,0)
+model save 'step4_120d'
+```
+
+---
+
+**SUMMARY**: Wade's validated recipe is burgers-mohr + threshold FISH at event 23 (solved callback) + explicit water-level STL boundaries + staged `model solve fluid` equilibration + fixed creep timestep + velocity zeroing per stage. The physics is: pore-pressure rise → effective stress drop → deviatoric stress crosses 0.6× reduced Mohr-Coulomb envelope → creep activates (viscosities drop to etak/etam). Coupled model requires gradual staged excavation + PFC contact model with creep-activated bond-break (same threshold logic applied to contacts).

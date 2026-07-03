@@ -1,0 +1,9 @@
+﻿CONVHIST-VISUAL:
+
+1. Yes. I accept thread-A creep-dominance verification as **PASSED**. Visually, the high-water stages show sustained closing ramps, the re-drained LOW stage is essentially flat, and the stage-change jumps are small relative to high-water creep. The numeric ratios meet the stated thresholds.
+
+2. The S1 LOW transient is physically acceptable **if reported as initial excavation/clock-start relaxation**, not as steady low-water creep. It does not undermine the “low water not significantly time-increasing” requirement because the diagnostic low-water stage is S3 after re-drainage, and S3 is flat. Wade should report S1 separately as initial convergence/transient adjustment, then use S3 as the low-water creep control.
+
+3. No major visual artifact concern. The y885 single-point trace has obvious coarse-axis step noise around early days, so it should be treated as a local QC trace only. The y860-910 BAND average is the correct J/C metric to report because it is smoother, spatially representative, and matches the final diameter check.
+
+4. I would treat the small-model input as validated for thread-C coupled drive: final band closure around `1.0-1.2 mm`, horizontal larger than vertical, with high-water creep dominance and negligible water-step jump response. One reporting caution: explicitly caption that S1 is an initial excavation-relaxation transient, while S3 is the steady re-drained low-water test.

@@ -1,0 +1,75 @@
+**********************************************
+* Logging started at 週二 六月 30 14:22:39 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore 'small_ep'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 13:49:33 2026
+Total Cycles: 11107  Super Cycles: 11107
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define find_conv_gps
+   Def>    global g_crown = null
+   Def>    global g_invert = null
+   Def>    global g_sprR = null
+   Def>    global g_sprL = null
+   Def>    local bc = 1e20
+   Def>    local bi = 1e20
+   Def>    local br = 1e20
+   Def>    local bl = 1e20
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local yy = comp.y(p)
+   Def>        if yy > 884.0 then
+   Def>        if yy < 886.0 then
+   Def>            local dcr = (comp.x(p)-1297.0)*(comp.x(p)-1297.0)+(comp.z(p)-1752.0)*(comp.z(p)-1752.0)
+   Def>            if dcr < bc then
+   Def>                bc = dcr
+   Def>                g_crown = g
+   Def>            end_if
+   Def>            local din = (comp.x(p)-1297.0)*(comp.x(p)-1297.0)+(comp.z(p)-1743.0)*(comp.z(p)-1743.0)
+   Def>            if din < bi then
+   Def>                bi = din
+   Def>                g_invert = g
+   Def>            end_if
+   Def>            local dsr = (comp.x(p)-1303.0)*(comp.x(p)-1303.0)+(comp.z(p)-1747.0)*(comp.z(p)-1747.0)
+   Def>            if dsr < br then
+   Def>                br = dsr
+   Def>                g_sprR = g
+   Def>            end_if
+   Def>            local dsl = (comp.x(p)-1291.0)*(comp.x(p)-1291.0)+(comp.z(p)-1747.0)*(comp.z(p)-1747.0)
+   Def>            if dsl < bl then
+   Def>                bl = dsl
+   Def>                g_sprL = g
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('CONV-GPS crown_dist='+string(math.sqrt(bc))+' invert_dist='+string(math.sqrt(bi))+' sprR_dist='+string(math.sqrt(br))+' sprL_dist='+string(math.sqrt(bl)))
+   Def>end
+flac3d>fish define report_conv(tag)
+   Def>    local dcr = gp.disp(g_crown)
+   Def>    local din = gp.disp(g_invert)
+   Def>    local dr  = gp.disp(g_sprR)
+   Def>    local dl  = gp.disp(g_sprL)
+   Def>    local vert  = (comp.z(dcr) - comp.z(din))*1000.0
+   Def>    local horiz = (comp.x(dr) - comp.x(dl))*1000.0
+   Def>    io.out('CONV '+tag+' vert_closure='+string(vert)+'mm horiz_closure='+string(horiz)+'mm | crown_dz='+string(comp.z(dcr)*1000.0)+' invert_dz='+string(comp.z(din)*1000.0)+' sprR_dx='+string(comp.x(dr)*1000.0)+' sprL_dx='+string(comp.x(dl)*1000.0))
+   Def>end
+flac3d>[find_conv_gps]
+CONV-GPS crown_dist=0.273887 invert_dist=0.0527194 sprR_dist=0.040415 sprL_dist=0.320232
+0 (integer)
+flac3d>[report_conv('DIAG-restored-state')]
+CONV DIAG-restored-state vert_closure=6.52124e-07mm horiz_closure=-3.68146e-07mm | crown_dz=-8.52664e-07 invert_dz=-1.50479e-06 sprR_dx=-5.07093e-07 sprL_dx=-1.38946e-07
+0 (integer)
+flac3d>[io.out('DIAG-CONVHIST-DONE')]
+DIAG-CONVHIST-DONE
+0 (integer)
+flac3d>program quit

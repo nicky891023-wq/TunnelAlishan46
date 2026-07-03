@@ -1,0 +1,104 @@
+program log-file 'qa_large_init.log'
+program log on
+model restore '../04_InitialBalance/Large_Initial'
+fish automatic-create on
+[io.out('QAL-0 restored Large_Initial zones='+string(zone.num)+' gps='+string(gp.num))]
+fish define qa_large
+    local nplas = 0
+    local szmn = 1e30
+    local szmx = -1e30
+    local bz = array.create(5)
+    local bx = array.create(5)
+    local bn = array.create(5)
+    local k = 1
+    loop while k <= 5
+        bz(k) = 0.0
+        bx(k) = 0.0
+        bn(k) = 0
+        k = k + 1
+    end_loop
+    ; ONE zone pass: plastic + szz range + z-bin profile
+    loop foreach local z zone.list
+        if zone.state(z,1) # 0 then
+            nplas = nplas + 1
+        end_if
+        local s = zone.stress.zz(z)
+        if s < szmn then
+            szmn = s
+        end_if
+        if s > szmx then
+            szmx = s
+        end_if
+        local j = int((zone.pos.z(z)-800.0)/240.0) + 1
+        if j < 1 then
+            j = 1
+        end_if
+        if j > 5 then
+            j = 5
+        end_if
+        bz(j) = bz(j) + s
+        bx(j) = bx(j) + zone.stress.xx(z)
+        bn(j) = bn(j) + 1
+    end_loop
+    ; ONE gp pass: max vel + BC counts
+    local mv = 0.0
+    local fx = 0
+    local fz = 0
+    loop foreach local g gp.list
+        local v = gp.vel(g)
+        local m = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+        if m > mv then
+            mv = m
+        end_if
+        if gp.fix.x(g) then
+            fx = fx + 1
+        end_if
+        if gp.fix.z(g) then
+            fz = fz + 1
+        end_if
+    end_loop
+    io.out('QAL-STATE plastic_zones='+string(nplas)+'/'+string(zone.num)+' max_gp_vel='+string(mv)+' szz[min='+string(szmn)+',max='+string(szmx)+']')
+    io.out('QAL-BC fixed_x_gps='+string(fx)+' fixed_z_gps='+string(fz))
+    local jj = 1
+    loop while jj <= 5
+        if bn(jj) > 0 then
+            local mz = bz(jj)/float(bn(jj))
+            local mxx = bx(jj)/float(bn(jj))
+            local k0 = 0.0
+            if mz # 0.0 then
+                k0 = mxx/mz
+            end_if
+            io.out('QAL-PROFILE zbin'+string(jj)+' z['+string(800+(jj-1)*240)+'-'+string(800+jj*240)+'] szz='+string(mz)+' sxx='+string(mxx)+' K0='+string(k0)+' n='+string(bn(jj)))
+        end_if
+        jj = jj + 1
+    end_loop
+end
+[qa_large]
+; slice export SUBSAMPLED (every 8th zone in y860-910)
+fish define exp_slice
+    local st = file.open('qa_large_slice.txt',1,1)
+    local b = array.create(1)
+    b(1) = 'x z szz sxx state'
+    file.write(b,1)
+    local n = 0
+    local cnt = 0
+    loop foreach local z zone.list
+        local yc = zone.pos.y(z)
+        if yc > 860.0 then
+        if yc < 910.0 then
+            cnt = cnt + 1
+            if cnt > -1 then
+                local p = zone.pos(z)
+                b(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.state(z,1))
+                file.write(b,1)
+                n = n + 1
+            end_if
+        end_if
+        end_if
+    end_loop
+    local cl = file.close
+    io.out('QAL-SLICE exported '+string(n)+' zones (y860-910, every 3rd) -> qa_large_slice.txt')
+end
+[exp_slice]
+[io.out('QAL-DONE')]
+program quit

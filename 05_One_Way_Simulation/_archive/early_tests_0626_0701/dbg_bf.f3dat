@@ -1,0 +1,47 @@
+program log-file 'dbg_bf.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'cb_control0'
+fish automatic-create on
+fish define dbg
+    local nbf = 0
+    local nall = 0
+    local ymin = 1e20
+    local ymax = -1e20
+    local nmid = 0
+    loop foreach local c contact.list
+        nall = nall + 1
+        if contact.group(c) = 'bf_couple' then
+            nbf = nbf + 1
+            local p = contact.pos(c)
+            local yy = comp.y(p)
+            if yy < ymin then
+                ymin = yy
+            end_if
+            if yy > ymax then
+                ymax = yy
+            end_if
+            if yy >= 866.0 then
+                if yy <= 904.0 then
+                    nmid = nmid + 1
+                end_if
+            end_if
+        end_if
+    end_loop
+    io.out('DBG total_contacts='+string(nall)+' bf_couple='+string(nbf)+' bf_y_range['+string(ymin)+','+string(ymax)+'] bf_in_mid(866-904)='+string(nmid))
+end
+[dbg]
+; also check wz_outter wall + what groups exist on ball-facet contacts
+fish define dbg2
+    local n1 = 0
+    loop foreach local c contact.list
+        if contact.type(c) = 'ball-facet' then
+            n1 = n1 + 1
+        end_if
+    end_loop
+    io.out('DBG2 ball-facet contacts='+string(n1))
+end
+[dbg2]
+[io.out('DBG-DONE')]
+program quit

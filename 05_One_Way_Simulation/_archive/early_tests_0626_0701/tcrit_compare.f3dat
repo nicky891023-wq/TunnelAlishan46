@@ -1,0 +1,147 @@
+; tcrit_compare.f3dat -- 0.6 too low (low-water 43% active), 0.9 too high (high-water also 0
+;   active => NO onset). Need the window: low-water max T_crit=0.866; what is HIGH-water max
+;   T_crit? Measure the T_crit distribution at LOW (td_s1) vs HIGH (td_s2) water to find the
+;   threshold window -- or reveal the water effect is too weak. T_crit = q/(c + pmean_eff*tan
+;   phi), active iff threshold <= T_crit. cwd = 05.
+program log-file 'tcrit_compare.log'
+program log on
+
+model restore 'td_s1'
+fish automatic-create on
+fish define tcrit_report
+    local tmax = 0.0
+    local n06=0
+    local n07=0
+    local n08=0
+    local n0866=0
+    local n09=0
+    local n10=0
+    local n11=0
+    local nrock=0
+    local sum_pp=0.0
+    local sum_q=0.0
+    local sum_pm=0.0
+    local ppmax=0.0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            nrock = nrock + 1
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pm = (s1 + s3)/2.0 - pore
+            local q = (s1 - s3)/2.0
+            local c = zone.prop(z,'cohesion')
+            local phi = zone.prop(z,'friction')
+            local strength = c + pm*math.tan(phi*math.degrad)
+            local tc = 0.0
+            if strength > 1.0 then
+                tc = q/strength
+            end_if
+            if tc > tmax then
+                tmax = tc
+            end_if
+            if tc >= 0.6 then
+                n06 = n06 + 1
+            end_if
+            if tc >= 0.7 then
+                n07 = n07 + 1
+            end_if
+            if tc >= 0.8 then
+                n08 = n08 + 1
+            end_if
+            if tc >= 0.866 then
+                n0866 = n0866 + 1
+            end_if
+            if tc >= 0.9 then
+                n09 = n09 + 1
+            end_if
+            if tc >= 1.0 then
+                n10 = n10 + 1
+            end_if
+            if tc >= 1.1 then
+                n11 = n11 + 1
+            end_if
+            sum_pp = sum_pp + pore
+            sum_q = sum_q + q
+            sum_pm = sum_pm + pm
+            if pore > ppmax then
+                ppmax = pore
+            end_if
+        end_if
+    end_loop
+    io.out('TCRIT max='+string(tmax)+' | >=0.6:'+string(n06)+' >=0.7:'+string(n07)+' >=0.8:'+string(n08)+' >=0.866:'+string(n0866)+' >=0.9:'+string(n09)+' >=1.0:'+string(n10)+' >=1.1:'+string(n11))
+    io.out('TCRIT-MEAN rock='+string(nrock)+' mean_pp='+string(sum_pp/nrock)+' max_pp='+string(ppmax)+' mean_q='+string(sum_q/nrock)+' mean_pmean_eff='+string(sum_pm/nrock))
+end
+[io.out('=== LOW water (td_s1) ===')]
+[tcrit_report]
+
+model restore 'td_s2'
+fish automatic-create on
+fish define tcrit_report
+    local tmax = 0.0
+    local n06=0
+    local n07=0
+    local n08=0
+    local n0866=0
+    local n09=0
+    local n10=0
+    local n11=0
+    local nrock=0
+    local sum_pp=0.0
+    local sum_q=0.0
+    local sum_pm=0.0
+    local ppmax=0.0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            nrock = nrock + 1
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pm = (s1 + s3)/2.0 - pore
+            local q = (s1 - s3)/2.0
+            local c = zone.prop(z,'cohesion')
+            local phi = zone.prop(z,'friction')
+            local strength = c + pm*math.tan(phi*math.degrad)
+            local tc = 0.0
+            if strength > 1.0 then
+                tc = q/strength
+            end_if
+            if tc > tmax then
+                tmax = tc
+            end_if
+            if tc >= 0.6 then
+                n06 = n06 + 1
+            end_if
+            if tc >= 0.7 then
+                n07 = n07 + 1
+            end_if
+            if tc >= 0.8 then
+                n08 = n08 + 1
+            end_if
+            if tc >= 0.866 then
+                n0866 = n0866 + 1
+            end_if
+            if tc >= 0.9 then
+                n09 = n09 + 1
+            end_if
+            if tc >= 1.0 then
+                n10 = n10 + 1
+            end_if
+            if tc >= 1.1 then
+                n11 = n11 + 1
+            end_if
+            sum_pp = sum_pp + pore
+            sum_q = sum_q + q
+            sum_pm = sum_pm + pm
+            if pore > ppmax then
+                ppmax = pore
+            end_if
+        end_if
+    end_loop
+    io.out('TCRIT max='+string(tmax)+' | >=0.6:'+string(n06)+' >=0.7:'+string(n07)+' >=0.8:'+string(n08)+' >=0.866:'+string(n0866)+' >=0.9:'+string(n09)+' >=1.0:'+string(n10)+' >=1.1:'+string(n11))
+    io.out('TCRIT-MEAN rock='+string(nrock)+' mean_pp='+string(sum_pp/nrock)+' max_pp='+string(ppmax)+' mean_q='+string(sum_q/nrock)+' mean_pmean_eff='+string(sum_pm/nrock))
+end
+[io.out('=== HIGH water (td_s2) ===')]
+[tcrit_report]
+[io.out('TCRIT-DONE')]
+program quit

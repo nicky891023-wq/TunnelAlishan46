@@ -1,0 +1,42 @@
+program log-file 'test_stl_water.log'
+program log on
+model restore '../04_InitialBalance/Large_Initial'
+call '../04_InitialBalance/parameter.f3dat'
+fish automatic-create on
+geometry import 'watertable_lower.stl'
+geometry list
+zone water density [rho_w]
+zone water set 'watertable_lower'
+fish define _chk
+    local ppmax = 0.0
+    local nwet = 0
+    local nabove = 0
+    loop foreach local z zone.list
+        local pp = zone.pp(z)
+        if pp > ppmax then
+            ppmax = pp
+        end_if
+        if pp > 0.0 then
+            nwet = nwet + 1
+        end_if
+    end_loop
+    io.out('STLWATER-LOW max_pp='+string(ppmax/1e6)+'MPa wet_zones='+string(nwet)+' of '+string(zone.num))
+end
+[_chk]
+; now check stability: calm + elastic re-solve, does it stay bounded (no walk)?
+model calm
+model solve elastic ratio-local 1e-3 cycles 20000
+fish define _dmax
+    local dm = 0.0
+    loop foreach local gp gp.list
+        local d = gp.disp(gp)
+        local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+        if mm > dm then
+            dm = mm
+        end_if
+    end_loop
+    io.out('STLWATER-REEQ dmax='+string(dm)+' m (bounded=STL water OK; km=still walks)')
+end
+[_dmax]
+[io.out('STLWATER-DONE')]
+program quit

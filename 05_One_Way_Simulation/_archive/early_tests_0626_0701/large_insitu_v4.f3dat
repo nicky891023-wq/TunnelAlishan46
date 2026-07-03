@@ -1,0 +1,123 @@
+program log-file 'large_insitu_v4.log'
+program log on
+model restore '../01_LargeModel/Large_Model'
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain off
+zone cmodel assign mohr-coulomb
+zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+zone initialize density [den_L_1] range group 'layer1' slot 'type'
+zone initialize density [den_L_2] range group 'layer2' slot 'type'
+zone initialize density [den_L_3] range group 'layer3' slot 'type'
+zone initialize density [den_L_4] range group 'layer4' slot 'type'
+model gravity 0 0 [-grav]
+zone initialize-stresses ratio 1.0
+zone gridpoint fix velocity-x range position-x -1 1
+zone gridpoint fix velocity-x range position-x 1999 2001
+zone gridpoint fix velocity-y range position-y -101 -99
+zone gridpoint fix velocity-y range position-y 1999 2001
+zone gridpoint fix velocity   range position-z 799 801
+fish define qa_tension(tag)
+    local maxprin = -1e30
+    local nten = 0
+    loop foreach local z zone.list
+        local pz = zone.stress.prin.z(z)
+        if pz > maxprin then
+            maxprin = pz
+        end_if
+        if pz > 1000.0 then
+            nten = nten + 1
+        end_if
+    end_loop
+    io.out('LV4-TENSION '+tag+' max_principal='+string(maxprin)+'Pa tension_zones(prin>1kPa)='+string(nten)+'/'+string(zone.num))
+end
+fish define qa_full(tag)
+    local nplas = 0
+    local mv = 0.0
+    local mdsp = 0.0
+    loop foreach local z zone.list
+        if zone.state(z,1) # 0 then
+            nplas = nplas + 1
+        end_if
+    end_loop
+    loop foreach local g gp.list
+        local v = gp.vel(g)
+        local m = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+        if m > mv then
+            mv = m
+        end_if
+        local d = gp.disp(g)
+        local md = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+        if md > mdsp then
+            mdsp = md
+        end_if
+    end_loop
+    io.out('LV4-FULL '+tag+' plastic_zones='+string(nplas)+'/'+string(zone.num)+' max_gp_vel='+string(mv)+' max_gp_disp='+string(mdsp*1000.0)+'mm')
+end
+[qa_tension('after-init-K0=1.0')]
+model solve elastic ratio-local 1e-3
+[qa_tension('after-elastic')]
+[qa_full('after-elastic')]
+model save '../04_InitialBalance/Large_Initial'
+[io.out('LV4-SAVED Large_Initial (K0=1.0, solve elastic)')]
+; export coarse near-field stress for small-model IDW (every 30th zone)
+fish define exp_coarse
+    local st = file.open('../04_InitialBalance/large_stress_coarse.dat',1,1)
+    local b = array.create(1)
+    b(1) = 'zid x y z sxx syy szz sxy sxz syz'
+    file.write(b,1)
+    local n = 0
+    local samp = 0
+    loop foreach local z zone.list
+        local x = zone.pos.x(z)
+        if x > 1150.0 then
+        if x < 1450.0 then
+        local y = zone.pos.y(z)
+        if y > 750.0 then
+        if y < 1050.0 then
+        local zc = zone.pos.z(z)
+        if zc > 1600.0 then
+        if zc < 1900.0 then
+            samp = samp + 1
+            if samp >= 20 then
+                samp = 0
+                b(1) = string(zone.id(z))+' '+string(x)+' '+string(y)+' '+string(zc)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))
+                file.write(b,1)
+                n = n + 1
+            end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    local cl = file.close
+    io.out('LV4-COARSE exported '+string(n)+' near-field stresses -> large_stress_coarse.dat')
+end
+[exp_coarse]
+fish define exp_slice
+    local st = file.open('qa_largev4_slice.txt',1,1)
+    local b = array.create(1)
+    b(1) = 'x z szz sxx prinz state'
+    file.write(b,1)
+    local n = 0
+    loop foreach local z zone.list
+        local yc = zone.pos.y(z)
+        if yc > 880.0 then
+        if yc < 890.0 then
+            local p = zone.pos(z)
+            b(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.stress.prin.z(z))+' '+string(zone.state(z,1))
+            file.write(b,1)
+            n = n + 1
+        end_if
+        end_if
+    end_loop
+    local cl = file.close
+    io.out('LV4-SLICE exported '+string(n)+' -> qa_largev4_slice.txt')
+end
+[exp_slice]
+[io.out('LV4-DONE')]
+program quit

@@ -1,0 +1,40 @@
+program log-file 'dbg_bf2.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'cb_control0'
+fish automatic-create on
+fish define dbg
+    local ncoup = 0
+    local nlin = 0
+    local ymin = 1e20
+    local ymax = -1e20
+    local nmid = 0
+    loop foreach local c contact.list
+        if contact.model(c) = 'linearpbond' then
+            local pt = contact.prop(c,'pb_ten')
+            if pt >= 1.0e10 then
+                ncoup = ncoup + 1
+                local p = contact.pos(c)
+                local yy = comp.y(p)
+                if yy < ymin then
+                    ymin = yy
+                end_if
+                if yy > ymax then
+                    ymax = yy
+                end_if
+                if yy >= 866.0 then
+                    if yy <= 904.0 then
+                        nmid = nmid + 1
+                    end_if
+                end_if
+            else
+                nlin = nlin + 1
+            end_if
+        end_if
+    end_loop
+    io.out('DBG2 coupling(pb_ten>=1e10)='+string(ncoup)+' lining(pb_ten<1e10)='+string(nlin)+' coup_y['+string(ymin)+','+string(ymax)+'] coup_mid866-904='+string(nmid))
+end
+[dbg]
+[io.out('DBG2-DONE')]
+program quit

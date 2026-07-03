@@ -1,0 +1,84 @@
+**********************************************
+* Logging started at 週日 六月 28 13:47:52 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../04_InitialBalance/Couple_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 08:35:04 2026
+Total Cycles: 21005  Super Cycles: 21005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('CA0 restored; zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num)+' dt='+string(mech.timestep))]
+CA0 restored; zones=424908 balls=456302 walls=4 dt=2.52176e-06
+flac3d>
+flac3d>fish define wzf_report
+   Def>    loop foreach local w wall.list
+   Def>        if wall.name(w) = 'wz_outter' then
+   Def>            local fc = wall.force.contact(w)
+   Def>            io.out('CA-wz wz_outter |F|='+string(math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6)+' MN  (Fx='+string(comp.x(fc)/1e6)+' Fy='+string(comp.y(fc)/1e6)+' Fz='+string(comp.z(fc)/1e6)+')')
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>[wzf_report]
+CA-wz wz_outter |F|=1.8818 MN  (Fx=-0.223941 Fy=0.411921 Fz=-1.82245)
+0 (integer)
+flac3d>
+flac3d>fish define export_bnd
+   Def>    local fo = file.open('couple_bnd.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id x y z'
+   Def>    fo = file.write(a,1)
+   Def>    local cnt = 0
+   Def>    loop foreach local gp gp.list
+   Def>        local p = gp.pos(gp)
+   Def>        local px = comp.x(p)
+   Def>        local py = comp.y(p)
+   Def>        local pz = comp.z(p)
+   Def>        local onb = 0
+   Def>        if px < 1277.5 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if px > 1316.5 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if py < 860.5 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if py > 909.5 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if pz < 1728.5 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if pz > 1767.5 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if onb = 1 then
+   Def>            a(1) = string(gp.id(gp))+' '+string(px)+' '+string(py)+' '+string(pz)
+   Def>            fo = file.write(a,1)
+   Def>            cnt = cnt + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('CA-EB boundary gps exported cnt='+string(cnt)+' of '+string(gp.num))
+   Def>end
+flac3d>[export_bnd]
+CA-EB boundary gps exported cnt=28304 of 441728
+0 (integer)
+flac3d>[io.out('CA-DONE')]
+CA-DONE
+0 (integer)
+flac3d>program quit

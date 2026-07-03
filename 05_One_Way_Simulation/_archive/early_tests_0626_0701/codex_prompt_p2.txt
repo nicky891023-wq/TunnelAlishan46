@@ -1,0 +1,17 @@
+You are Codex, independent reviewer + co-designer with Claude (Wade's two-agent governance). Gate-0 already PASSED WITH CONDITIONS. This is REVIEW_PACKET #02: Phase 1 (small-model lining reaction) has a structural question needing consensus, and Phase 2 (coupled lining-crack drive) needs pre-execution review. Wade reaffirmed the three model roles: large=regional stress/disp field (done, endmember); small=tunnel rock stress/disp field (done); coupled=draw small's per-stage displacement as external force (no water/creep), focus on lining FORCE + CRACK pattern + rock-lining interaction (the core deliverable).
+
+READ (in C:\Users\Wade\Desktop\Tunnel_TX\05_One_Way_Simulation\):
+1. REVIEW_PACKET_02.md  <-- read first. Section A = Phase 1 lining-reaction structural problem + question; Section B = Phase 2 coupled-drive plan.
+2. CODEX_GATE0_REVIEW.md <-- your Gate-0 verdict (continuity).
+3. couple_drive.f3dat, couple_idw.py (now has rigid-body decomposition), gate1_funcs.fis, run_small_init.f3dat (../04_InitialBalance/).
+
+KEY FACTS to weigh:
+- Phase 1: small "lining" group (slot mat AND type ='lining') = 335011 zones spanning radial r=0-9m (hist peak 3-4m, outer ~5m), NOT a thin 0.4m ring; wished-in-place (no excavated void, lining co-located with rock, shares nodes). Tunnel-wall convergence works (~0.22mm inward, << global dmax 3.22mm). My per-lining-zone outer-face traction gave garbage net force.
+- Phase 2: drive coupled OUTER ROCK boundary (28304 gp) with small's per-stage IDW disp, rigid-body subtracted (deformational residual), bonded PFC lining force-shares via wz_outter and cracks. Control-0 zero-increment gate, no-damage transfer, SMOKE first, w_inner rigid (Wade) + free-inner control (your mandatory sensitivity), Couple_Initial residual 6.1e-3.
+
+YOUR TASK:
+1. Phase 1 reaction method: given the fuzzy "lining" structure, which extraction is correct for E1 (small lining reaction vs coupled wz_outter ~1.88MN)? Pick (a) virtual cylindrical cut at r~5m integrating sigma.n.A, (b) mean radial stress x wall area, (c) something better. Also: is the small "lining" structure (335011 zones, r0-9m, no void) as expected, or a build red flag?
+2. Phase 2: confirm/correct the plan (rigid residual + Control-0 + no-damage + SMOKE-first sequence); specify the over-cracking circuit-breaker threshold (per-substep crack delta) and the Control-0 pass criterion; confirm running w_inner rigid (main) + free (sensitivity) both.
+3. Verdict for Phase 2: PROCEED TO SMOKE | PROCEED WITH CONDITIONS | BLOCKED.
+
+OUTPUT to stdout. Be specific and decisive; we need an executable consensus.

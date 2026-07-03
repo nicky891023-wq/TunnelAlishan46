@@ -1,0 +1,154 @@
+**********************************************
+* Logging started at 週二 六月 30 20:16:20 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../04_InitialBalance/Couple_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 08:35:04 2026
+Total Cycles: 21005  Super Cycles: 21005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>call 'fracture_track.fis'
+flac3d>; fname: fracture.fis
+flac3d>;
+flac3d>; Simple environment to track fragmentation in a BPM.
+flac3d>; Track LinearPBond model "bond_change" events and turn them into fractures.
+flac3d>; Use Fragment logic and Ball Result logic to record fragemnt ids 
+flac3d>;
+flac3d>; ============================================================================
+flac3d>
+flac3d>fish define add_crack(entries)
+   Def>    local contact    = entries(1)
+   Def>    local mode       = entries(2)    ; FIX: slot2=failure mode {1=tension,2=shear}; slot3=strength(force). Was entries(3)=strength -> mode never 1/2 -> crack_tension/crack_shear DFNs never created (QA empty). Verified vs PFC linearpbond cmlinearpbond.html Table3 + official fracture.p3fis.
+   Def>    local  frac_pos   = contact.pos(contact)
+   Def>    local norm       = contact.normal(contact)
+   Def>    local dfn_label  = 'crack'
+   Def>    local  frac_size
+   Def>    local  bp1 = contact.end1(contact)
+   Def>    local  bp2 = contact.end2(contact)
+   Def>    local  ret = math.min(ball.radius(bp1),ball.radius(bp2))
+   Def>                 ; (  contact.method(contact,'pb_radius')  )
+   Def>    frac_size = ret
+   Def>    local arg = array.create(5)
+   Def>    arg(1) = 'disk'
+   Def>    arg(2) = frac_pos
+   Def>    arg(3) = frac_size
+   Def>    arg(4) = math.dip.from.normal(norm)/math.degrad
+   Def>    arg(5) = math.ddir.from.normal(norm)/math.degrad
+   Def>    if arg(5) < 0.0
+   Def>      arg(5) = 360.0+arg(5)
+   Def>    end_if
+   Def>    global crack_num
+   Def>    crack_num = crack_num + 1
+   Def>    
+   Def>    if mode = 1 then 
+   Def>        ; failed in tension
+   Def>        dfn_label = dfn_label + '_tension'
+   Def>    else if mode = 2 then
+   Def>        ; failed in shear
+   Def>        dfn_label = dfn_label + '_shear'
+   Def>    endif
+   Def>        
+   Def>    global dfn = dfn.find(dfn_label)
+   Def>    if dfn = null then
+   Def>        dfn = dfn.create(dfn_label)
+   Def>    endif
+   Def>    local fnew = fracture.create(dfn,arg)
+   Def>    fracture.prop(fnew,'age')  = mech.time.total
+   Def>    fracture.extra(fnew,1) = bp1
+   Def>    fracture.extra(fnew,2) = bp2
+   Def>    crack_accum += 1
+   Def>    global frag_time
+   Def>    global xmin,xmax,ymin,ymax,zmin,zmax
+   Def>    if crack_accum > 50
+   Def>        if frag_time < mech.time.total
+   Def>            frag_time = mech.time.total
+   Def>            crack_accum = 0
+   Def>            command 
+   Def>                fragment compute
+   Def>            endcommand
+   Def>            ; go through and update the fracture positions
+   Def>            loop for (local i = 0, i < 2, i = i + 1)
+   Def>                local name = 'crack_tension'
+   Def>                if i = 1
+   Def>                    name = 'crack_shear'
+   Def>                endif
+   Def>                dfn = dfn.find(name)
+   Def>                if dfn # null
+   Def>                    loop foreach local frac dfn.fracturelist(dfn)
+   Def>                        local ball1 = fracture.extra(frac,1)
+   Def>                        local ball2 = fracture.extra(frac,2)
+   Def>                        if ball1 # null
+   Def>                            if ball2 # null
+   Def>                                local len = fracture.diameter(frac)/2.0
+   Def>                                local pos = (ball.pos(ball1)+ ...
+   Def>                                             ball.pos(ball2))/2.0
+   Def>                                if comp.x(pos)-len > xmin
+   Def>                                    if comp.x(pos)+len < xmax
+   Def>                                        if comp.y(pos)-len > ymin
+   Def>                                            if comp.y(pos)+len < ymax
+   Def>                                                if comp.z(pos)-len > zmin
+   Def>                                                    if comp.z(pos)+len < zmax
+   Def>                                                       fracture.pos(frac) = pos
+   Def>                                                    end_if
+   Def>                                                end_if
+   Def>                                            endif
+   Def>                                        endif
+   Def>                                    endif
+   Def>                                endif
+   Def>                            endif
+   Def>                        endif
+   Def>                    endloop
+   Def>                endif
+   Def>            endloop
+   Def>        endif
+   Def>    endif
+   Def>end
+flac3d>
+flac3d>fish define track_init
+   Def>    command
+   Def>        fracture delete
+   Def>        model results clear-map
+   Def>        fragment clear
+   Def>        fragment register ball-ball
+   Def>    endcommand
+   Def>  ; activate fishcalls
+   Def>    command
+   Def>        fish callback remove add_crack event bond_break
+   Def>        fish callback add add_crack event bond_break
+   Def>    endcommand
+   Def>    ; reset global variables
+   Def>    global crack_accum = 0
+   Def>    global crack_num = 0
+   Def>    global track_time0 = mech.time.total
+   Def>    global frag_time = mech.time.total
+   Def>    global xmin = domain.min.x()
+   Def>    global ymin = domain.min.y()
+   Def>    global xmax = domain.max.x()
+   Def>    global ymax = domain.max.y()
+   Def>    global zmin = domain.min.z()
+   Def>    global zmax = domain.max.z()
+   Def>
+   Def>end
+flac3d>
+flac3d>; ============================================================================
+flac3d>; eof: fracture.fis
+flac3d>[track_init]
+flac3d>fracture delete
++++ No fractures found in range.
+flac3d>model results clear-map
+flac3d>fragment clear
+--- The previous fragment computations have been cleared and automatic updates disabled.

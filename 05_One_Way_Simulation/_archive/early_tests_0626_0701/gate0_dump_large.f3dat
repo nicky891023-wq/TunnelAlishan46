@@ -1,0 +1,27 @@
+; gate0_dump.f3dat -- Gate-0 small dump. CALL gate0_funcs.fis AFTER EACH restore (restore clears
+;   FISH state -> functions defined once vanish on next restore = the args-not-used cascade).
+program log-file 'gate0_dump_large.log'
+program log on
+fish automatic-create on
+model restore 'lg_s1'
+call 'gate0_funcs.fis'
+[count_active(1,'lg')]
+[dump_zone(1,'lg')]
+[dump_gp(1,'lg')]
+model restore 'lg_s2'
+call 'gate0_funcs.fis'
+[count_active(2,'lg')]
+[dump_zone(2,'lg')]
+[dump_gp(2,'lg')]
+model restore 'lg_s3'
+call 'gate0_funcs.fis'
+[count_active(3,'lg')]
+[dump_zone(3,'lg')]
+[dump_gp(3,'lg')]
+model restore 'lg_s4'
+call 'gate0_funcs.fis'
+[count_active(4,'lg')]
+[dump_zone(4,'lg')]
+[dump_gp(4,'lg')]
+[io.out('GATE0-DUMP-DONE lg')]
+program quit

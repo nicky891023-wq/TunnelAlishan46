@@ -1,0 +1,60 @@
+**********************************************
+* Logging started at 週日 六月 28 13:38:15 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>fish automatic-create on
+flac3d>model restore 's4_s1'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 21:16:44 2026
+Total Cycles: 15428  Super Cycles: 15428
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish define diag2
+   Def>    io.out('D2-start')
+   Def>    local fo = file.open('bc_s1.txt',1,1)
+   Def>    io.out('D2-opened status='+string(fo))
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z dx dy dz'
+   Def>    fo = file.write(a,1)
+   Def>    io.out('D2-header')
+   Def>    local cnt = 0
+   Def>    loop foreach local gp gp.list
+   Def>        local p = gp.pos(gp)
+   Def>        if comp.x(p)>=1272.0 then
+   Def>        if comp.x(p)<=1322.0 then
+   Def>        if comp.y(p)>=855.0 then
+   Def>        if comp.y(p)<=915.0 then
+   Def>        if comp.z(p)>=1723.0 then
+   Def>        if comp.z(p)<=1773.0 then
+   Def>            local d = gp.disp(gp)
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            fo = file.write(a,1)
+   Def>            cnt = cnt + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('D2-loop cnt='+string(cnt))
+   Def>    fo = file.close
+   Def>    io.out('D2-closed')
+   Def>end
+flac3d>[diag2]
+D2-start
+D2-opened status=0
+D2-header
+D2-loop cnt=140694
+D2-closed
+0 (integer)
+flac3d>[io.out('D2-DONE')]
+D2-DONE
+0 (integer)
+flac3d>program quit

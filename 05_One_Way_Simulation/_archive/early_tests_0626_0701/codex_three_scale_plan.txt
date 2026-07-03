@@ -1,0 +1,87 @@
+﻿THREE-SCALE-PLAN:
+
+My reviewer position: Wade’s proposal is sound as a reduced-order structural-interaction model, provided the coupled model is explicitly not used to interpret geologic stress concentrations. The three-scale logic hangs together if the coupled model inherits the small model’s kinematics and uses simplified rock only as a calibrated transmitting medium.
+
+**1. Single Elastic Rock**
+
+Yes, acceptable for the coupled model’s stated role: lining forces, reactions, and crack pattern. The small model owns the geology, groundwater, creep, and tunnel squeezing physics; the coupled model owns lining interaction.
+
+Pitfall: layer-interface stress concentrations, local weak bands, and anisotropic compliance are removed. That is acceptable only if those effects are already expressed in the imported small-model tunnel-wall displacement field. Do not claim the coupled rock stresses are geologically meaningful.
+
+I would require at least one sensitivity check: equivalent elastic rock stiffness at baseline, softer, and stiffer. If lining crack pattern changes completely, the simplification is controlling the answer too much.
+
+**2. Equivalent Stiffness**
+
+The most defensible method is compliance matching, not simple weighted averaging.
+
+A volume-weighted average of the six layers is only a fallback. Tunnel response is usually governed by the softer/deformable layers and by the deformation mode, so arithmetic averaging of `E` can be misleading.
+
+Best method: calibrate the single elastic rock so the coupled model reproduces the small model’s local tunnel compliance in the y=860-910 influence zone. Use dominant deformation modes: crown-invert closure, springline closure, ovalization, and shear distortion. If small-model interface tractions are available, match force-displacement stiffness. If only displacement is available, match closures and deformation shape, then treat lining forces as coupled-model-derived rather than directly validated parent loads.
+
+Under direct displacement control, rock stiffness mainly affects reaction magnitude, contact pressure distribution, and how much slip/separation occurs. If the imposed displacement is applied directly at the liner-rock contact, stiffness has less effect on kinematics but still affects forces. If the displacement is applied through a rock collar, stiffness matters more and must be calibrated.
+
+**3. Where To Impose Displacement**
+
+Use option **a**, with one refinement: impose the full-vector small-model displacement on the rock-side interface/control ring adjacent to the liner, not on the liner itself.
+
+If direct interface driving over-constrains contact, move the driver one rock-zone outward and leave a compliant rock/contact layer between the prescribed ring and the liner. That is often the cleaner structural interpretation.
+
+Avoid option **b**, imposing the whole rock field. It over-constrains strain and can manufacture stresses.
+
+Avoid option **c**, outer-boundary driving, because that already failed by attenuating the tunnel ovalization. With single elastic rock, it will remain too dependent on artificial domain stiffness and boundary distance.
+
+**4. Small-Model Creep-Dominance Verification**
+
+Yes: extract crown-invert and springline closure histories for y=860-910, within each stage and across stage transitions.
+
+Define, for each closure measure:
+
+`J = closure_after_water_step_equilibrium - closure_before_water_step`
+
+`C = closure_at_stage_end - closure_after_water_step_equilibrium`
+
+I would accept creep dominance if, over y=860-910:
+
+`C_high / |J_water_up| >= 3` minimum, preferably `>= 5`.
+
+Also require:
+
+`|J_water_up| / (|J_water_up| + |C_high|) <= 0.25`, preferably `<= 0.15`.
+
+For low water, the within-stage closure rate should be small: for example, low-water creep increment less than about 20-25% of the high-water creep increment, and high-water closure rate at least 3x the low-water rate. These are engineering thresholds, not laws; the key is to define them before tuning.
+
+Plot physical time, not just solve cycles. Mark water-step instants separately from creep-duration response.
+
+**5. Three-Scale Consistency**
+
+The plan is internally consistent:
+
+Large model: regional terrain, groundwater, creep field.
+
+Small model: tunnel-scale geology, squeezing, convergence time-history, creep dominance.
+
+Coupled model: lining-focused structure response, driven by small-model wall displacement, with simplified elastic rock.
+
+Missing checks I would add:
+
+Verify coordinate registration and sign convention for imported displacement vectors.
+
+Transfer stage-wise displacement increments, not just independent total fields, so crack history evolves correctly.
+
+Validate coupled crown-invert and springline closures against the small model before interpreting cracks.
+
+Track force balance: external rock force, liner internal force, and reaction should close within tolerance.
+
+Do not reset damage/cracks between stages.
+
+Keep contact stiffness/friction sensitivity separate from rock stiffness sensitivity.
+
+**6. Implementation Choice**
+
+Rebuild a clean coupled model.
+
+The existing coupled model has too much baggage: far-box driving, `wz_outter` coupling, fixed-corner artifacts, and the no-invert/geometry issue. Patching it may be faster initially, but it will be harder to defend.
+
+Reuse only validated pieces: lining geometry, material/crack law, history extraction, and plotting scripts. Build a new coupled pilot with single elastic rock ring/collar, clean boundaries, interface displacement drive, and closure-validation histories. Once that reproduces y=860-910 closures, scale it up.
+
+Reviewer conclusion: Wade’s simplification is reasonable, but only as a kinematically driven, lining-focused structural model. The defensible path is compliance-calibrated single elastic rock, interface/control-ring full-vector displacement input, stage-wise crack-history evolution, and explicit proof that high-water convergence is creep-dominated rather than water-step dominated.

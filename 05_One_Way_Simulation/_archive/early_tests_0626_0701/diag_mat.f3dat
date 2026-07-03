@@ -1,0 +1,43 @@
+program log-file 'diag_mat.log'
+program log on
+fish automatic-create on
+model restore 's4_s1'
+fish define diag
+    local cx=1297.0
+    local cz=1747.0
+    local nrock=0
+    local nlin=0
+    local noth=0
+    local hist=array.create(10)
+    local i=1
+    loop while i<=10
+        hist(i)=0
+        i=i+1
+    end_loop
+    loop foreach local z zone.list
+        local m=zone.group(z,'mat')
+        if m='rock' then
+            nrock=nrock+1
+        end_if
+        if m='lining' then
+            nlin=nlin+1
+            local p=zone.pos(z)
+            local r=math.sqrt((comp.x(p)-cx)*(comp.x(p)-cx)+(comp.z(p)-cz)*(comp.z(p)-cz))
+            local b=int(r)+1
+            if b>10 then
+                b=10
+            end_if
+            hist(b)=hist(b)+1
+        end_if
+        if m#'rock' then
+            if m#'lining' then
+                noth=noth+1
+            end_if
+        end_if
+    end_loop
+    io.out('MAT-SLOT rock='+string(nrock)+' lining='+string(nlin)+' other='+string(noth))
+    io.out('MAT-lining radial-hist[0-1..9+]: '+string(hist(1))+' '+string(hist(2))+' '+string(hist(3))+' '+string(hist(4))+' '+string(hist(5))+' '+string(hist(6))+' '+string(hist(7))+' '+string(hist(8))+' '+string(hist(9))+' '+string(hist(10)))
+end
+[diag]
+[io.out('DIAG-MAT-DONE')]
+program quit

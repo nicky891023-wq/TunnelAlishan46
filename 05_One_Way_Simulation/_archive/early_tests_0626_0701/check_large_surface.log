@@ -1,0 +1,47 @@
+**********************************************
+* Logging started at 週六 六月 27 21:56:08 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../04_InitialBalance/Large_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週一 六月 22 17:10:41 2026
+Total Cycles: 7482  Super Cycles: 7482
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define _chk
+   Def>    ; surface = the Top boundary gridpoints; report their z range
+   Def>    local zmin = 1e20
+   Def>    local zmax = -1e20
+   Def>    local nbelow = 0
+   Def>    local ntop = 0
+   Def>    loop foreach local gp gp.list
+   Def>        if gp.isgroup(gp,'Top1') then
+   Def>            ntop = ntop + 1
+   Def>            local z = gp.pos.z(gp)
+   Def>            if z < zmin then
+   Def>                zmin = z
+   Def>            end_if
+   Def>            if z > zmax then
+   Def>                zmax = z
+   Def>            end_if
+   Def>            if z < 1724.0 then
+   Def>                nbelow = nbelow + 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('CHK surface(Top1) gps='+string(ntop)+' z=['+string(zmin)+','+string(zmax)+'] | BELOW water-plane z1724: '+string(nbelow)+' (water ABOVE ground there = bad pp)')
+   Def>end
+flac3d>[_chk]
+CHK surface(Top1) gps=10028 z=[1268.53,2186.22] | BELOW water-plane z1724: 3643 (water ABOVE ground there = bad pp)
+0 (integer)
+flac3d>[io.out('CHK-DONE')]
+CHK-DONE
+0 (integer)
+flac3d>program quit

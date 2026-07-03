@@ -1,0 +1,28 @@
+; min_fish_test.f3dat -- diagnose why [wbcs1] returns 0 instead of running body.
+program log-file 'min_fish_test.log'
+program log on
+model new
+; CASE A: define+call, NO automatic-create
+fish define caseA
+    io.out('A-RAN body')
+    local fo = file.open('mintest_A.txt',1,1)
+    local arr = array.create(1)
+    arr(1) = 'A line'
+    fo = file.write(arr,1)
+    fo = file.close
+    io.out('A-WROTE file')
+end
+[caseA]
+; CASE B: automatic-create on, then define+call
+fish automatic-create on
+fish define caseB
+    io.out('B-RAN body')
+end
+[caseB]
+; CASE C: call with @ syntax
+fish define caseC
+    io.out('C-RAN body')
+end
+@caseC
+[io.out('MIN-DONE')]
+program quit

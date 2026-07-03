@@ -1,0 +1,73 @@
+**********************************************
+* Logging started at 週二 六月 30 00:01:51 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore 'cb_control0'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週一 六月 29 12:50:33 2026
+Total Cycles: 25677  Super Cycles: 25677
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define react_region
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    global fblue = 0.0
+   Def>    global fcorner = 0.0
+   Def>    local nbl = 0
+   Def>    local ncr = 0
+   Def>    loop foreach local c contact.list
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_ten') >= 1.0e10 then
+   Def>                local p = contact.pos(c)
+   Def>                local yy = comp.y(p)
+   Def>                if yy >= 870.0 then
+   Def>                if yy <= 900.0 then
+   Def>                    local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+   Def>                    if ang < 0.0 then
+   Def>                        ang = 360.0 + ang
+   Def>                    end_if
+   Def>                    local fn = contact.force.normal(c)
+   Def>                    local af = fn
+   Def>                    if af < 0.0 then
+   Def>                        af = -af
+   Def>                    end_if
+   Def>                    local isc = 0
+   Def>                    if ang >= 250.0 then
+   Def>                        if ang <= 320.0 then
+   Def>                            isc = 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                    if isc = 1 then
+   Def>                        fcorner = fcorner + af
+   Def>                        ncr = ncr + 1
+   Def>                    else
+   Def>                        fblue = fblue + af
+   Def>                        nbl = nbl + 1
+   Def>                    end_if
+   Def>                end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('INSITU-REACT blue-line n='+string(nbl)+' abs_reaction='+string(fblue/1e6)+'MN | corner n='+string(ncr)+' abs='+string(fcorner/1e6)+'MN')
+   Def>end
+flac3d>[react_region]
+INSITU-REACT blue-line n=35778 abs_reaction=6.1406MN | corner n=1915 abs=1.17917MN
+0 (integer)
+flac3d>[io.out('INSITU-REACT-DONE')]
+INSITU-REACT-DONE
+0 (integer)
+flac3d>program quit

@@ -1,0 +1,61 @@
+**********************************************
+* Logging started at 週一 六月 29 16:31:04 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore 'cb_control0'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週一 六月 29 12:50:33 2026
+Total Cycles: 25677  Super Cycles: 25677
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define dbg
+   Def>    local nbf = 0
+   Def>    local nall = 0
+   Def>    local ymin = 1e20
+   Def>    local ymax = -1e20
+   Def>    local nmid = 0
+   Def>    loop foreach local c contact.list
+   Def>        nall = nall + 1
+   Def>        if contact.group(c) = 'bf_couple' then
+   Def>            nbf = nbf + 1
+   Def>            local p = contact.pos(c)
+   Def>            local yy = comp.y(p)
+   Def>            if yy < ymin then
+   Def>                ymin = yy
+   Def>            end_if
+   Def>            if yy > ymax then
+   Def>                ymax = yy
+   Def>            end_if
+   Def>            if yy >= 866.0 then
+   Def>                if yy <= 904.0 then
+   Def>                    nmid = nmid + 1
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('DBG total_contacts='+string(nall)+' bf_couple='+string(nbf)+' bf_y_range['+string(ymin)+','+string(ymax)+'] bf_in_mid(866-904)='+string(nmid))
+   Def>end
+flac3d>[dbg]
+DBG total_contacts=2386556 bf_couple=0 bf_y_range[1e+20,-1e+20] bf_in_mid(866-904)=0
+0 (integer)
+flac3d>; also check wz_outter wall + what groups exist on ball-facet contacts
+flac3d>fish define dbg2
+   Def>    local n1 = 0
+   Def>    loop foreach local c contact.list
+   Def>        if contact.type(c) = 'ball-facet' then
+*** FISH symbols cannot use a '.' character.
+    From line 39 of source C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/dbg_bf.f3dat.
+    While processing line 36 of file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/dbg_bf.f3dat.

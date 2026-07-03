@@ -1,0 +1,44 @@
+fish automatic-create on
+fish define count_state
+    local nbb = 0
+    local ntens = 0
+    local nshear = 0
+    loop foreach local c contact.list
+        if contact.model(c) = 'linearpbond' then
+            if contact.prop(c,'pb_ten') < 1.0e10 then
+                local cp = contact.pos(c)
+                if comp.y(cp) > 884.5 then
+                if comp.y(cp) < 885.5 then
+                    nbb = nbb + 1
+                    local st = contact.prop(c,'pb_state')
+                    if st = 1 then
+                        ntens = ntens + 1
+                    end_if
+                    if st = 2 then
+                        nshear = nshear + 1
+                    end_if
+                end_if
+                end_if
+            end_if
+        end_if
+    end_loop
+    local dmax = 0.0
+    loop foreach local b ball.list
+        local dx = ball.disp(b,1)
+        local dy = ball.disp(b,2)
+        local dz = ball.disp(b,3)
+        local dm = math.sqrt(dx*dx+dy*dy+dz*dz)
+        if dm > dmax then
+            dmax = dm
+        end_if
+    end_loop
+    local gpmax = 0.0
+    loop foreach local gp gp.list
+        local gd = gp.disp(gp)
+        local gm = math.sqrt(comp.x(gd)*comp.x(gd)+comp.y(gd)*comp.y(gd)+comp.z(gd)*comp.z(gd))
+        if gm > gpmax then
+            gpmax = gm
+        end_if
+    end_loop
+    io.out('   bonds(slice)='+string(nbb)+' tension-broken='+string(ntens)+' shear-broken='+string(nshear)+' | ball disp_max='+string(dmax)+' m | rock gp disp_max='+string(gpmax)+' m')
+end

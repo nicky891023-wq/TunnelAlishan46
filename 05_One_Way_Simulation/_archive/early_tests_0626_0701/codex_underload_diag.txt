@@ -1,0 +1,48 @@
+﻿UNDERLOAD-DIAGNOSIS:
+
+Short verdict: do not run the 3-4h free-`w_inner` case yet. Run a no-solve/short-solve diagnostic first. Existing evidence says the blue-line lining is under-loaded, but the strict cause is not “rigid-body subtraction removed everything.”
+
+My ranking:
+
+1. **C + A are the main suspects.** The y-end band is absorbing most of the imposed work, and `w_inner` is a real load-bearing rigid backstop once any closure reaches the lining.
+2. **B, as stated, is not strongly supported.** I reconstructed the original 28,304-point field using `couple_bnd_ORIG.txt`: stage-4 boundary residual RMS is still **1.557 mm** after subtracting translation+rotation, versus full RMS **1.946 mm**. In the parent field at mid `r=5-10 m`, translation-only and translation+rotation give almost the same blue-line radial stats. So the rotation subtraction is not the main thing erasing tunnel closure.
+
+Key evidence:
+- `w_inner` already carries load in the initial coupled model: **1.378 MN** in [couple_recon.log](C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/couple_recon.log:55).
+- The v1 saved `cb_full_s4` has inner-wall convergence essentially zero: mean **-1.09e-5 mm**, max **0.00788 mm** in [couple_reanalyze.log](C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/couple_reanalyze.log:209).
+- Blue-line reaction went from **6.1406 MN** in [insitu_react.log](C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/insitu_react.log:68) to **6.13697 MN** in [couple_reanalyze.log](C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/couple_reanalyze.log:256).
+
+**Checks Before Free Run**
+
+Run these in order:
+
+1. **Restore `cb_full_s4`; no solve.** Probe actual coupled rock `gp.disp` in the mid band, not the lining balls:
+   - `y=870-900`
+   - annuli `r=2-5`, `5-10`, `10-15 m`
+   - split blue-line `ang not 250-320` vs corner `250-320`
+   - report radial inward mean/median/p95/max by 30-degree sector.
+
+Decision:
+- If driven boundary target is nonzero but rock `r=5-10 m` is near zero, the drive is not reaching the tunnel: **C / boundary absorption**, not free-`w_inner` first.
+- If rock `r=5-10 m` has material closure, say sector p95 `>0.2-0.5 mm`, but lining convergence stays `~0.008 mm`, then **A dominates** and free-`w_inner` is justified.
+- If the target field itself is near zero in the mid blue-line, then revisit the coupling field definition before any PFC run.
+
+2. **Free-inner release baseline.** Restore `cb_control0`, delete only `w_inner`, then cycle/calm/short solve with zero drive. Record release-only cracks, radial convergence, and max ball velocity. This isolates “inner wall removal damage” from drive-induced damage.
+
+3. **Only then run stages.** Use the free-inner settled state as the new datum, reset displacements, then apply the same drive-all 28,304 BC.
+
+**Rigid-Body Removal**
+
+Keep subtracting best-fit translation + rotation for production. The code intentionally drives the deformational residual in [couple_idw.py](C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/couple_idw.py:53). Switching to translation-only or no subtraction is a sensitivity/upper-bound case, not the corrected one-way BC, unless you also move every rigid PFC wall consistently with the removed rigid mode.
+
+**Free-`w_inner` Implementation**
+
+Delete `w_inner`; do not make it servo-free. PFC walls are kinematic boundaries; a servo is an active controller, not a passive free surface. Official FLAC3D/PFC examples use `wall delete wall range name 'top'`, so the corresponding command is:
+
+```text
+wall delete wall range name 'w_inner'
+```
+
+Numerical stability: the bonded lining balls should not “fly” if you do a release-only baseline with damping/calm and velocity/crack breakers. If deleting `w_inner` alone causes major cracks, that is a result: the rigid inner wall was carrying artificial support, and the free-inner run must be reported relative to the free-inner settled baseline.
+
+I did not launch the free run here because this session is read-only and the run would need to write logs/saves.

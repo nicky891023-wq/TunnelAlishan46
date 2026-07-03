@@ -1,0 +1,111 @@
+program log-file 'large_insitu_v3.log'
+program log on
+model restore '../01_LargeModel/Large_Model'
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain off
+zone cmodel assign mohr-coulomb
+zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+zone initialize density [den_L_1] range group 'layer1' slot 'type'
+zone initialize density [den_L_2] range group 'layer2' slot 'type'
+zone initialize density [den_L_3] range group 'layer3' slot 'type'
+zone initialize density [den_L_4] range group 'layer4' slot 'type'
+model gravity 0 0 [-grav]
+zone initialize-stresses ratio [K0]
+; --- depth-tapered K0: shallow ridges K0=0.33 -> deep K0=0.7 by overburden sv ---
+[global k0_sh = 0.33]
+[global k0_dp = 0.70]
+[global sv_ref = 3.0e6]
+fish define taper_k0
+    local nt = 0
+    loop foreach local z zone.list
+        local szz = zone.stress.zz(z)
+        local sv = -szz
+        local frac = sv/sv_ref
+        if frac > 1.0 then
+            frac = 1.0
+        end_if
+        if frac < 0.0 then
+            frac = 0.0
+        end_if
+        local k0z = k0_sh + (k0_dp-k0_sh)*frac
+        zone.stress.xx(z) = k0z*szz
+        zone.stress.yy(z) = k0z*szz
+        nt = nt + 1
+    end_loop
+    io.out('LV3-TAPER applied depth-tapered K0 ('+string(k0_sh)+'->'+string(k0_dp)+' over sv 0-'+string(sv_ref)+') to '+string(nt)+' zones')
+end
+[taper_k0]
+zone gridpoint fix velocity-x range position-x -1 1
+zone gridpoint fix velocity-x range position-x 1999 2001
+zone gridpoint fix velocity-y range position-y -101 -99
+zone gridpoint fix velocity-y range position-y 1999 2001
+zone gridpoint fix velocity   range position-z 799 801
+fish define qa_tension(tag)
+    local maxprin = -1e30
+    local nten = 0
+    loop foreach local z zone.list
+        local pz = zone.stress.prin.z(z)
+        if pz > maxprin then
+            maxprin = pz
+        end_if
+        if pz > 1000.0 then
+            nten = nten + 1
+        end_if
+    end_loop
+    io.out('LV3-TENSION '+tag+' max_principal='+string(maxprin)+'Pa tension_zones(prin>1kPa)='+string(nten)+'/'+string(zone.num))
+end
+fish define qa_full(tag)
+    local nplas = 0
+    local mv = 0.0
+    local mdsp = 0.0
+    loop foreach local z zone.list
+        if zone.state(z,1) # 0 then
+            nplas = nplas + 1
+        end_if
+    end_loop
+    loop foreach local g gp.list
+        local v = gp.vel(g)
+        local m = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+        if m > mv then
+            mv = m
+        end_if
+        local d = gp.disp(g)
+        local md = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+        if md > mdsp then
+            mdsp = md
+        end_if
+    end_loop
+    io.out('LV3-FULL '+tag+' plastic_zones='+string(nplas)+'/'+string(zone.num)+' max_gp_vel='+string(mv)+' max_gp_disp='+string(mdsp*1000.0)+'mm')
+end
+[qa_tension('after-taper-init')]
+model solve elastic ratio-local 1e-3
+[qa_tension('after-elastic')]
+[qa_full('after-elastic')]
+model save '../04_InitialBalance/Large_Init_v3'
+[io.out('LV3-SAVED Large_Init_v3')]
+fish define exp_slice
+    local st = file.open('qa_largev3_slice.txt',1,1)
+    local b = array.create(1)
+    b(1) = 'x z szz sxx prinz state'
+    file.write(b,1)
+    local n = 0
+    loop foreach local z zone.list
+        local yc = zone.pos.y(z)
+        if yc > 880.0 then
+        if yc < 890.0 then
+            local p = zone.pos(z)
+            b(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.stress.prin.z(z))+' '+string(zone.state(z,1))
+            file.write(b,1)
+            n = n + 1
+        end_if
+        end_if
+    end_loop
+    local cl = file.close
+    io.out('LV3-SLICE exported '+string(n)+' zones -> qa_largev3_slice.txt')
+end
+[exp_slice]
+[io.out('LV3-DONE')]
+program quit

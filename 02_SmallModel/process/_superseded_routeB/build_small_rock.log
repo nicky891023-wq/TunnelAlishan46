@@ -1,0 +1,1669 @@
+after cut+fragment: rock volumes = 6
+  layer1: 1 fragment(s)
+  layer2: 1 fragment(s)
+  layer3: 1 fragment(s)
+  layer4: 1 fragment(s)
+  layer5: 1 fragment(s)
+  layer6: 1 fragment(s)
+  cavity wall faces: 132
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 13 (BSpline)
+Info    : [ 10%] Meshing curve 14 (BSpline)
+Info    : [ 10%] Meshing curve 15 (BSpline)
+Info    : [ 10%] Meshing curve 16 (BSpline)
+Info    : [ 10%] Meshing curve 17 (BSpline)
+Info    : [ 10%] Meshing curve 18 (BSpline)
+Info    : [ 10%] Meshing curve 19 (BSpline)
+Info    : [ 10%] Meshing curve 20 (BSpline)
+Info    : [ 10%] Meshing curve 29 (BSpline)
+Info    : [ 10%] Meshing curve 30 (BSpline)
+Info    : [ 10%] Meshing curve 31 (BSpline)
+Info    : [ 10%] Meshing curve 32 (BSpline)
+Info    : [ 10%] Meshing curve 33 (BSpline)
+Info    : [ 10%] Meshing curve 34 (Line)
+Info    : [ 10%] Meshing curve 35 (Line)
+Info    : [ 10%] Meshing curve 36 (Line)
+Info    : [ 10%] Meshing curve 37 (Line)
+Info    : [ 10%] Meshing curve 38 (Line)
+Info    : [ 10%] Meshing curve 39 (Line)
+Info    : [ 10%] Meshing curve 40 (Line)
+Info    : [ 10%] Meshing curve 41 (Line)
+Info    : [ 10%] Meshing curve 42 (Line)
+Info    : [ 10%] Meshing curve 43 (Line)
+Info    : [ 10%] Meshing curve 44 (Line)
+Info    : [ 10%] Meshing curve 45 (Line)
+Info    : [ 10%] Meshing curve 46 (Line)
+Info    : [ 10%] Meshing curve 47 (Line)
+Info    : [ 10%] Meshing curve 48 (Line)
+Info    : [ 10%] Meshing curve 49 (Line)
+Info    : [ 10%] Meshing curve 50 (Line)
+Info    : [ 10%] Meshing curve 51 (Line)
+Info    : [ 10%] Meshing curve 52 (Line)
+Info    : [ 10%] Meshing curve 53 (Line)
+Info    : [ 10%] Meshing curve 54 (Line)
+Info    : [ 10%] Meshing curve 55 (Line)
+Info    : [ 10%] Meshing curve 56 (Line)
+Info    : [ 10%] Meshing curve 57 (Line)
+Info    : [ 10%] Meshing curve 58 (Line)
+Info    : [ 10%] Meshing curve 59 (Line)
+Info    : [ 10%] Meshing curve 60 (Line)
+Info    : [ 10%] Meshing curve 61 (Line)
+Info    : [ 10%] Meshing curve 62 (Line)
+Info    : [ 10%] Meshing curve 63 (Line)
+Info    : [ 10%] Meshing curve 64 (Line)
+Info    : [ 10%] Meshing curve 65 (Line)
+Info    : [ 10%] Meshing curve 66 (Line)
+Info    : [ 10%] Meshing curve 67 (Line)
+Info    : [ 10%] Meshing curve 68 (Line)
+Info    : [ 10%] Meshing curve 69 (Line)
+Info    : [ 10%] Meshing curve 70 (Line)
+Info    : [ 10%] Meshing curve 71 (Line)
+Info    : [ 10%] Meshing curve 72 (Line)
+Info    : [ 10%] Meshing curve 73 (Line)
+Info    : [ 10%] Meshing curve 74 (Line)
+Info    : [ 20%] Meshing curve 75 (Line)
+Info    : [ 20%] Meshing curve 76 (Line)
+Info    : [ 20%] Meshing curve 77 (Line)
+Info    : [ 20%] Meshing curve 78 (Line)
+Info    : [ 20%] Meshing curve 79 (Line)
+Info    : [ 20%] Meshing curve 80 (Line)
+Info    : [ 20%] Meshing curve 81 (Line)
+Info    : [ 20%] Meshing curve 82 (Line)
+Info    : [ 20%] Meshing curve 83 (Line)
+Info    : [ 20%] Meshing curve 84 (Line)
+Info    : [ 20%] Meshing curve 85 (Line)
+Info    : [ 20%] Meshing curve 86 (Line)
+Info    : [ 20%] Meshing curve 87 (Line)
+Info    : [ 20%] Meshing curve 88 (Line)
+Info    : [ 20%] Meshing curve 89 (Line)
+Info    : [ 20%] Meshing curve 90 (Line)
+Info    : [ 20%] Meshing curve 91 (Line)
+Info    : [ 20%] Meshing curve 92 (Line)
+Info    : [ 20%] Meshing curve 93 (Line)
+Info    : [ 20%] Meshing curve 94 (Line)
+Info    : [ 20%] Meshing curve 95 (Line)
+Info    : [ 20%] Meshing curve 96 (Line)
+Info    : [ 20%] Meshing curve 97 (Line)
+Info    : [ 20%] Meshing curve 98 (Line)
+Info    : [ 20%] Meshing curve 99 (Line)
+Info    : [ 20%] Meshing curve 100 (Line)
+Info    : [ 20%] Meshing curve 101 (Line)
+Info    : [ 20%] Meshing curve 102 (Line)
+Info    : [ 20%] Meshing curve 103 (Line)
+Info    : [ 20%] Meshing curve 104 (Line)
+Info    : [ 20%] Meshing curve 105 (BSpline)
+Info    : [ 20%] Meshing curve 106 (Line)
+Info    : [ 20%] Meshing curve 107 (Line)
+Info    : [ 20%] Meshing curve 108 (BSpline)
+Info    : [ 20%] Meshing curve 109 (BSpline)
+Info    : [ 20%] Meshing curve 110 (BSpline)
+Info    : [ 20%] Meshing curve 111 (BSpline)
+Info    : [ 20%] Meshing curve 112 (BSpline)
+Info    : [ 20%] Meshing curve 113 (BSpline)
+Info    : [ 20%] Meshing curve 114 (BSpline)
+Info    : [ 20%] Meshing curve 115 (BSpline)
+Info    : [ 20%] Meshing curve 116 (BSpline)
+Info    : [ 20%] Meshing curve 117 (BSpline)
+Info    : [ 20%] Meshing curve 118 (BSpline)
+Info    : [ 20%] Meshing curve 119 (BSpline)
+Info    : [ 20%] Meshing curve 120 (BSpline)
+Info    : [ 20%] Meshing curve 121 (BSpline)
+Info    : [ 20%] Meshing curve 122 (BSpline)
+Info    : [ 20%] Meshing curve 123 (BSpline)
+Info    : [ 20%] Meshing curve 124 (BSpline)
+Info    : [ 20%] Meshing curve 125 (BSpline)
+Info    : [ 20%] Meshing curve 126 (BSpline)
+Info    : [ 20%] Meshing curve 127 (BSpline)
+Info    : [ 20%] Meshing curve 128 (BSpline)
+Info    : [ 30%] Meshing curve 129 (BSpline)
+Info    : [ 30%] Meshing curve 130 (BSpline)
+Info    : [ 30%] Meshing curve 131 (BSpline)
+Info    : [ 30%] Meshing curve 132 (BSpline)
+Info    : [ 30%] Meshing curve 133 (BSpline)
+Info    : [ 30%] Meshing curve 134 (BSpline)
+Info    : [ 30%] Meshing curve 135 (BSpline)
+Info    : [ 30%] Meshing curve 136 (BSpline)
+Info    : [ 30%] Meshing curve 137 (BSpline)
+Info    : [ 30%] Meshing curve 138 (BSpline)
+Info    : [ 30%] Meshing curve 139 (BSpline)
+Info    : [ 30%] Meshing curve 140 (BSpline)
+Info    : [ 30%] Meshing curve 141 (BSpline)
+Info    : [ 30%] Meshing curve 142 (BSpline)
+Info    : [ 30%] Meshing curve 143 (BSpline)
+Info    : [ 30%] Meshing curve 144 (BSpline)
+Info    : [ 30%] Meshing curve 145 (BSpline)
+Info    : [ 30%] Meshing curve 146 (BSpline)
+Info    : [ 30%] Meshing curve 147 (BSpline)
+Info    : [ 30%] Meshing curve 148 (BSpline)
+Info    : [ 30%] Meshing curve 149 (BSpline)
+Info    : [ 30%] Meshing curve 150 (BSpline)
+Info    : [ 30%] Meshing curve 151 (BSpline)
+Info    : [ 30%] Meshing curve 152 (BSpline)
+Info    : [ 30%] Meshing curve 153 (BSpline)
+Info    : [ 30%] Meshing curve 154 (BSpline)
+Info    : [ 30%] Meshing curve 155 (BSpline)
+Info    : [ 30%] Meshing curve 156 (BSpline)
+Info    : [ 30%] Meshing curve 157 (BSpline)
+Info    : [ 30%] Meshing curve 158 (BSpline)
+Info    : [ 30%] Meshing curve 159 (BSpline)
+Info    : [ 30%] Meshing curve 160 (BSpline)
+Info    : [ 30%] Meshing curve 161 (BSpline)
+Info    : [ 30%] Meshing curve 162 (BSpline)
+Info    : [ 30%] Meshing curve 163 (BSpline)
+Info    : [ 30%] Meshing curve 164 (BSpline)
+Info    : [ 30%] Meshing curve 165 (BSpline)
+Info    : [ 30%] Meshing curve 166 (BSpline)
+Info    : [ 30%] Meshing curve 167 (BSpline)
+Info    : [ 30%] Meshing curve 168 (BSpline)
+Info    : [ 30%] Meshing curve 169 (BSpline)
+Info    : [ 30%] Meshing curve 170 (BSpline)
+Info    : [ 30%] Meshing curve 171 (BSpline)
+Info    : [ 30%] Meshing curve 172 (BSpline)
+Info    : [ 30%] Meshing curve 173 (BSpline)
+Info    : [ 30%] Meshing curve 174 (BSpline)
+Info    : [ 30%] Meshing curve 175 (BSpline)
+Info    : [ 30%] Meshing curve 176 (BSpline)
+Info    : [ 30%] Meshing curve 177 (BSpline)
+Info    : [ 30%] Meshing curve 178 (BSpline)
+Info    : [ 30%] Meshing curve 179 (BSpline)
+Info    : [ 30%] Meshing curve 180 (BSpline)
+Info    : [ 30%] Meshing curve 181 (BSpline)
+Info    : [ 30%] Meshing curve 182 (BSpline)
+Info    : [ 40%] Meshing curve 183 (BSpline)
+Info    : [ 40%] Meshing curve 184 (BSpline)
+Info    : [ 40%] Meshing curve 185 (BSpline)
+Info    : [ 40%] Meshing curve 186 (BSpline)
+Info    : [ 40%] Meshing curve 187 (BSpline)
+Info    : [ 40%] Meshing curve 188 (BSpline)
+Info    : [ 40%] Meshing curve 189 (BSpline)
+Info    : [ 40%] Meshing curve 190 (BSpline)
+Info    : [ 40%] Meshing curve 191 (BSpline)
+Info    : [ 40%] Meshing curve 192 (BSpline)
+Info    : [ 40%] Meshing curve 193 (BSpline)
+Info    : [ 40%] Meshing curve 194 (BSpline)
+Info    : [ 40%] Meshing curve 195 (BSpline)
+Info    : [ 40%] Meshing curve 196 (BSpline)
+Info    : [ 40%] Meshing curve 197 (BSpline)
+Info    : [ 40%] Meshing curve 198 (BSpline)
+Info    : [ 40%] Meshing curve 199 (BSpline)
+Info    : [ 40%] Meshing curve 200 (BSpline)
+Info    : [ 40%] Meshing curve 201 (BSpline)
+Info    : [ 40%] Meshing curve 202 (BSpline)
+Info    : [ 40%] Meshing curve 203 (BSpline)
+Info    : [ 40%] Meshing curve 204 (BSpline)
+Info    : [ 40%] Meshing curve 205 (BSpline)
+Info    : [ 40%] Meshing curve 206 (BSpline)
+Info    : [ 40%] Meshing curve 207 (BSpline)
+Info    : [ 40%] Meshing curve 208 (BSpline)
+Info    : [ 40%] Meshing curve 209 (BSpline)
+Info    : [ 40%] Meshing curve 210 (BSpline)
+Info    : [ 40%] Meshing curve 211 (BSpline)
+Info    : [ 40%] Meshing curve 212 (BSpline)
+Info    : [ 40%] Meshing curve 213 (BSpline)
+Info    : [ 40%] Meshing curve 214 (BSpline)
+Info    : [ 40%] Meshing curve 215 (BSpline)
+Info    : [ 40%] Meshing curve 216 (BSpline)
+Info    : [ 40%] Meshing curve 217 (BSpline)
+Info    : [ 40%] Meshing curve 218 (BSpline)
+Info    : [ 40%] Meshing curve 219 (BSpline)
+Info    : [ 40%] Meshing curve 220 (BSpline)
+Info    : [ 40%] Meshing curve 221 (BSpline)
+Info    : [ 40%] Meshing curve 222 (BSpline)
+Info    : [ 40%] Meshing curve 223 (BSpline)
+Info    : [ 40%] Meshing curve 224 (BSpline)
+Info    : [ 40%] Meshing curve 225 (BSpline)
+Info    : [ 40%] Meshing curve 226 (BSpline)
+Info    : [ 40%] Meshing curve 227 (BSpline)
+Info    : [ 40%] Meshing curve 228 (BSpline)
+Info    : [ 40%] Meshing curve 229 (BSpline)
+Info    : [ 40%] Meshing curve 230 (BSpline)
+Info    : [ 40%] Meshing curve 231 (BSpline)
+Info    : [ 40%] Meshing curve 232 (BSpline)
+Info    : [ 40%] Meshing curve 233 (BSpline)
+Info    : [ 40%] Meshing curve 234 (BSpline)
+Info    : [ 40%] Meshing curve 235 (Line)
+Info    : [ 40%] Meshing curve 236 (BSpline)
+Info    : [ 50%] Meshing curve 237 (BSpline)
+Info    : [ 50%] Meshing curve 238 (BSpline)
+Info    : [ 50%] Meshing curve 239 (BSpline)
+Info    : [ 50%] Meshing curve 240 (BSpline)
+Info    : [ 50%] Meshing curve 241 (BSpline)
+Info    : [ 50%] Meshing curve 242 (BSpline)
+Info    : [ 50%] Meshing curve 243 (BSpline)
+Info    : [ 50%] Meshing curve 244 (BSpline)
+Info    : [ 50%] Meshing curve 245 (BSpline)
+Info    : [ 50%] Meshing curve 246 (BSpline)
+Info    : [ 50%] Meshing curve 247 (BSpline)
+Info    : [ 50%] Meshing curve 248 (BSpline)
+Info    : [ 50%] Meshing curve 249 (BSpline)
+Info    : [ 50%] Meshing curve 250 (BSpline)
+Info    : [ 50%] Meshing curve 251 (BSpline)
+Info    : [ 50%] Meshing curve 252 (BSpline)
+Info    : [ 50%] Meshing curve 253 (BSpline)
+Info    : [ 50%] Meshing curve 254 (BSpline)
+Info    : [ 50%] Meshing curve 255 (BSpline)
+Info    : [ 50%] Meshing curve 256 (BSpline)
+Info    : [ 50%] Meshing curve 257 (BSpline)
+Info    : [ 50%] Meshing curve 258 (BSpline)
+Info    : [ 50%] Meshing curve 259 (BSpline)
+Info    : [ 50%] Meshing curve 260 (BSpline)
+Info    : [ 50%] Meshing curve 261 (BSpline)
+Info    : [ 50%] Meshing curve 262 (BSpline)
+Info    : [ 50%] Meshing curve 263 (BSpline)
+Info    : [ 50%] Meshing curve 264 (BSpline)
+Info    : [ 50%] Meshing curve 265 (BSpline)
+Info    : [ 50%] Meshing curve 266 (BSpline)
+Info    : [ 50%] Meshing curve 267 (BSpline)
+Info    : [ 50%] Meshing curve 268 (BSpline)
+Info    : [ 50%] Meshing curve 269 (BSpline)
+Info    : [ 50%] Meshing curve 270 (BSpline)
+Info    : [ 50%] Meshing curve 271 (BSpline)
+Info    : [ 50%] Meshing curve 272 (BSpline)
+Info    : [ 50%] Meshing curve 273 (BSpline)
+Info    : [ 50%] Meshing curve 274 (BSpline)
+Info    : [ 50%] Meshing curve 275 (BSpline)
+Info    : [ 50%] Meshing curve 276 (BSpline)
+Info    : [ 50%] Meshing curve 277 (BSpline)
+Info    : [ 50%] Meshing curve 278 (BSpline)
+Info    : [ 50%] Meshing curve 279 (BSpline)
+Info    : [ 50%] Meshing curve 280 (BSpline)
+Info    : [ 50%] Meshing curve 281 (BSpline)
+Info    : [ 50%] Meshing curve 282 (BSpline)
+Info    : [ 50%] Meshing curve 283 (BSpline)
+Info    : [ 50%] Meshing curve 284 (BSpline)
+Info    : [ 50%] Meshing curve 285 (BSpline)
+Info    : [ 50%] Meshing curve 286 (BSpline)
+Info    : [ 50%] Meshing curve 287 (BSpline)
+Info    : [ 50%] Meshing curve 288 (BSpline)
+Info    : [ 50%] Meshing curve 289 (BSpline)
+Info    : [ 50%] Meshing curve 290 (BSpline)
+Info    : [ 60%] Meshing curve 291 (BSpline)
+Info    : [ 60%] Meshing curve 292 (BSpline)
+Info    : [ 60%] Meshing curve 293 (BSpline)
+Info    : [ 60%] Meshing curve 294 (BSpline)
+Info    : [ 60%] Meshing curve 295 (BSpline)
+Info    : [ 60%] Meshing curve 296 (BSpline)
+Info    : [ 60%] Meshing curve 297 (BSpline)
+Info    : [ 60%] Meshing curve 298 (Line)
+Info    : [ 60%] Meshing curve 299 (BSpline)
+Info    : [ 60%] Meshing curve 300 (Line)
+Info    : [ 60%] Meshing curve 301 (Line)
+Info    : [ 60%] Meshing curve 302 (BSpline)
+Info    : [ 60%] Meshing curve 303 (BSpline)
+Info    : [ 60%] Meshing curve 304 (BSpline)
+Info    : [ 60%] Meshing curve 305 (BSpline)
+Info    : [ 60%] Meshing curve 306 (BSpline)
+Info    : [ 60%] Meshing curve 307 (BSpline)
+Info    : [ 60%] Meshing curve 308 (BSpline)
+Info    : [ 60%] Meshing curve 309 (BSpline)
+Info    : [ 60%] Meshing curve 310 (BSpline)
+Info    : [ 60%] Meshing curve 311 (BSpline)
+Info    : [ 60%] Meshing curve 312 (BSpline)
+Info    : [ 60%] Meshing curve 313 (BSpline)
+Info    : [ 60%] Meshing curve 314 (BSpline)
+Info    : [ 60%] Meshing curve 315 (BSpline)
+Info    : [ 60%] Meshing curve 316 (BSpline)
+Info    : [ 60%] Meshing curve 317 (BSpline)
+Info    : [ 60%] Meshing curve 318 (BSpline)
+Info    : [ 60%] Meshing curve 319 (BSpline)
+Info    : [ 60%] Meshing curve 320 (BSpline)
+Info    : [ 60%] Meshing curve 321 (BSpline)
+Info    : [ 60%] Meshing curve 322 (BSpline)
+Info    : [ 60%] Meshing curve 323 (BSpline)
+Info    : [ 60%] Meshing curve 324 (BSpline)
+Info    : [ 60%] Meshing curve 325 (BSpline)
+Info    : [ 60%] Meshing curve 326 (BSpline)
+Info    : [ 60%] Meshing curve 327 (BSpline)
+Info    : [ 60%] Meshing curve 328 (BSpline)
+Info    : [ 60%] Meshing curve 329 (BSpline)
+Info    : [ 60%] Meshing curve 330 (BSpline)
+Info    : [ 60%] Meshing curve 331 (BSpline)
+Info    : [ 60%] Meshing curve 332 (BSpline)
+Info    : [ 60%] Meshing curve 333 (BSpline)
+Info    : [ 60%] Meshing curve 334 (BSpline)
+Info    : [ 60%] Meshing curve 335 (BSpline)
+Info    : [ 60%] Meshing curve 336 (BSpline)
+Info    : [ 60%] Meshing curve 337 (BSpline)
+Info    : [ 60%] Meshing curve 338 (BSpline)
+Info    : [ 60%] Meshing curve 339 (BSpline)
+Info    : [ 60%] Meshing curve 340 (BSpline)
+Info    : [ 60%] Meshing curve 341 (BSpline)
+Info    : [ 60%] Meshing curve 342 (BSpline)
+Info    : [ 60%] Meshing curve 343 (BSpline)
+Info    : [ 60%] Meshing curve 344 (BSpline)
+Info    : [ 70%] Meshing curve 345 (BSpline)
+Info    : [ 70%] Meshing curve 346 (BSpline)
+Info    : [ 70%] Meshing curve 347 (BSpline)
+Info    : [ 70%] Meshing curve 348 (BSpline)
+Info    : [ 70%] Meshing curve 349 (BSpline)
+Info    : [ 70%] Meshing curve 350 (BSpline)
+Info    : [ 70%] Meshing curve 351 (BSpline)
+Info    : [ 70%] Meshing curve 352 (BSpline)
+Info    : [ 70%] Meshing curve 353 (BSpline)
+Info    : [ 70%] Meshing curve 354 (BSpline)
+Info    : [ 70%] Meshing curve 355 (BSpline)
+Info    : [ 70%] Meshing curve 356 (BSpline)
+Info    : [ 70%] Meshing curve 357 (BSpline)
+Info    : [ 70%] Meshing curve 358 (BSpline)
+Info    : [ 70%] Meshing curve 359 (BSpline)
+Info    : [ 70%] Meshing curve 360 (BSpline)
+Info    : [ 70%] Meshing curve 361 (BSpline)
+Info    : [ 70%] Meshing curve 362 (Line)
+Info    : [ 70%] Meshing curve 363 (BSpline)
+Info    : [ 70%] Meshing curve 364 (BSpline)
+Info    : [ 70%] Meshing curve 365 (BSpline)
+Info    : [ 70%] Meshing curve 366 (BSpline)
+Info    : [ 70%] Meshing curve 367 (BSpline)
+Info    : [ 70%] Meshing curve 368 (BSpline)
+Info    : [ 70%] Meshing curve 369 (BSpline)
+Info    : [ 70%] Meshing curve 370 (BSpline)
+Info    : [ 70%] Meshing curve 371 (BSpline)
+Info    : [ 70%] Meshing curve 372 (BSpline)
+Info    : [ 70%] Meshing curve 373 (BSpline)
+Info    : [ 70%] Meshing curve 374 (BSpline)
+Info    : [ 70%] Meshing curve 375 (BSpline)
+Info    : [ 70%] Meshing curve 376 (BSpline)
+Info    : [ 70%] Meshing curve 377 (BSpline)
+Info    : [ 70%] Meshing curve 378 (BSpline)
+Info    : [ 70%] Meshing curve 379 (BSpline)
+Info    : [ 70%] Meshing curve 380 (BSpline)
+Info    : [ 70%] Meshing curve 381 (BSpline)
+Info    : [ 70%] Meshing curve 382 (BSpline)
+Info    : [ 70%] Meshing curve 383 (BSpline)
+Info    : [ 70%] Meshing curve 384 (BSpline)
+Info    : [ 70%] Meshing curve 385 (BSpline)
+Info    : [ 70%] Meshing curve 386 (BSpline)
+Info    : [ 70%] Meshing curve 387 (BSpline)
+Info    : [ 70%] Meshing curve 388 (BSpline)
+Info    : [ 70%] Meshing curve 389 (BSpline)
+Info    : [ 70%] Meshing curve 390 (BSpline)
+Info    : [ 70%] Meshing curve 391 (BSpline)
+Info    : [ 70%] Meshing curve 392 (BSpline)
+Info    : [ 70%] Meshing curve 393 (BSpline)
+Info    : [ 70%] Meshing curve 394 (BSpline)
+Info    : [ 70%] Meshing curve 395 (BSpline)
+Info    : [ 70%] Meshing curve 396 (BSpline)
+Info    : [ 70%] Meshing curve 397 (BSpline)
+Info    : [ 70%] Meshing curve 398 (BSpline)
+Info    : [ 80%] Meshing curve 399 (BSpline)
+Info    : [ 80%] Meshing curve 400 (BSpline)
+Info    : [ 80%] Meshing curve 401 (BSpline)
+Info    : [ 80%] Meshing curve 402 (BSpline)
+Info    : [ 80%] Meshing curve 403 (BSpline)
+Info    : [ 80%] Meshing curve 404 (BSpline)
+Info    : [ 80%] Meshing curve 405 (BSpline)
+Info    : [ 80%] Meshing curve 406 (BSpline)
+Info    : [ 80%] Meshing curve 407 (BSpline)
+Info    : [ 80%] Meshing curve 408 (BSpline)
+Info    : [ 80%] Meshing curve 409 (BSpline)
+Info    : [ 80%] Meshing curve 410 (BSpline)
+Info    : [ 80%] Meshing curve 411 (BSpline)
+Info    : [ 80%] Meshing curve 412 (BSpline)
+Info    : [ 80%] Meshing curve 413 (BSpline)
+Info    : [ 80%] Meshing curve 414 (BSpline)
+Info    : [ 80%] Meshing curve 415 (BSpline)
+Info    : [ 80%] Meshing curve 416 (BSpline)
+Info    : [ 80%] Meshing curve 417 (BSpline)
+Info    : [ 80%] Meshing curve 418 (BSpline)
+Info    : [ 80%] Meshing curve 419 (BSpline)
+Info    : [ 80%] Meshing curve 420 (BSpline)
+Info    : [ 80%] Meshing curve 421 (BSpline)
+Info    : [ 80%] Meshing curve 422 (BSpline)
+Info    : [ 80%] Meshing curve 423 (BSpline)
+Info    : [ 80%] Meshing curve 424 (BSpline)
+Info    : [ 80%] Meshing curve 425 (BSpline)
+Info    : [ 80%] Meshing curve 426 (BSpline)
+Info    : [ 80%] Meshing curve 427 (BSpline)
+Info    : [ 80%] Meshing curve 428 (BSpline)
+Info    : [ 80%] Meshing curve 429 (BSpline)
+Info    : [ 80%] Meshing curve 430 (BSpline)
+Info    : [ 80%] Meshing curve 431 (BSpline)
+Info    : [ 80%] Meshing curve 432 (BSpline)
+Info    : [ 80%] Meshing curve 433 (Line)
+Info    : [ 80%] Meshing curve 434 (Line)
+Info    : [ 80%] Meshing curve 435 (Line)
+Info    : [ 80%] Meshing curve 436 (Line)
+Info    : [ 80%] Meshing curve 437 (BSpline)
+Info    : [ 80%] Meshing curve 438 (BSpline)
+Info    : [ 80%] Meshing curve 439 (BSpline)
+Info    : [ 80%] Meshing curve 440 (BSpline)
+Info    : [ 80%] Meshing curve 441 (BSpline)
+Info    : [ 80%] Meshing curve 442 (BSpline)
+Info    : [ 80%] Meshing curve 443 (BSpline)
+Info    : [ 80%] Meshing curve 444 (BSpline)
+Info    : [ 80%] Meshing curve 445 (BSpline)
+Info    : [ 80%] Meshing curve 446 (BSpline)
+Info    : [ 80%] Meshing curve 447 (BSpline)
+Info    : [ 80%] Meshing curve 448 (BSpline)
+Info    : [ 80%] Meshing curve 449 (BSpline)
+Info    : [ 80%] Meshing curve 450 (BSpline)
+Info    : [ 80%] Meshing curve 451 (BSpline)
+Info    : [ 80%] Meshing curve 452 (BSpline)
+Info    : [ 90%] Meshing curve 453 (BSpline)
+Info    : [ 90%] Meshing curve 454 (BSpline)
+Info    : [ 90%] Meshing curve 455 (BSpline)
+Info    : [ 90%] Meshing curve 456 (BSpline)
+Info    : [ 90%] Meshing curve 457 (BSpline)
+Info    : [ 90%] Meshing curve 458 (BSpline)
+Info    : [ 90%] Meshing curve 459 (BSpline)
+Info    : [ 90%] Meshing curve 460 (BSpline)
+Info    : [ 90%] Meshing curve 461 (BSpline)
+Info    : [ 90%] Meshing curve 462 (BSpline)
+Info    : [ 90%] Meshing curve 463 (BSpline)
+Info    : [ 90%] Meshing curve 464 (BSpline)
+Info    : [ 90%] Meshing curve 465 (BSpline)
+Info    : [ 90%] Meshing curve 466 (BSpline)
+Info    : [ 90%] Meshing curve 467 (BSpline)
+Info    : [ 90%] Meshing curve 468 (BSpline)
+Info    : [ 90%] Meshing curve 469 (BSpline)
+Info    : [ 90%] Meshing curve 470 (BSpline)
+Info    : [ 90%] Meshing curve 471 (BSpline)
+Info    : [ 90%] Meshing curve 472 (BSpline)
+Info    : [ 90%] Meshing curve 473 (BSpline)
+Info    : [ 90%] Meshing curve 474 (BSpline)
+Info    : [ 90%] Meshing curve 475 (BSpline)
+Info    : [ 90%] Meshing curve 476 (BSpline)
+Info    : [ 90%] Meshing curve 477 (BSpline)
+Info    : [ 90%] Meshing curve 478 (BSpline)
+Info    : [ 90%] Meshing curve 479 (BSpline)
+Info    : [ 90%] Meshing curve 480 (BSpline)
+Info    : [ 90%] Meshing curve 481 (BSpline)
+Info    : [ 90%] Meshing curve 482 (BSpline)
+Info    : [ 90%] Meshing curve 483 (BSpline)
+Info    : [ 90%] Meshing curve 484 (BSpline)
+Info    : [ 90%] Meshing curve 485 (BSpline)
+Info    : [ 90%] Meshing curve 486 (BSpline)
+Info    : [ 90%] Meshing curve 487 (BSpline)
+Info    : [ 90%] Meshing curve 488 (BSpline)
+Info    : [ 90%] Meshing curve 489 (BSpline)
+Info    : [ 90%] Meshing curve 490 (BSpline)
+Info    : [ 90%] Meshing curve 491 (BSpline)
+Info    : [ 90%] Meshing curve 492 (BSpline)
+Info    : [ 90%] Meshing curve 493 (BSpline)
+Info    : [ 90%] Meshing curve 494 (BSpline)
+Info    : [ 90%] Meshing curve 495 (BSpline)
+Info    : [ 90%] Meshing curve 496 (BSpline)
+Info    : [ 90%] Meshing curve 497 (BSpline)
+Info    : [ 90%] Meshing curve 498 (BSpline)
+Info    : [ 90%] Meshing curve 499 (BSpline)
+Info    : [ 90%] Meshing curve 500 (BSpline)
+Info    : [ 90%] Meshing curve 501 (BSpline)
+Info    : [ 90%] Meshing curve 502 (BSpline)
+Info    : [ 90%] Meshing curve 503 (BSpline)
+Info    : [ 90%] Meshing curve 504 (BSpline)
+Info    : [ 90%] Meshing curve 505 (BSpline)
+Info    : [ 90%] Meshing curve 506 (BSpline)
+Info    : [100%] Meshing curve 507 (BSpline)
+Info    : [100%] Meshing curve 508 (BSpline)
+Info    : [100%] Meshing curve 509 (BSpline)
+Info    : [100%] Meshing curve 510 (BSpline)
+Info    : [100%] Meshing curve 511 (BSpline)
+Info    : [100%] Meshing curve 512 (BSpline)
+Info    : [100%] Meshing curve 513 (BSpline)
+Info    : [100%] Meshing curve 514 (BSpline)
+Info    : [100%] Meshing curve 515 (BSpline)
+Info    : [100%] Meshing curve 516 (BSpline)
+Info    : [100%] Meshing curve 517 (BSpline)
+Info    : [100%] Meshing curve 518 (BSpline)
+Info    : [100%] Meshing curve 519 (BSpline)
+Info    : [100%] Meshing curve 520 (BSpline)
+Info    : [100%] Meshing curve 521 (BSpline)
+Info    : [100%] Meshing curve 522 (BSpline)
+Info    : [100%] Meshing curve 523 (BSpline)
+Info    : [100%] Meshing curve 524 (BSpline)
+Info    : [100%] Meshing curve 525 (BSpline)
+Info    : [100%] Meshing curve 526 (BSpline)
+Info    : [100%] Meshing curve 527 (BSpline)
+Info    : [100%] Meshing curve 528 (BSpline)
+Info    : [100%] Meshing curve 529 (BSpline)
+Info    : [100%] Meshing curve 530 (BSpline)
+Info    : [100%] Meshing curve 531 (BSpline)
+Info    : [100%] Meshing curve 532 (BSpline)
+Info    : [100%] Meshing curve 533 (BSpline)
+Info    : [100%] Meshing curve 534 (BSpline)
+Info    : [100%] Meshing curve 535 (BSpline)
+Info    : [100%] Meshing curve 536 (BSpline)
+Info    : [100%] Meshing curve 537 (BSpline)
+Info    : [100%] Meshing curve 538 (BSpline)
+Info    : [100%] Meshing curve 539 (BSpline)
+Info    : [100%] Meshing curve 540 (BSpline)
+Info    : [100%] Meshing curve 541 (BSpline)
+Info    : [100%] Meshing curve 542 (BSpline)
+Info    : [100%] Meshing curve 543 (BSpline)
+Info    : [100%] Meshing curve 544 (BSpline)
+Info    : [100%] Meshing curve 545 (BSpline)
+Info    : [100%] Meshing curve 546 (BSpline)
+Info    : [100%] Meshing curve 547 (BSpline)
+Info    : [100%] Meshing curve 548 (Line)
+Info    : [100%] Meshing curve 549 (Line)
+Info    : [100%] Meshing curve 550 (Line)
+Info    : [100%] Meshing curve 551 (Line)
+Info    : [100%] Meshing curve 552 (Line)
+Info    : [100%] Meshing curve 553 (Line)
+Info    : [100%] Meshing curve 554 (Line)
+Info    : [100%] Meshing curve 555 (Line)
+Info    : [100%] Meshing curve 556 (Line)
+Info    : [100%] Meshing curve 557 (Line)
+Info    : [100%] Meshing curve 558 (Line)
+Info    : [100%] Meshing curve 559 (Line)
+Info    : [100%] Meshing curve 560 (BSpline)
+Info    : Done meshing 1D (Wall 18.1344s, CPU 17.8281s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 7 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 8 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 11 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 13 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 14 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 15 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 16 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 17 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 18 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 19 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 20 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 21 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 22 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 23 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 24 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 25 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 26 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 27 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 28 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 29 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 30 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 31 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 32 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 33 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 34 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 35 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 36 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 37 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 38 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 39 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 40 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 41 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 42 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 43 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 44 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 45 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 46 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 47 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 48 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 49 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 50 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 51 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 52 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 53 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 54 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 55 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 56 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 57 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 58 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 59 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 60 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 61 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 62 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 63 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 64 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 65 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 66 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 67 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 68 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 69 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 70 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 71 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 72 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 73 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 74 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 75 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 76 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 77 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 78 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 79 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 80 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 81 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 82 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 83 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 84 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 85 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 86 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 87 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 88 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 89 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 90 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 91 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 92 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 93 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 94 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 95 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 96 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 97 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 98 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 99 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 100 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 101 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 102 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 103 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 104 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 105 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 106 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 107 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 108 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 109 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 110 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 111 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 112 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 113 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 114 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 115 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 116 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 117 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 118 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 119 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 120 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 121 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 122 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 123 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 124 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 125 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 126 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 127 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 128 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 129 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 130 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 131 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 132 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 133 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 134 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 135 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 136 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 137 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 138 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 139 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 140 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 141 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 142 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 143 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 144 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 145 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 146 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 147 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 148 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 149 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 150 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 151 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 152 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 153 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 154 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 155 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 156 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 157 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 158 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 159 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 160 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 161 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 162 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 163 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 164 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 165 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 166 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 167 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 168 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 169 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 170 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 171 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 172 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 173 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 174 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 175 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 176 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 177 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 178 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 179 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 180 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 181 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 182 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 183 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 184 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 185 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 186 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 187 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 188 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 189 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 190 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 191 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 192 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 193 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 194 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 195 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 196 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 197 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 198 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 199 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 200 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 201 (BSpline surface, Frontal-Delaunay)
+Info    : [100%] Meshing surface 202 (BSpline surface, Frontal-Delaunay)
+Info    : [100%] Meshing surface 203 (BSpline surface, Frontal-Delaunay)
+Info    : [100%] Meshing surface 204 (BSpline surface, Frontal-Delaunay)
+Info    : [100%] Meshing surface 205 (BSpline surface, Frontal-Delaunay)
+Info    : [100%] Meshing surface 206 (BSpline surface, Frontal-Delaunay)
+Info    : [100%] Meshing surface 207 (BSpline surface, Frontal-Delaunay)
+Info    : [100%] Meshing surface 208 (BSpline surface, Frontal-Delaunay)
+Info    : [100%] Meshing surface 209 (BSpline surface, Frontal-Delaunay)
+Info    : [100%] Meshing surface 210 (BSpline surface, Frontal-Delaunay)
+Info    : [100%] Meshing surface 211 (BSpline surface, Frontal-Delaunay)
+Info    : [100%] Meshing surface 212 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 213 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 214 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 215 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 216 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 217 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 218 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 219 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 220 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 221 (BSpline surface, Frontal-Delaunay)
+Info    : [100%] Meshing surface 222 (BSpline surface, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 1.52925s, CPU 1.53125s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 6 volumes with 1 connected component
+Info    : Tetrahedrizing 37349 nodes...
+Info    : Done tetrahedrizing 37357 nodes (Wall 0.45072s, CPU 0.453125s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.891051s, CPU 0.84375s)
+Info    : Found volume 3
+Info    : Found volume 2
+Info    : Found volume 4
+Info    : Found volume 1
+Info    : Found volume 6
+Info    : Found volume 5
+Info    : It. 0 - 0 nodes created - worst tet radius 18.5781 (nodes removed 0 0)
+Info    : It. 500 - 496 nodes created - worst tet radius 4.49043 (nodes removed 0 4)
+Info    : It. 1000 - 993 nodes created - worst tet radius 3.59109 (nodes removed 0 7)
+Info    : It. 1500 - 1491 nodes created - worst tet radius 3.15336 (nodes removed 0 9)
+Info    : It. 2000 - 1986 nodes created - worst tet radius 2.88611 (nodes removed 0 14)
+Info    : It. 2500 - 2485 nodes created - worst tet radius 2.70634 (nodes removed 0 15)
+Info    : It. 3000 - 2984 nodes created - worst tet radius 2.55517 (nodes removed 0 16)
+Info    : It. 3500 - 3482 nodes created - worst tet radius 2.43093 (nodes removed 0 18)
+Info    : It. 4000 - 3981 nodes created - worst tet radius 2.3362 (nodes removed 0 19)
+Info    : It. 4500 - 4480 nodes created - worst tet radius 2.25106 (nodes removed 0 20)
+Info    : It. 5000 - 4978 nodes created - worst tet radius 2.18365 (nodes removed 0 22)
+Info    : It. 5500 - 5475 nodes created - worst tet radius 2.12144 (nodes removed 0 25)
+Info    : It. 6000 - 5973 nodes created - worst tet radius 2.06858 (nodes removed 0 27)
+Info    : It. 6500 - 6471 nodes created - worst tet radius 2.02184 (nodes removed 0 29)
+Info    : It. 7000 - 6970 nodes created - worst tet radius 1.974 (nodes removed 0 30)
+Info    : It. 7500 - 7470 nodes created - worst tet radius 1.93022 (nodes removed 0 30)
+Info    : It. 8000 - 7968 nodes created - worst tet radius 1.89333 (nodes removed 0 32)
+Info    : It. 8500 - 8467 nodes created - worst tet radius 1.85977 (nodes removed 0 33)
+Info    : It. 9000 - 8966 nodes created - worst tet radius 1.82388 (nodes removed 0 34)
+Info    : It. 9500 - 9464 nodes created - worst tet radius 1.79343 (nodes removed 0 36)
+Info    : It. 10000 - 9960 nodes created - worst tet radius 1.76694 (nodes removed 0 40)
+Info    : It. 10500 - 10460 nodes created - worst tet radius 1.74019 (nodes removed 0 40)
+Info    : It. 11000 - 10959 nodes created - worst tet radius 1.71403 (nodes removed 0 41)
+Info    : It. 11500 - 11457 nodes created - worst tet radius 1.69102 (nodes removed 0 43)
+Info    : It. 12000 - 11955 nodes created - worst tet radius 1.6696 (nodes removed 0 45)
+Info    : It. 12500 - 12452 nodes created - worst tet radius 1.64851 (nodes removed 0 48)
+Info    : It. 13000 - 12949 nodes created - worst tet radius 1.62983 (nodes removed 0 51)
+Info    : It. 13500 - 13446 nodes created - worst tet radius 1.61276 (nodes removed 0 54)
+Info    : It. 14000 - 13944 nodes created - worst tet radius 1.59452 (nodes removed 0 56)
+Info    : It. 14500 - 14443 nodes created - worst tet radius 1.5765 (nodes removed 0 57)
+Info    : It. 15000 - 14942 nodes created - worst tet radius 1.56087 (nodes removed 0 58)
+Info    : It. 15500 - 15441 nodes created - worst tet radius 1.54452 (nodes removed 0 59)
+Info    : It. 16000 - 15941 nodes created - worst tet radius 1.52917 (nodes removed 0 59)
+Info    : It. 16500 - 16439 nodes created - worst tet radius 1.51543 (nodes removed 0 61)
+Info    : It. 17000 - 16936 nodes created - worst tet radius 1.50218 (nodes removed 0 64)
+Info    : It. 17500 - 17436 nodes created - worst tet radius 1.53953 (nodes removed 0 64)
+Info    : It. 18000 - 17935 nodes created - worst tet radius 1.47462 (nodes removed 0 65)
+Info    : It. 18500 - 18435 nodes created - worst tet radius 1.46182 (nodes removed 0 65)
+Info    : It. 19000 - 18934 nodes created - worst tet radius 1.45025 (nodes removed 0 66)
+Info    : It. 19500 - 19431 nodes created - worst tet radius 1.43893 (nodes removed 0 69)
+Info    : It. 20000 - 19929 nodes created - worst tet radius 1.42751 (nodes removed 0 71)
+Info    : It. 20500 - 20426 nodes created - worst tet radius 1.41648 (nodes removed 0 74)
+Info    : It. 21000 - 20925 nodes created - worst tet radius 1.40575 (nodes removed 0 75)
+Info    : It. 21500 - 21422 nodes created - worst tet radius 1.45069 (nodes removed 0 78)
+Info    : It. 22000 - 21921 nodes created - worst tet radius 1.38496 (nodes removed 0 79)
+Info    : It. 22500 - 22418 nodes created - worst tet radius 1.37501 (nodes removed 0 82)
+Info    : It. 23000 - 22916 nodes created - worst tet radius 1.36609 (nodes removed 0 84)
+Info    : It. 23500 - 23415 nodes created - worst tet radius 1.35735 (nodes removed 0 85)
+Info    : It. 24000 - 23913 nodes created - worst tet radius 1.34906 (nodes removed 0 87)
+Info    : It. 24500 - 24412 nodes created - worst tet radius 1.3407 (nodes removed 0 88)
+Info    : It. 25000 - 24910 nodes created - worst tet radius 1.33973 (nodes removed 0 90)
+Info    : It. 25500 - 25408 nodes created - worst tet radius 1.32407 (nodes removed 0 92)
+Info    : It. 26000 - 25907 nodes created - worst tet radius 1.31645 (nodes removed 0 93)
+Info    : It. 26500 - 26400 nodes created - worst tet radius 1.3096 (nodes removed 0 100)
+Info    : It. 27000 - 26899 nodes created - worst tet radius 1.30229 (nodes removed 0 101)
+Info    : It. 27500 - 27398 nodes created - worst tet radius 1.29433 (nodes removed 0 102)
+Info    : It. 28000 - 27898 nodes created - worst tet radius 1.28744 (nodes removed 0 102)
+Info    : It. 28500 - 28396 nodes created - worst tet radius 1.31211 (nodes removed 0 104)
+Info    : It. 29000 - 28895 nodes created - worst tet radius 1.2739 (nodes removed 0 105)
+Info    : It. 29500 - 29395 nodes created - worst tet radius 5.07658 (nodes removed 0 105)
+Info    : It. 30000 - 29893 nodes created - worst tet radius 1.26072 (nodes removed 0 107)
+Info    : It. 30500 - 30393 nodes created - worst tet radius 1.25455 (nodes removed 0 107)
+Info    : It. 31000 - 30887 nodes created - worst tet radius 1.24845 (nodes removed 0 113)
+Info    : It. 31500 - 31386 nodes created - worst tet radius 1.2427 (nodes removed 0 114)
+Info    : It. 32000 - 31885 nodes created - worst tet radius 1.23701 (nodes removed 0 115)
+Info    : It. 32500 - 32385 nodes created - worst tet radius 1.23124 (nodes removed 0 115)
+Info    : It. 33000 - 32884 nodes created - worst tet radius 1.22518 (nodes removed 0 116)
+Info    : It. 33500 - 33384 nodes created - worst tet radius 1.2192 (nodes removed 0 116)
+Info    : It. 34000 - 33881 nodes created - worst tet radius 1.21355 (nodes removed 0 119)
+Info    : It. 34500 - 34378 nodes created - worst tet radius 1.20799 (nodes removed 0 122)
+Info    : It. 35000 - 34877 nodes created - worst tet radius 1.20275 (nodes removed 0 123)
+Info    : It. 35500 - 35375 nodes created - worst tet radius 1.19755 (nodes removed 0 125)
+Info    : It. 36000 - 35874 nodes created - worst tet radius 1.19243 (nodes removed 0 126)
+Info    : It. 36500 - 36371 nodes created - worst tet radius 1.18757 (nodes removed 0 129)
+Info    : It. 37000 - 36871 nodes created - worst tet radius 1.18258 (nodes removed 0 129)
+Info    : It. 37500 - 37371 nodes created - worst tet radius 1.17749 (nodes removed 0 129)
+Info    : It. 38000 - 37868 nodes created - worst tet radius 1.17238 (nodes removed 0 132)
+Info    : It. 38500 - 38363 nodes created - worst tet radius 1.16757 (nodes removed 2 135)
+Info    : It. 39000 - 38862 nodes created - worst tet radius 1.1631 (nodes removed 2 136)
+Info    : It. 39500 - 39362 nodes created - worst tet radius 1.1584 (nodes removed 2 136)
+Info    : It. 40000 - 39862 nodes created - worst tet radius 1.15423 (nodes removed 2 136)
+Info    : It. 40500 - 40359 nodes created - worst tet radius 1.15613 (nodes removed 2 139)
+Info    : It. 41000 - 40858 nodes created - worst tet radius 1.1457 (nodes removed 2 140)
+Info    : It. 41500 - 41355 nodes created - worst tet radius 1.14155 (nodes removed 2 143)
+Info    : It. 42000 - 41855 nodes created - worst tet radius 1.13727 (nodes removed 2 143)
+Info    : It. 42500 - 42353 nodes created - worst tet radius 1.13303 (nodes removed 2 145)
+Info    : It. 43000 - 42853 nodes created - worst tet radius 1.12866 (nodes removed 2 145)
+Info    : It. 43500 - 43352 nodes created - worst tet radius 1.12444 (nodes removed 2 146)
+Info    : It. 44000 - 43852 nodes created - worst tet radius 1.12035 (nodes removed 2 146)
+Info    : It. 44500 - 44351 nodes created - worst tet radius 1.11649 (nodes removed 2 147)
+Info    : It. 45000 - 44850 nodes created - worst tet radius 1.11296 (nodes removed 2 148)
+Info    : It. 45500 - 45349 nodes created - worst tet radius 1.10904 (nodes removed 2 149)
+Info    : It. 46000 - 45845 nodes created - worst tet radius 1.10548 (nodes removed 2 153)
+Info    : It. 46500 - 46342 nodes created - worst tet radius 1.10206 (nodes removed 2 156)
+Info    : It. 47000 - 46841 nodes created - worst tet radius 1.09851 (nodes removed 2 157)
+Info    : It. 47500 - 47339 nodes created - worst tet radius 1.09511 (nodes removed 2 159)
+Info    : It. 48000 - 47834 nodes created - worst tet radius 1.09186 (nodes removed 2 164)
+Info    : It. 48500 - 48332 nodes created - worst tet radius 1.08849 (nodes removed 2 166)
+Info    : It. 49000 - 48829 nodes created - worst tet radius 1.08521 (nodes removed 2 169)
+Info    : It. 49500 - 49327 nodes created - worst tet radius 1.08155 (nodes removed 2 171)
+Info    : It. 50000 - 49823 nodes created - worst tet radius 1.07835 (nodes removed 2 175)
+Info    : It. 50500 - 50322 nodes created - worst tet radius 1.07497 (nodes removed 2 176)
+Info    : It. 51000 - 50819 nodes created - worst tet radius 1.07167 (nodes removed 2 179)
+Info    : It. 51500 - 51319 nodes created - worst tet radius 1.06839 (nodes removed 2 179)
+Info    : It. 52000 - 51818 nodes created - worst tet radius 1.06498 (nodes removed 2 180)
+Info    : It. 52500 - 52316 nodes created - worst tet radius 1.06187 (nodes removed 2 182)
+Info    : It. 53000 - 52815 nodes created - worst tet radius 1.05898 (nodes removed 2 183)
+Info    : It. 53500 - 53315 nodes created - worst tet radius 1.05579 (nodes removed 2 183)
+Info    : It. 54000 - 53812 nodes created - worst tet radius 1.05292 (nodes removed 2 186)
+Info    : It. 54500 - 54307 nodes created - worst tet radius 1.04993 (nodes removed 2 191)
+Info    : It. 55000 - 54804 nodes created - worst tet radius 1.04698 (nodes removed 2 194)
+Info    : It. 55500 - 55297 nodes created - worst tet radius 1.04408 (nodes removed 2 201)
+Info    : It. 56000 - 55793 nodes created - worst tet radius 1.04111 (nodes removed 2 205)
+Info    : It. 56500 - 56288 nodes created - worst tet radius 1.03816 (nodes removed 2 210)
+Info    : It. 57000 - 56786 nodes created - worst tet radius 1.03532 (nodes removed 2 212)
+Info    : It. 57500 - 57284 nodes created - worst tet radius 1.03257 (nodes removed 2 214)
+Info    : It. 58000 - 57782 nodes created - worst tet radius 1.02982 (nodes removed 2 216)
+Info    : It. 58500 - 58281 nodes created - worst tet radius 1.02709 (nodes removed 2 217)
+Info    : It. 59000 - 58778 nodes created - worst tet radius 1.02442 (nodes removed 2 220)
+Info    : It. 59500 - 59275 nodes created - worst tet radius 1.02156 (nodes removed 2 223)
+Info    : It. 60000 - 59774 nodes created - worst tet radius 1.01896 (nodes removed 2 224)
+Info    : It. 60500 - 60273 nodes created - worst tet radius 1.01639 (nodes removed 2 225)
+Info    : It. 61000 - 60768 nodes created - worst tet radius 1.01366 (nodes removed 2 230)
+Info    : It. 61500 - 61267 nodes created - worst tet radius 1.01091 (nodes removed 2 231)
+Info    : It. 62000 - 61765 nodes created - worst tet radius 1.00834 (nodes removed 2 233)
+Info    : It. 62500 - 62264 nodes created - worst tet radius 1.00605 (nodes removed 2 234)
+Info    : It. 63000 - 62762 nodes created - worst tet radius 1.00374 (nodes removed 2 236)
+Info    : It. 63500 - 63259 nodes created - worst tet radius 1.0013 (nodes removed 2 239)
+Info    : 3D refinement terminated (102569 nodes total):
+Info    :  - 892 Delaunay cavities modified for star shapeness
+Info    :  - 241 nodes could not be inserted
+Info    :  - 558557 tetrahedra created in 5.71691 sec. (97702 tets/s)
+Info    : 68 node relocations
+Info    : Done meshing 3D (Wall 7.65686s, CPU 7.53125s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 269226) with worst = 0.00531131 / average = 0.771051:
+Info    : 0.00 < quality < 0.10 :        64 elements
+Info    : 0.10 < quality < 0.20 :       181 elements
+Info    : 0.20 < quality < 0.30 :       330 elements
+Info    : 0.30 < quality < 0.40 :       501 elements
+Info    : 0.40 < quality < 0.50 :       761 elements
+Info    : 0.50 < quality < 0.60 :      1463 elements
+Info    : 0.60 < quality < 0.70 :      3459 elements
+Info    : 0.70 < quality < 0.80 :      7305 elements
+Info    : 0.80 < quality < 0.90 :     10352 elements
+Info    : 0.90 < quality < 1.00 :      4821 elements
+Info    : 560 edge swaps, 15 node relocations (volume = 269226): worst = 0.161182 / average = 0.783034 (Wall 0.00579405s, CPU 0s)
+Info    : 572 edge swaps, 18 node relocations (volume = 269226): worst = 0.279373 / average = 0.783327 (Wall 0.00699496s, CPU 0s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         1 elements
+Info    : 0.30 < quality < 0.40 :       487 elements
+Info    : 0.40 < quality < 0.50 :       746 elements
+Info    : 0.50 < quality < 0.60 :      1460 elements
+Info    : 0.60 < quality < 0.70 :      3437 elements
+Info    : 0.70 < quality < 0.80 :      7334 elements
+Info    : 0.80 < quality < 0.90 :     10451 elements
+Info    : 0.90 < quality < 1.00 :      4809 elements
+Info    : Optimizing volume 2
+Info    : Optimization starts (volume = 153911) with worst = 0.000540282 / average = 0.756393:
+Info    : 0.00 < quality < 0.10 :       349 elements
+Info    : 0.10 < quality < 0.20 :       950 elements
+Info    : 0.20 < quality < 0.30 :      1699 elements
+Info    : 0.30 < quality < 0.40 :      2957 elements
+Info    : 0.40 < quality < 0.50 :      5473 elements
+Info    : 0.50 < quality < 0.60 :      9021 elements
+Info    : 0.60 < quality < 0.70 :     15042 elements
+Info    : 0.70 < quality < 0.80 :     30640 elements
+Info    : 0.80 < quality < 0.90 :     43459 elements
+Info    : 0.90 < quality < 1.00 :     21490 elements
+Info    : 2765 edge swaps, 129 node relocations (volume = 153911): worst = 0.0163532 / average = 0.768823 (Wall 0.0374799s, CPU 0.03125s)
+Info    : 2812 edge swaps, 145 node relocations (volume = 153911): worst = 0.0163532 / average = 0.768977 (Wall 0.0473511s, CPU 0.046875s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :        15 elements
+Info    : 0.10 < quality < 0.20 :        59 elements
+Info    : 0.20 < quality < 0.30 :       133 elements
+Info    : 0.30 < quality < 0.40 :      3000 elements
+Info    : 0.40 < quality < 0.50 :      5365 elements
+Info    : 0.50 < quality < 0.60 :      8903 elements
+Info    : 0.60 < quality < 0.70 :     14988 elements
+Info    : 0.70 < quality < 0.80 :     30831 elements
+Info    : 0.80 < quality < 0.90 :     43830 elements
+Info    : 0.90 < quality < 1.00 :     21493 elements
+Info    : Optimizing volume 3
+Info    : Optimization starts (volume = 158819) with worst = 0.000496197 / average = 0.747725:
+Info    : 0.00 < quality < 0.10 :       746 elements
+Info    : 0.10 < quality < 0.20 :      1996 elements
+Info    : 0.20 < quality < 0.30 :      3769 elements
+Info    : 0.30 < quality < 0.40 :      7423 elements
+Info    : 0.40 < quality < 0.50 :     14651 elements
+Info    : 0.50 < quality < 0.60 :     21042 elements
+Info    : 0.60 < quality < 0.70 :     30431 elements
+Info    : 0.70 < quality < 0.80 :     58212 elements
+Info    : 0.80 < quality < 0.90 :     87398 elements
+Info    : 0.90 < quality < 1.00 :     44470 elements
+Info    : 5954 edge swaps, 489 node relocations (volume = 158819): worst = 0.0116251 / average = 0.760571 (Wall 0.092288s, CPU 0.078125s)
+Info    : 6109 edge swaps, 615 node relocations (volume = 158819): worst = 0.0116251 / average = 0.76081 (Wall 0.119185s, CPU 0.109375s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :        26 elements
+Info    : 0.10 < quality < 0.20 :        63 elements
+Info    : 0.20 < quality < 0.30 :       261 elements
+Info    : 0.30 < quality < 0.40 :      7530 elements
+Info    : 0.40 < quality < 0.50 :     14520 elements
+Info    : 0.50 < quality < 0.60 :     20742 elements
+Info    : 0.60 < quality < 0.70 :     30102 elements
+Info    : 0.70 < quality < 0.80 :     58948 elements
+Info    : 0.80 < quality < 0.90 :     88214 elements
+Info    : 0.90 < quality < 1.00 :     44362 elements
+Info    : Optimizing volume 4
+Info    : Optimization starts (volume = 85416.6) with worst = 0.00155581 / average = 0.746116:
+Info    : 0.00 < quality < 0.10 :       243 elements
+Info    : 0.10 < quality < 0.20 :       578 elements
+Info    : 0.20 < quality < 0.30 :      1226 elements
+Info    : 0.30 < quality < 0.40 :      2232 elements
+Info    : 0.40 < quality < 0.50 :      4206 elements
+Info    : 0.50 < quality < 0.60 :      6535 elements
+Info    : 0.60 < quality < 0.70 :     10054 elements
+Info    : 0.70 < quality < 0.80 :     19173 elements
+Info    : 0.80 < quality < 0.90 :     26516 elements
+Info    : 0.90 < quality < 1.00 :     13040 elements
+Info    : 1825 edge swaps, 98 node relocations (volume = 85416.6): worst = 0.0285654 / average = 0.758954 (Wall 0.0228069s, CPU 0.015625s)
+Info    : 1868 edge swaps, 124 node relocations (volume = 85416.6): worst = 0.0764813 / average = 0.759164 (Wall 0.0282989s, CPU 0.03125s)
+Info    : 1875 edge swaps, 135 node relocations (volume = 85416.6): worst = 0.0764813 / average = 0.759199 (Wall 0.0335631s, CPU 0.03125s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         2 elements
+Info    : 0.10 < quality < 0.20 :        21 elements
+Info    : 0.20 < quality < 0.30 :       141 elements
+Info    : 0.30 < quality < 0.40 :      2267 elements
+Info    : 0.40 < quality < 0.50 :      4117 elements
+Info    : 0.50 < quality < 0.60 :      6512 elements
+Info    : 0.60 < quality < 0.70 :      9950 elements
+Info    : 0.70 < quality < 0.80 :     19328 elements
+Info    : 0.80 < quality < 0.90 :     26812 elements
+Info    : 0.90 < quality < 1.00 :     13037 elements
+Info    : Optimizing volume 5
+Info    : Optimization starts (volume = 94444.8) with worst = 0.00396275 / average = 0.762319:
+Info    : 0.00 < quality < 0.10 :        71 elements
+Info    : 0.10 < quality < 0.20 :       159 elements
+Info    : 0.20 < quality < 0.30 :       285 elements
+Info    : 0.30 < quality < 0.40 :       421 elements
+Info    : 0.40 < quality < 0.50 :       616 elements
+Info    : 0.50 < quality < 0.60 :      1213 elements
+Info    : 0.60 < quality < 0.70 :      2738 elements
+Info    : 0.70 < quality < 0.80 :      6278 elements
+Info    : 0.80 < quality < 0.90 :      7450 elements
+Info    : 0.90 < quality < 1.00 :      3438 elements
+Info    : 504 edge swaps, 6 node relocations (volume = 94444.8): worst = 0.24072 / average = 0.776433 (Wall 0.00475907s, CPU 0s)
+Info    : 508 edge swaps, 6 node relocations (volume = 94444.8): worst = 0.299873 / average = 0.776547 (Wall 0.00560999s, CPU 0s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         1 elements
+Info    : 0.30 < quality < 0.40 :       422 elements
+Info    : 0.40 < quality < 0.50 :       585 elements
+Info    : 0.50 < quality < 0.60 :      1201 elements
+Info    : 0.60 < quality < 0.70 :      2697 elements
+Info    : 0.70 < quality < 0.80 :      6319 elements
+Info    : 0.80 < quality < 0.90 :      7538 elements
+Info    : 0.90 < quality < 1.00 :      3439 elements
+Info    : Optimizing volume 6
+Info    : Optimization starts (volume = 235605) with worst = 0.00713597 / average = 0.769023:
+Info    : 0.00 < quality < 0.10 :        55 elements
+Info    : 0.10 < quality < 0.20 :       153 elements
+Info    : 0.20 < quality < 0.30 :       237 elements
+Info    : 0.30 < quality < 0.40 :       332 elements
+Info    : 0.40 < quality < 0.50 :       631 elements
+Info    : 0.50 < quality < 0.60 :      1045 elements
+Info    : 0.60 < quality < 0.70 :      2612 elements
+Info    : 0.70 < quality < 0.80 :      5592 elements
+Info    : 0.80 < quality < 0.90 :      7509 elements
+Info    : 0.90 < quality < 1.00 :      3464 elements
+Info    : 438 edge swaps, 15 node relocations (volume = 235605): worst = 0.247366 / average = 0.781924 (Wall 0.00435495s, CPU 0s)
+Info    : 442 edge swaps, 15 node relocations (volume = 235605): worst = 0.300464 / average = 0.782001 (Wall 0.00516605s, CPU 0s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       329 elements
+Info    : 0.40 < quality < 0.50 :       607 elements
+Info    : 0.50 < quality < 0.60 :      1045 elements
+Info    : 0.60 < quality < 0.70 :      2564 elements
+Info    : 0.70 < quality < 0.80 :      5645 elements
+Info    : 0.80 < quality < 0.90 :      7578 elements
+Info    : 0.90 < quality < 1.00 :      3465 elements
+Info    : Done optimizing mesh (Wall 0.649229s, CPU 0.640625s)
+Info    : Optimizing mesh (Netgen)...
+Info    : Optimizing volume 1
+Info    : CalcLocalH: 6247 Points 28725 Elements 6260 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 741 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 17.4903 
+Info    : 126 splits performed 
+Info    : SwapImprove  
+Info    : 163 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 373 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 29.4838 
+Info    : 99 splits performed 
+Info    : SwapImprove  
+Info    : 23 swaps performed 
+Info    : SwapImprove2  
+Info    : 3 swaps performed 
+Info    : 91 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 818.064 
+Info    : 23 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 25 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 818.064 
+Info    : 6 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 6 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 818.064 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 233 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 40634.9 
+Info    : Total badness = 38833 
+Info    : SplitImprove 
+Info    : badmax = 21.4525 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 38833 
+Info    : Total badness = 38558.9 
+Info    : SwapImprove  
+Info    : 1675 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 35684.7 
+Info    : Total badness = 34861.3 
+Info    : CombineImprove 
+Info    : 38 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 34526.8 
+Info    : Total badness = 34436.3 
+Info    : SplitImprove 
+Info    : badmax = 15.5221 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 34436.3 
+Info    : Total badness = 34421.9 
+Info    : SwapImprove  
+Info    : 282 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 34226.8 
+Info    : Total badness = 34067.4 
+Info    : CombineImprove 
+Info    : 13 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 33954.3 
+Info    : Total badness = 33933.7 
+Info    : SplitImprove 
+Info    : badmax = 14.9559 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 33933.7 
+Info    : Total badness = 33930.4 
+Info    : SwapImprove  
+Info    : 88 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 33881 
+Info    : Total badness = 33826.2 
+Info    : Optimizing volume 2
+Info    : CalcLocalH: 26322 Points 128660 Elements 22252 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 1566 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 536.499 
+Info    : 259 splits performed 
+Info    : SwapImprove  
+Info    : 256 swaps performed 
+Info    : SwapImprove2  
+Info    : 20 swaps performed 
+Info    : 916 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 693.479 
+Info    : 212 splits performed 
+Info    : SwapImprove  
+Info    : 63 swaps performed 
+Info    : SwapImprove2  
+Info    : 25 swaps performed 
+Info    : 334 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 1513.03 
+Info    : 93 splits performed 
+Info    : SwapImprove  
+Info    : 17 swaps performed 
+Info    : SwapImprove2  
+Info    : 20 swaps performed 
+Info    : 70 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 935.025 
+Info    : 23 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 4 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 935.025 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 1070 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 185691 
+Info    : Total badness = 175935 
+Info    : SplitImprove 
+Info    : badmax = 383.634 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 175948 
+Info    : Total badness = 174609 
+Info    : SwapImprove  
+Info    : 7614 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 160987 
+Info    : Total badness = 157056 
+Info    : CombineImprove 
+Info    : 183 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 155381 
+Info    : Total badness = 154925 
+Info    : SplitImprove 
+Info    : badmax = 356.839 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 154925 
+Info    : Total badness = 154845 
+Info    : SwapImprove  
+Info    : 1278 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 153716 
+Info    : Total badness = 152845 
+Info    : CombineImprove 
+Info    : 78 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 152153 
+Info    : Total badness = 152029 
+Info    : SplitImprove 
+Info    : badmax = 356.785 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 152029 
+Info    : Total badness = 152007 
+Info    : SwapImprove  
+Info    : 436 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 151747 
+Info    : Total badness = 151446 
+Info    : Optimizing volume 3
+Info    : CalcLocalH: 52905 Points 264969 Elements 41222 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 1766 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 1213.61 
+Info    : 297 splits performed 
+Info    : SwapImprove  
+Info    : 269 swaps performed 
+Info    : SwapImprove2  
+Info    : 12 swaps performed 
+Info    : 1064 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 3981.35 
+Info    : 261 splits performed 
+Info    : SwapImprove  
+Info    : 54 swaps performed 
+Info    : SwapImprove2  
+Info    : 33 swaps performed 
+Info    : 401 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 4851.08 
+Info    : 115 splits performed 
+Info    : SwapImprove  
+Info    : 29 swaps performed 
+Info    : SwapImprove2  
+Info    : 25 swaps performed 
+Info    : 95 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 2874.38 
+Info    : 30 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 2 swaps performed 
+Info    : 11 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 2874.38 
+Info    : 4 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 2206 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 383408 
+Info    : Total badness = 361971 
+Info    : SplitImprove 
+Info    : badmax = 559.974 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 361971 
+Info    : Total badness = 358830 
+Info    : SwapImprove  
+Info    : 15433 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 331367 
+Info    : Total badness = 323595 
+Info    : CombineImprove 
+Info    : 445 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 319594 
+Info    : Total badness = 318590 
+Info    : SplitImprove 
+Info    : badmax = 567.482 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 318590 
+Info    : Total badness = 318408 
+Info    : SwapImprove  
+Info    : 2611 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 316141 
+Info    : Total badness = 314462 
+Info    : CombineImprove 
+Info    : 125 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 313401 
+Info    : Total badness = 313161 
+Info    : SplitImprove 
+Info    : badmax = 567.678 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 313161 
+Info    : Total badness = 313113 
+Info    : SwapImprove  
+Info    : 927 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 312621 
+Info    : Total badness = 312027 
+Info    : Optimizing volume 4
+Info    : CalcLocalH: 17915 Points 82195 Elements 18182 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 1407 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 296.584 
+Info    : 243 splits performed 
+Info    : SwapImprove  
+Info    : 229 swaps performed 
+Info    : SwapImprove2  
+Info    : 13 swaps performed 
+Info    : 765 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 248.084 
+Info    : 186 splits performed 
+Info    : SwapImprove  
+Info    : 46 swaps performed 
+Info    : SwapImprove2  
+Info    : 12 swaps performed 
+Info    : 304 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 265.119 
+Info    : 82 splits performed 
+Info    : SwapImprove  
+Info    : 17 swaps performed 
+Info    : SwapImprove2  
+Info    : 4 swaps performed 
+Info    : 97 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 487.213 
+Info    : 30 splits performed 
+Info    : SwapImprove  
+Info    : 4 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 6 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 487.213 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 600 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 124226 
+Info    : Total badness = 117392 
+Info    : SplitImprove 
+Info    : badmax = 113.786 
+Info    : 7 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 117426 
+Info    : Total badness = 116427 
+Info    : SwapImprove  
+Info    : 5048 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 107484 
+Info    : Total badness = 104825 
+Info    : CombineImprove 
+Info    : 126 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 103615 
+Info    : Total badness = 103318 
+Info    : SplitImprove 
+Info    : badmax = 48.4271 
+Info    : 2 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 103327 
+Info    : Total badness = 103274 
+Info    : SwapImprove  
+Info    : 953 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 102408 
+Info    : Total badness = 101766 
+Info    : CombineImprove 
+Info    : 32 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 101483 
+Info    : Total badness = 101413 
+Info    : SplitImprove 
+Info    : badmax = 34.7503 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 101418 
+Info    : Total badness = 101399 
+Info    : SwapImprove  
+Info    : 370 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 101168 
+Info    : Total badness = 100924 
+Info    : Optimizing volume 5
+Info    : CalcLocalH: 5399 Points 22202 Elements 6956 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 768 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 17.5534 
+Info    : 135 splits performed 
+Info    : SwapImprove  
+Info    : 166 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 371 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 55.8766 
+Info    : 95 splits performed 
+Info    : SwapImprove  
+Info    : 20 swaps performed 
+Info    : SwapImprove2  
+Info    : 6 swaps performed 
+Info    : 92 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 2357.5 
+Info    : 26 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 2 swaps performed 
+Info    : 23 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 1483.29 
+Info    : 8 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 5 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 725.324 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 127 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 33331 
+Info    : Total badness = 31980.7 
+Info    : SplitImprove 
+Info    : badmax = 41.39 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 31987.3 
+Info    : Total badness = 31822.5 
+Info    : SwapImprove  
+Info    : 1365 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 29626.7 
+Info    : Total badness = 29009.2 
+Info    : CombineImprove 
+Info    : 20 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 28841.8 
+Info    : Total badness = 28790.6 
+Info    : SplitImprove 
+Info    : badmax = 12.4267 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 28790.6 
+Info    : Total badness = 28785 
+Info    : SwapImprove  
+Info    : 264 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 28572.7 
+Info    : Total badness = 28429.8 
+Info    : CombineImprove 
+Info    : 5 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 28388.3 
+Info    : Total badness = 28376.7 
+Info    : SplitImprove 
+Info    : badmax = 12.4941 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 28376.7 
+Info    : Total badness = 28375.3 
+Info    : SwapImprove  
+Info    : 93 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 28329.8 
+Info    : Total badness = 28274.1 
+Info    : Optimizing volume 6
+Info    : CalcLocalH: 4785 Points 21233 Elements 5246 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 707 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 16.2693 
+Info    : 117 splits performed 
+Info    : SwapImprove  
+Info    : 153 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 362 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 16.2693 
+Info    : 92 splits performed 
+Info    : SwapImprove  
+Info    : 24 swaps performed 
+Info    : SwapImprove2  
+Info    : 3 swaps performed 
+Info    : 96 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 4142 
+Info    : 25 splits performed 
+Info    : SwapImprove  
+Info    : 4 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 31 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 158.542 
+Info    : 9 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 6 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 158.542 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 165 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 30761.8 
+Info    : Total badness = 29456.6 
+Info    : SplitImprove 
+Info    : badmax = 21.3103 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 29456.6 
+Info    : Total badness = 29247.6 
+Info    : SwapImprove  
+Info    : 1312 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 27001.2 
+Info    : Total badness = 26395.1 
+Info    : CombineImprove 
+Info    : 35 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 26074.4 
+Info    : Total badness = 26005.6 
+Info    : SplitImprove 
+Info    : badmax = 8.70915 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 26005.6 
+Info    : Total badness = 25995.8 
+Info    : SwapImprove  
+Info    : 239 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 25830.2 
+Info    : Total badness = 25701.4 
+Info    : CombineImprove 
+Info    : 7 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 25640.3 
+Info    : Total badness = 25625.9 
+Info    : SplitImprove 
+Info    : badmax = 8.78858 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 25625.9 
+Info    : Total badness = 25623.6 
+Info    : SwapImprove  
+Info    : 75 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 25599.1 
+Info    : Total badness = 25555.7 
+Info    : Done optimizing mesh (Wall 16.4558s, CPU 16.3281s)
+Info    : 102137 nodes 603648 elements
+wrote C:\Users\Wade\Desktop\Tunnel_TX\02_Small\rock_wall.stl
+tets total 505153  nodes used 97964 (of 102137)
+layer tet counts: {1: 20483, 2: 22029, 3: 77284, 4: 239937, 5: 118146, 6: 27274}
+wrote C:\Users\Wade\Desktop\Tunnel_TX\02_Small\rock.inp

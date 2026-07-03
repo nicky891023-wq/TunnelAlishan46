@@ -1,0 +1,54 @@
+﻿ELINING-VERDICT: Use the **structural shell/liner surrogate**, not FISH E-reduction on the existing solid `lining` zones.
+
+For this small model, the lining is an equivalent support, not the cracking model. The old shell workflow is the better numerical match: thin support, membrane/bending behavior, direct stress recovery, and stiffness degradation that actually changes the structural reaction. Your local tests also argue against the zone route: `test_lining_softE.log` shows reducing lining E to 6 GPa did **not** reduce the locked-in 57 MPa stress, and `test_lining_softening.log` capped tension but let compression rise near 90 MPa. Zone E changes affect future increments; they do not reliably cap existing continuum stress.
+
+Use one support representation only. If shells are added, remove/null the solid lining zones or start from a pre-zone-lining state. Keeping shell support plus elastic lining zones is double support.
+
+**Stability**
+The E-reduction law can be stable during creep if treated as monotonic damage, not a reversible servo:
+
+- `E_new <= E_old` only. Never allow stiffness recovery during the same run.
+- Use a floor, e.g. `E_floor = 0.10 E0 = 2.5 GPa`; sensitivity-check 1.25, 2.5, and 5 GPa.
+- Limit one update to at most a 50% drop: `E_new >= 0.5 E_old`.
+- Update at creep segment boundaries or every 50-100 creep steps, then `model calm` and re-equilibrate if many elements degrade.
+- Do not delete/recreate shells or reduce thickness during active creep unless absolutely necessary. Thickness changes are much harsher because bending stiffness scales with `t^3`.
+- Check both shell faces. Compression-only capping misses the current problem: tensile stress is already above `ft`.
+
+Use fixed creep timestep as you are doing. With `crp_dt = 600 s`, a 100-step lining check is about 0.69 days; that is reasonable. Use 25-50 steps for the first high-water activation trial if many elements degrade at once.
+
+**Three-Scale Handoff**
+No double-counting if the coupled model is driven by **rock-side displacement/convergence**, not by small-model lining force or lining stress.
+
+Clean handoff:
+
+1. Small model uses an equivalent damaged shell support only to keep the rock-side convergence physically bounded.
+2. Extract incremental rock-side displacement at the lining-rock interface or at the coupled submodel boundary.
+3. In the coupled model, do not include the small-model surrogate lining. The PFC bonded lining is the only structural lining.
+4. Apply the displacement history to the coupled rock boundary/rock wall and let the PFC lining crack/respond.
+
+It becomes double-counting only if you transfer support reactions, keep a continuum lining in the coupled model, or prescribe PFC lining motion directly while also letting the rock/support interaction resist it.
+
+**Recommended Starting Parameters**
+Use the supplied concrete strengths, not the old 80 MPa cap:
+
+- `E0 = 25 GPa`
+- `thickness = 0.40 m`
+- compressive cap: `sigCapC = 41.2 MPa`  
+  Conservative option: `0.8 fc = 33 MPa`
+- tensile cap: `sigCapT = 4.12 MPa`
+- trigger: `1.02-1.05 * cap`, not `1.25 * cap` for tension
+- `Ereduce_ratio = 0.5` maximum drop per event
+- `E_floor = 2.5 GPa` start; bracket with `1.25-5 GPa`
+- callback/check interval: 50-100 creep steps, or explicit 0.5-1 day creep subsegments
+
+Stress-demand rule should use the worst of compression and tension:
+
+```text
+demand = max(sc / sigCapC, st / sigCapT)
+if demand > 1:
+    E_trial = E_old / demand
+    E_new = max(E_floor, max(0.5 * E_old, E_trial))
+    E_new = min(E_old, E_new)
+```
+
+Grounding: FLAC3D 6.00 shipped tunnel examples use `struct shell create by-face` for shotcrete support and `struct liner create by-face` with coupling stiffness for lined tunnel support, e.g. `ExampleApplications/ExcavationAndSupportOfShallowTunnel`, `Structure/Shell/AdvancingTunnel`, and `Structure/Liner/AdvancingLinedTunnel`.

@@ -1,0 +1,41 @@
+; verify_wzforce_v5.f3dat -- is the v5 lining actually LOADED? Read the wz_outter
+;   rock<->lining interface force + the bf_couple ball-facet contact normal forces.
+;   cwd = 04_InitialBalance/couple_solve.
+program log-file 'verify_wzforce_v5.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'Couple_Initial_v5'
+fish define _wzf
+    loop foreach local w wall.list
+        if wall.name(w) = 'wz_outter' then
+            local fc = wall.force.contact(w)
+            io.out('WZF wz_outter NET force=('+string(comp.x(fc))+', '+string(comp.y(fc))+', '+string(comp.z(fc))+') N |F|='+string(math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc)))+' N')
+        end_if
+    end_loop
+    local fmax = 0.0
+    local fsum = 0.0
+    local nc = 0
+    local nact = 0
+    loop foreach local c contact.list
+        if contact.group(c) = 'bf_couple' then
+            nc = nc + 1
+            local fn = contact.force.normal(c)
+            local af = fn
+            if af < 0.0 then
+                af = -af
+            end_if
+            fsum = fsum + af
+            if af > 0.1 then
+                nact = nact + 1
+            end_if
+            if af > fmax then
+                fmax = af
+            end_if
+        end_if
+    end_loop
+    io.out('WZF bf_couple contacts='+string(nc)+' active(|fn|>0.1N)='+string(nact)+' normal-force max='+string(fmax)+' mean='+string(fsum/nc)+' N')
+end
+[_wzf]
+[io.out('WZF-DONE')]
+program quit

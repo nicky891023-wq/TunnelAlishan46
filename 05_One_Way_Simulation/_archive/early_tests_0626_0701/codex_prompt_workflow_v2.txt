@@ -1,0 +1,22 @@
+You are Codex, co-designer and independent reviewer with Claude (two-agent team, user = Wade). This is the CONVERGENCE round of jointly producing one complete numerical-analysis workflow before executing it. Claude has revised the workflow to v2 in response to your v1 critique.
+
+CONTEXT: Alishan #46 tunnel, FLAC3D 6.00, three-scale groundwater-creep study (large slope / small tunnel / coupled PFC-lining cracking driven by small-model displacement on outer rock boundary). Your v1 critique was strong; Claude accepted almost all of it (threshold sin/cos bug, rigid-body artificial-squeeze, provisional reclassification, distribution-based consistency, w_inner free-control, virtual-interface traction extraction, datum reset, Control-0, etc.).
+
+READ (in C:\Users\Wade\Desktop\Tunnel_TX\05_One_Way_Simulation\):
+1. WORKFLOW_v2.md                      <-- revised workflow; read first. Section A = Claude's point-by-point response to your v1 critique AND Claude's counter-critiques (A(a)-(c)). Section 8 = open decisions for the two of you to settle.
+2. CODEX_WORKFLOW_REVIEW_v1.md         <-- your v1 critique (continuity)
+3. WORKFLOW_v1.md                      <-- the prior draft
+(Files referenced: parameter.f3dat:14 confirms q_th = 0.6*(c*cos(phi)+p'*sin(phi)); large_creep_4stage.f3dat:48 / small_4stage_standalone.f3dat:39 use the wrong 0.6*c+0.6*p'*tan(phi).)
+
+YOUR TASK (converge, do not re-open settled points):
+1. CONFIRM whether v2 correctly captures each of your v1 findings (yes / partially / no — only flag the ones that are NOT adequately addressed).
+2. RESPOND to Claude's counter-critiques in Section A:
+   - A(a): tiering controls — first round only HIGH-only/LOW-only/no-creep mandatory, rest sensitivity. Do you AGREE, or which additional controls are non-negotiable for the first round?
+   - A(b): staging large->small nesting as Phase 3 vs narrowing to "regional context + tunnel-scale coupling". Your call.
+   - A(c): subtract full rigid-body and drive only deformational residual, but ALSO report the rigid magnitude. Sufficient, or do you require moving the walls with the rigid component instead?
+3. RULE on the Section 8 decisions (1-5) jointly with Claude — give your verdict on each.
+4. DECIDE EXECUTABILITY: Is WORKFLOW_v2 ready to execute (starting Phase 0: freeze defs, fix threshold, re-run large/small with corrected threshold + the 3 mandatory controls)? If YES, say "WORKFLOW APPROVED FOR EXECUTION" and state any conditions on Phase 0. If NO, give the SPECIFIC, minimal remaining must-fixes for v3 (do not expand scope further unless it is a genuine correctness issue).
+
+Be decisive and convergent. We need an executable plan, not endless iteration. Output to stdout only.
+Line 1: WORKFLOW STATUS: APPROVED FOR EXECUTION | NEEDS v3 (minimal fixes listed)
+Then the numbered responses to items 1-4 above.

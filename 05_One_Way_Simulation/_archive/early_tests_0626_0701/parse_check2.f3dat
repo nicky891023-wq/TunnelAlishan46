@@ -1,0 +1,91 @@
+program log-file 'parse_check2.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model new
+fish automatic-create on
+[global crack_num = 0]
+fish define wz_now
+    local r = 0.0
+    loop foreach local w wall.list
+        if wall.name(w) = 'wz_outter' then
+            local fc = wall.force.contact(w)
+            r = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+        end_if
+    end_loop
+    wz_now = r
+end
+fish define maxbvel
+    local mv = 0.0
+    loop foreach local b ball.list
+        local v = ball.vel(b)
+        local m = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+        if m > mv then
+            mv = m
+        end_if
+    end_loop
+    maxbvel = mv
+end
+fish define interior_dmax
+    local dm = 0.0
+    loop foreach local g gp.list
+        if gp.group(g,'drive') # 'driven' then
+            local d = gp.disp(g)
+            local m = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+            if m > dm then
+                dm = m
+            end_if
+        end_if
+    end_loop
+    interior_dmax = dm
+end
+fish define load_targets
+    local lines = array.create(40000)
+    local st = file.open('couple_bnd_disp.txt',0,1)
+    local nn = file.read(lines, 40000)
+    st = file.close
+    global ndriven = 0
+    global nmiss = 0
+    local i = 2
+    loop while i <= nn
+        local gid = int(string.token(lines(i),1))
+        local g = gp.find(gid)
+        if g = null then
+            nmiss = nmiss + 1
+        else
+            gp.extra(g,1) = vector(string.token(lines(i),2),string.token(lines(i),3),string.token(lines(i),4))
+            gp.extra(g,2) = vector(string.token(lines(i),5),string.token(lines(i),6),string.token(lines(i),7))
+            gp.extra(g,3) = vector(string.token(lines(i),8),string.token(lines(i),9),string.token(lines(i),10))
+            gp.extra(g,4) = vector(string.token(lines(i),11),string.token(lines(i),12),string.token(lines(i),13))
+            gp.group(g,'drive') = 'driven'
+            ndriven = ndriven + 1
+        end_if
+        i = i + 1
+    end_loop
+    io.out('PC-LT nn='+string(nn)+' driven='+string(ndriven)+' miss='+string(nmiss))
+    load_targets = ndriven
+end
+fish define run_stage(stg, nsub, ncyc_sub, solvecap)
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            gp.extra(g,5) = gp.extra(g, stg) - gp.disp(g)
+        end_if
+    end_loop
+    local denom = float(nsub) * float(ncyc_sub) * mech.timestep
+    local j = 1
+    loop while j <= nsub
+        loop foreach local g2 gp.list
+            if gp.group(g2,'drive') = 'driven' then
+                gp.vel(g2) = gp.extra(g2,5) / denom
+            end_if
+        end_loop
+        command
+            model cycle [ncyc_sub]
+        endcommand
+        io.out('   sub j='+string(j)+' mbv='+string(maxbvel))
+        j = j + 1
+    end_loop
+end
+[load_targets]
+[io.out('PARSE-OK ndriven='+string(load_targets))]
+program quit

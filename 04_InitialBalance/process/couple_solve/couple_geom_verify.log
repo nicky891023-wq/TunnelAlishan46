@@ -1,0 +1,61 @@
+**********************************************
+* Logging started at 週五 六月 26 15:05:58 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore 'Couple_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週五 六月 26 15:04:26 2026
+Total Cycles: 10596  Super Cycles: 10596
+Title: Alishan #46 COUPLED CC -- clearance-fill bore + PFC lining (relax-excavate)
+Customer: 
+        : 
+********************************************
+flac3d>fish define _gexp
+   Def>    local a = array.create(1)
+   Def>    ; --- ALL balls (x y z r) ---
+   Def>    local fb = file.open('geom_balls.txt',1,1)
+   Def>    a(1) = 'x y z r'
+   Def>    fb = file.write(a,1)
+   Def>    local nb = 0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(ball.radius(b))
+   Def>        fb = file.write(a,1)
+   Def>        nb = nb + 1
+   Def>    end_loop
+   Def>    fb = file.close
+   Def>    ; --- wz_outter facet centroids (x y z) = deformed bore surface ---
+   Def>    local fw = file.open('geom_wzouter.txt',1,1)
+   Def>    a(1) = 'x y z'
+   Def>    fw = file.write(a,1)
+   Def>    local nw = 0
+   Def>    loop foreach local w wall.list
+   Def>        if wall.name(w) = 'wz_outter' then
+   Def>            loop foreach local fc wall.facetlist(w)
+   Def>                local q = wall.facet.pos(fc)
+   Def>                a(1) = string(comp.x(q))+' '+string(comp.y(q))+' '+string(comp.z(q))
+   Def>                fw = file.write(a,1)
+   Def>                nw = nw + 1
+   Def>            end_loop
+   Def>        end_if
+   Def>    end_loop
+   Def>    fw = file.close
+   Def>    io.out('GEOM exported balls='+string(nb)+' wz_outter_facets='+string(nw))
+   Def>end
+flac3d>[_gexp]
+GEOM exported balls=456302 wz_outter_facets=25752
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週五 六月 26 15:06:34 2026
+**********************************************

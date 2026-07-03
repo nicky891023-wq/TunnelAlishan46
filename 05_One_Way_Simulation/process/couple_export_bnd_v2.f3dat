@@ -1,0 +1,115 @@
+; ============================================================================
+; couple_export_bnd_v2.f3dat -- export SMALL-model displacements for the COUPLED box
+;   (Phase C drive source, Claude 2026-07-03). For each stage save ss_NN:
+;   (a) boundary band: small gps within +-1.0 m of the 6 couple-box faces
+;       (box x[1277,1317] y[860,910] z[1728,1768], all interior to the small box)
+;       -> process/cpl_bnd_sNN.txt   (x y z dx dy dz)  = drive target source
+;   (b) cavity wall band: small gps within r<=3.5 m of tunnel axis (y 860-910)
+;       -> process/cpl_wall_sNN.txt  = gate G2 reference (coupled wall disp match)
+;   cwd = 05 root. Restores are sequential (11 x ~2 GB).
+; ============================================================================
+program log-file 'process/couple_export_bnd_v2.log'
+program log on
+fish automatic-create on
+
+fish define exp_stage(fnb, fnw)
+    ; (a) boundary bands of the couple box
+    local fb = file.open(fnb,1,1)
+    local a = array.create(1)
+    a(1) = 'x y z dx dy dz'
+    local st = file.write(a,1)
+    local nb = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local x = comp.x(p)
+        local y = comp.y(p)
+        local z = comp.z(p)
+        if x > 1276.0 then
+        if x < 1318.0 then
+        if y > 859.0 then
+        if y < 911.0 then
+        if z > 1727.0 then
+        if z < 1769.0 then
+            local onb = 0
+            if math.abs(x-1277.0) < 1.0 then
+                onb = 1
+            end_if
+            if math.abs(x-1317.0) < 1.0 then
+                onb = 1
+            end_if
+            if math.abs(y-860.0) < 1.0 then
+                onb = 1
+            end_if
+            if math.abs(y-910.0) < 1.0 then
+                onb = 1
+            end_if
+            if math.abs(z-1728.0) < 1.0 then
+                onb = 1
+            end_if
+            if math.abs(z-1768.0) < 1.0 then
+                onb = 1
+            end_if
+            if onb = 1 then
+                local d = gp.disp(g)
+                a(1) = string(x)+' '+string(y)+' '+string(z)+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+                st = file.write(a,1)
+                nb = nb + 1
+            end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    st = file.close
+    ; (b) cavity wall band (G2 reference): r<=3.5 m of tunnel center (1297,1747.5), y in couple range
+    local fw = file.open(fnw,1,1)
+    a(1) = 'x y z dx dy dz'
+    st = file.write(a,1)
+    local nw = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local y2 = comp.y(p)
+        if y2 > 860.0 then
+        if y2 < 910.0 then
+            local rx = comp.x(p) - 1297.0
+            local rz = comp.z(p) - 1747.5
+            if rx*rx + rz*rz < 12.25 then
+                local d = gp.disp(g)
+                a(1) = string(comp.x(p))+' '+string(y2)+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+                st = file.write(a,1)
+                nw = nw + 1
+            end_if
+        end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('CEB '+fnb+' n_bnd='+string(nb)+' | '+fnw+' n_wall='+string(nw))
+end
+
+model restore 'output/ss_01'
+[exp_stage('process/cpl_bnd_s01.txt','process/cpl_wall_s01.txt')]
+model restore 'output/ss_02'
+[exp_stage('process/cpl_bnd_s02.txt','process/cpl_wall_s02.txt')]
+model restore 'output/ss_03'
+[exp_stage('process/cpl_bnd_s03.txt','process/cpl_wall_s03.txt')]
+model restore 'output/ss_04'
+[exp_stage('process/cpl_bnd_s04.txt','process/cpl_wall_s04.txt')]
+model restore 'output/ss_05'
+[exp_stage('process/cpl_bnd_s05.txt','process/cpl_wall_s05.txt')]
+model restore 'output/ss_06'
+[exp_stage('process/cpl_bnd_s06.txt','process/cpl_wall_s06.txt')]
+model restore 'output/ss_07'
+[exp_stage('process/cpl_bnd_s07.txt','process/cpl_wall_s07.txt')]
+model restore 'output/ss_08'
+[exp_stage('process/cpl_bnd_s08.txt','process/cpl_wall_s08.txt')]
+model restore 'output/ss_09'
+[exp_stage('process/cpl_bnd_s09.txt','process/cpl_wall_s09.txt')]
+model restore 'output/ss_10'
+[exp_stage('process/cpl_bnd_s10.txt','process/cpl_wall_s10.txt')]
+model restore 'output/ss_11'
+[exp_stage('process/cpl_bnd_s11.txt','process/cpl_wall_s11.txt')]
+[io.out('CEB-DONE 11 stages exported')]
+program log off
+program quit

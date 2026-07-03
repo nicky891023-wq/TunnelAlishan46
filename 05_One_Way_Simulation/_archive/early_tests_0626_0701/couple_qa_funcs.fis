@@ -1,0 +1,180 @@
+; couple_qa_funcs.fis -- Visual QA extraction for coupled stages (call AFTER each restore).
+;   dump_cracks(pfx): write <pfx>_cracks.txt (x y z type diam age) for crack_tension + crack_shear DFNs.
+;   qa_walls(pfx,stg): io.out wz_outter / w_inner net contact force per stage.
+;   crack_sectors(pfx): bin tension+shear crack count by circumferential sector (12 x 30deg) + axial band.
+;   tunnel axis along y, centre (cx,cz)=(1297,1747.5).
+fish define dump_cracks(pfx)
+    local fname = pfx+'_cracks.txt'
+    local st = file.open(fname,1,1)
+    local buf = array.create(1)
+    buf(1) = 'x y z type diam age'
+    file.write(buf,1)
+    global ncr_t = 0
+    global ncr_s = 0
+    local ii = 0
+    loop while ii < 2
+        local nm = 'crack_tension'
+        local ty = 1
+        if ii = 1 then
+            nm = 'crack_shear'
+            ty = 2
+        end_if
+        local d = dfn.find(nm)
+        if d # null then
+            loop foreach local fr dfn.fracturelist(d)
+                local p = fracture.pos(fr)
+                local dm = fracture.diameter(fr)
+                local ag = fracture.prop(fr,'age')
+                buf(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(ty)+' '+string(dm)+' '+string(ag)
+                file.write(buf,1)
+                if ty = 1 then
+                    ncr_t = ncr_t + 1
+                else
+                    ncr_s = ncr_s + 1
+                end_if
+            end_loop
+        end_if
+        ii = ii + 1
+    end_loop
+    st = file.close
+    io.out('QA-CRACKS '+pfx+' tension='+string(ncr_t)+' shear='+string(ncr_s)+' total='+string(ncr_t+ncr_s)+' -> '+fname)
+end
+fish define qa_walls(pfx, stg)
+    loop foreach local w wall.list
+        local fc = wall.force.contact(w)
+        local m = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+        if wall.name(w) = 'wz_outter' then
+            io.out('QA-WALL '+pfx+' s'+string(stg)+' wz_outter='+string(m)+'MN ('+string(comp.x(fc)/1e6)+','+string(comp.y(fc)/1e6)+','+string(comp.z(fc)/1e6)+')')
+        end_if
+        if wall.name(w) = 'w_inner' then
+            io.out('QA-WALL '+pfx+' s'+string(stg)+' w_inner='+string(m)+'MN')
+        end_if
+    end_loop
+end
+; mid-band only wz_outter reaction: integrate bf_couple ball-facet contact forces over y in [y0,y1]
+;   (total wall.force.contact is end-contaminated; this isolates the mid-tunnel lining reaction)
+fish define mid_wall_force(pfx, y0, y1)
+    global fmid_sum = 0.0      ; signed sum of normal force (compression>0 per PFC convention varies)
+    global fmid_abs = 0.0      ; sum |normal force| = contact-load magnitude proxy
+    global nmid_c = 0
+    ; coupling (ball-facet on wz_outter) = linearpbond unbreakable pb_ten>=1e10 (cb_control0 has NO
+    ;   'bf_couple' group; identify by pb_ten instead — verified 62556 coupling contacts, 47806 in mid)
+    loop foreach local c contact.list
+        if contact.model(c) = 'linearpbond' then
+            if contact.prop(c,'pb_ten') >= 1.0e10 then
+                local p = contact.pos(c)
+                local yy = comp.y(p)
+                if yy >= y0 then
+                    if yy <= y1 then
+                        local fn = contact.force.normal(c)
+                        fmid_sum = fmid_sum + fn
+                        local af = fn
+                        if af < 0.0 then
+                            af = -af
+                        end_if
+                        fmid_abs = fmid_abs + af
+                        nmid_c = nmid_c + 1
+                    end_if
+                end_if
+            end_if
+        end_if
+    end_loop
+    io.out('MID-WALL '+pfx+' y['+string(y0)+','+string(y1)+'] bf_couple_n='+string(nmid_c)+' sum_normal='+string(fmid_sum/1e6)+'MN abs_normal='+string(fmid_abs/1e6)+'MN')
+end
+; mid-band tunnel-wall convergence (Codex Q2 2nd proof): lining-ball radial-inward displacement in
+;   y[y0,y1]. ball.disp tracks drive-induced motion (datum reset zeroed it). reports mean/max + inner-band.
+fish define mid_convergence(pfx, y0, y1)
+    local cx = 1297.0
+    local cz = 1747.5
+    ; INNER-WALL (r 1.35-2.0m) radial convergence, split by region (Codex): blue-line load region
+    ;   (ang NOT in 250-320deg = sidewalls+crown) vs fixed-corner band (ang 250-320 = artifact).
+    global cv_blue = 0.0
+    global mx_blue = 0.0
+    global nb_blue = 0
+    global cv_corner = 0.0
+    global mx_corner = 0.0
+    global nb_corner = 0
+    local sblue = 0.0
+    local scorner = 0.0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        local yy = comp.y(p)
+        if yy >= y0 then
+        if yy <= y1 then
+            local rx = comp.x(p) - cx
+            local rz = comp.z(p) - cz
+            local rr = math.sqrt(rx*rx + rz*rz)
+            if rr >= 1.35 then
+            if rr <= 2.0 then
+                local ang = math.atan2(rz, rx)/math.degrad
+                if ang < 0.0 then
+                    ang = 360.0 + ang
+                end_if
+                local d = ball.disp(b)
+                local ri = -(comp.x(d)*rx/rr + comp.z(d)*rz/rr)
+                local iscorner = 0
+                if ang >= 250.0 then
+                    if ang <= 320.0 then
+                        iscorner = 1
+                    end_if
+                end_if
+                if iscorner = 1 then
+                    scorner = scorner + ri
+                    nb_corner = nb_corner + 1
+                    if ri > mx_corner then
+                        mx_corner = ri
+                    end_if
+                else
+                    sblue = sblue + ri
+                    nb_blue = nb_blue + 1
+                    if ri > mx_blue then
+                        mx_blue = ri
+                    end_if
+                end_if
+            end_if
+            end_if
+        end_if
+        end_if
+    end_loop
+    if nb_blue > 0 then
+        cv_blue = sblue/float(nb_blue)
+    end_if
+    if nb_corner > 0 then
+        cv_corner = scorner/float(nb_corner)
+    end_if
+    io.out('MID-CONV '+pfx+' INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n='+string(nb_blue)+' radial_inward mean='+string(cv_blue*1000.0)+'mm max='+string(mx_blue*1000.0)+'mm | fixed-corner n='+string(nb_corner)+' mean='+string(cv_corner*1000.0)+'mm max='+string(mx_corner*1000.0)+'mm')
+end
+fish define crack_sectors(pfx)
+    local cx = 1297.0
+    local cz = 1747.5
+    local sect = array.create(12)
+    local kk = 1
+    loop while kk <= 12
+        sect(kk) = 0
+        kk = kk + 1
+    end_loop
+    local ii = 0
+    loop while ii < 2
+        local nm = 'crack_tension'
+        if ii = 1 then
+            nm = 'crack_shear'
+        end_if
+        local d = dfn.find(nm)
+        if d # null then
+            loop foreach local fr dfn.fracturelist(d)
+                local p = fracture.pos(fr)
+                local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+                if ang < 0.0 then
+                    ang = 360.0 + ang
+                end_if
+                local s = int(ang/30.0) + 1
+                if s > 12 then
+                    s = 12
+                end_if
+                sect(s) = sect(s) + 1
+            end_loop
+        end_if
+        ii = ii + 1
+    end_loop
+    io.out('QA-SECTORS '+pfx+' (30deg bins 0..360): '+string(sect(1))+' '+string(sect(2))+' '+string(sect(3))+' '+string(sect(4))+' '+string(sect(5))+' '+string(sect(6))+' '+string(sect(7))+' '+string(sect(8))+' '+string(sect(9))+' '+string(sect(10))+' '+string(sect(11))+' '+string(sect(12)))
+end

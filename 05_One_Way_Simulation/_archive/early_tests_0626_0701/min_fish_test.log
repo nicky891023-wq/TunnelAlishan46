@@ -1,0 +1,43 @@
+**********************************************
+* Logging started at ¶g¤é ¤»¤ë 28 13:36:19 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model new
+flac3d>model deterministic on
+flac3d>model precision 1
+flac3d>model random 10000
+flac3d>; CASE A: define+call, NO automatic-create
+flac3d>fish define caseA
+   Def>    io.out('A-RAN body')
+   Def>    local fo = file.open('mintest_A.txt',1,1)
+   Def>    local arr = array.create(1)
+   Def>    arr(1) = 'A line'
+   Def>    fo = file.write(arr,1)
+   Def>    fo = file.close
+   Def>    io.out('A-WROTE file')
+   Def>end
+flac3d>[caseA]
+A-RAN body
+A-WROTE file
+0 (integer)
+flac3d>; CASE B: automatic-create on, then define+call
+flac3d>fish automatic-create on
+flac3d>fish define caseB
+   Def>    io.out('B-RAN body')
+   Def>end
+flac3d>[caseB]
+B-RAN body
+0 (integer)
+flac3d>; CASE C: call with @ syntax
+flac3d>fish define caseC
+   Def>    io.out('C-RAN body')
+   Def>end
+flac3d>@caseC
+C-RAN body
+flac3d>[io.out('MIN-DONE')]
+MIN-DONE
+0 (integer)
+flac3d>program quit

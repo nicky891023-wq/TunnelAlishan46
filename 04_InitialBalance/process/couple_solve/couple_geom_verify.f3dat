@@ -1,0 +1,44 @@
+; couple_geom_verify.f3dat -- export balls + wz_outter facets from the (new) Couple_Initial
+;   for a FULL ball/wall geometry check (Wade 2026-06-26 concern: do balls penetrate
+;   OUTSIDE wz_outter into the rock, esp at the mouths y~865/905 + the invert).
+;   Multi-slice overlay done in Python. cwd = 04_InitialBalance/couple_solve.
+program log-file 'couple_geom_verify.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'Couple_Initial'
+fish define _gexp
+    local a = array.create(1)
+    ; --- ALL balls (x y z r) ---
+    local fb = file.open('geom_balls.txt',1,1)
+    a(1) = 'x y z r'
+    fb = file.write(a,1)
+    local nb = 0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(ball.radius(b))
+        fb = file.write(a,1)
+        nb = nb + 1
+    end_loop
+    fb = file.close
+    ; --- wz_outter facet centroids (x y z) = deformed bore surface ---
+    local fw = file.open('geom_wzouter.txt',1,1)
+    a(1) = 'x y z'
+    fw = file.write(a,1)
+    local nw = 0
+    loop foreach local w wall.list
+        if wall.name(w) = 'wz_outter' then
+            loop foreach local fc wall.facetlist(w)
+                local q = wall.facet.pos(fc)
+                a(1) = string(comp.x(q))+' '+string(comp.y(q))+' '+string(comp.z(q))
+                fw = file.write(a,1)
+                nw = nw + 1
+            end_loop
+        end_if
+    end_loop
+    fw = file.close
+    io.out('GEOM exported balls='+string(nb)+' wz_outter_facets='+string(nw))
+end
+[_gexp]
+program log off
+program quit

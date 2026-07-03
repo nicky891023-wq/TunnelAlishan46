@@ -1,0 +1,9 @@
+﻿FULL4-RIGID-VERDICT: APPROVED WITH CONDITIONS
+
+- **Q1:** Yes. Accept the rigid mid-tunnel result as the deliverable: `0->2->5->5` tension bonds, localized invert crack cluster, mid section largely intact through stages 1-4. State clearly that this is **one localized invert tension onset**, not distributed lining failure.
+
+- **Q2:** Acceptable. I do **not** require `cb_control0` before accepting this result. The mid is not undriven: both mid crack count and max convergence grow. The ~7 MN reaction plateau is plausibly lining/interface limit or softening behavior while the extra imposed work is partly absorbed by end-band cascade. Condition: report mid reaction as **absolute reaction**, and caveat that drive-induced reaction increment is not isolated.
+
+- **Q3:** Yes. Proceed to the 4-stage **free-`w_inner` sensitivity** run. It is the right bracket for whether rigid `w_inner` is suppressing or reshaping mid damage.
+
+Condition on approval: keep end-band damage excluded from the deliverable metrics and explicitly label it as a boundary/end artifact.

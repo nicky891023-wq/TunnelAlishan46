@@ -1,0 +1,28 @@
+program log-file 'diag_loop.log'
+program log on
+fish automatic-create on
+model restore 's4_s1'
+fish define diag
+    io.out('DIAG-start gpnum='+string(gp.num))
+    local cnt = 0
+    loop foreach local gp gp.list
+        local p = gp.pos(gp)
+        if comp.x(p)>=1272.0 then
+        if comp.x(p)<=1322.0 then
+        if comp.y(p)>=855.0 then
+        if comp.y(p)<=915.0 then
+        if comp.z(p)>=1723.0 then
+        if comp.z(p)<=1773.0 then
+            cnt = cnt + 1
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    io.out('DIAG-loop-done cnt='+string(cnt))
+end
+[diag]
+[io.out('DIAG-DONE')]
+program quit

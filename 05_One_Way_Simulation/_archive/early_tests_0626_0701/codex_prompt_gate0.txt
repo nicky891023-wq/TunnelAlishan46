@@ -1,0 +1,26 @@
+You are Codex, the independent reviewer (with Claude as executor) under Wade's two-agent governance. This is the GATE-0 review of WORKFLOW_v2 Phase 0 (you previously APPROVED the workflow FOR EXECUTION). Per Wade's rule, you must confirm geometry, stress path, deformation location, and failure zone are reasonable BEFORE Claude proceeds to Phase 1/2. Return: GATE-0 PASS | PASS WITH CONDITIONS | FAIL, with specific actionable items.
+
+PHASE 0 EXECUTED (corrected sin/cos threshold, all 8 runs done): large & small models × {baseline LOW-HIGH-LOW-HIGH, HIGH-only, LOW-only, no-creep}, each 4 stages / 120 days. fracture_track zmax bug fixed. Old (tan-threshold) results archived as provisional.
+
+READ (in C:\Users\Wade\Desktop\Tunnel_TX\05_One_Way_Simulation\):
+1. GATE0_PACKET.md   <-- full results, trend tables, key findings, decisions, Visual-QA caveats. READ FIRST.
+2. The run logs for cross-check: large_creep_4stage.log, large_HIGHonly.log, large_LOWonly.log, large_nocreep.log, small_4stage.log, small_HIGHonly.log, small_LOWonly.log, small_nocreep.log (grep "S{N}done dmax=" and "S{N}eq active=").
+3. The y=885 slice dumps z_s4_s{1..4}.txt and z_lg_s{1..4}.txt (cols: xc yc zc s1 s3 pp coh phi layer creep; compression positive after the script's sign flip; q=(s1-s3)/2, p'=(s1+s3)/2-pp, q_th=0.6*(coh*cos(phi)+p'*sin(phi))).
+4. Three plots are ATTACHED (gate0_small_fields.png, gate0_small_trends.png, gate0_large_fields.png) so you can verify the Visual QA directly.
+
+KEY RESULTS (verify against files):
+- SMALL (tunnel): final dmax baseline 4.42mm / HIGH-only 4.05 / LOW-only 3.26 / no-creep 1.89mm (elastic). Increments: S2(HIGH)+0.99, S3(LOW)+0.005 PAUSE, S4(HIGH)+0.21. Creep concentrated in layer4 (wet weak sandshale c=100kPa): slice L4 active S1=13512/13687 -> S3(LOW)=356 -> S4(HIGH)=9756. Active-by-stage (no-creep, pure threshold): 662079(LOW)->868855(HIGH)->385633(LOW)->868855(HIGH) = water level directly modulates the creep-active set ~2.3x. mm-scale, hypothesis (GW rise -> eff. stress drop -> threshold exceeded -> creep) strongly supported.
+- LARGE (slope): final dmax baseline 1.63m / HIGH-only 1.69 / LOW-only 1.38 / no-creep 0.13m. Over-driven ~75-275x field slope rate (15-33 mm/yr). Over-driving is CREEP-dominated (no-creep only 0.13m). Water effect present (HIGH>LOW, ~22%) but secondary to the over-driven baseline creep.
+
+YOUR REVIEW (be rigorous, this model had many prior errors):
+1. GEOMETRY: are the y=885 slice extents, layer membership, and active-zone spatial patterns (small: layer4 band + tunnel EDZ; large: shallow/slope-surface) reasonable?
+2. STRESS PATH / MECHANISM: is the water->effective-stress->threshold->creep mechanism correctly demonstrated by the active-set modulation, and is the q_th sin/cos form now correct? Any sign/units red flags in the dumps?
+3. DEFORMATION LOCATION: small = tunnel convergence (mm, near tunnel); large = slope creep (m, shallow). Reasonable?
+4. FAILURE/ACTIVE ZONE: is layer4-dominant creep (99% active) physical for a wet weak layer, or a red flag (e.g. threshold too low / cohesion too low)?
+5. OVER-DRIVING decision (packet §4.1): Claude proposes treating LARGE as a regional-context endmember SCENARIO (labelled non-calibrated), since the core deliverable is tunnel-scale (small->coupled). Do you agree, or must the large creep be re-calibrated (eta/threshold) before proceeding? Note small is mm-scale and not the over-driving problem.
+6. Is the small model sound enough to proceed to Phase 1 (lining-reaction extraction) + Phase 2 (coupled drive)?
+7. Visual-QA caveats in packet §3 (scatter not interpolated; field anchor; missing stress-path/rigid-residual/unbalanced plots) — which must be fixed for Gate-0, vs deferred to their relevant phase?
+
+OUTPUT to stdout:
+Line 1: GATE-0: PASS | PASS WITH CONDITIONS | FAIL
+Then numbered findings keyed to items 1-7, each specific and actionable. State exactly what (if anything) must change before Phase 1/2.

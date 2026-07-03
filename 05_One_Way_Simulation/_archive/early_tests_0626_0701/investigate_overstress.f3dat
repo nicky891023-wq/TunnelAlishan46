@@ -1,0 +1,146 @@
+; investigate_overstress.f3dat -- WHY does the upper rock dominate the small-model creep?
+;   (Wade: investigate the over-stress domination). Characterize small_ep's in-situ T_crit by
+;   DEPTH band + RADIAL distance from tunnel -> is the high-T_crit (creep-active) region the
+;   upper over-stress (mapped from large-model surface) or the tunnel EDZ? Export y885 T_crit
+;   field. T_crit = q/(c+pmean*tanphi); active iff >=0.8. cwd = 05.
+program log-file 'investigate_overstress.log'
+program log on
+model restore 'small_ep'
+fish automatic-create on
+fish define _inv
+    local nb = 10
+    local zmin = 1700.0
+    local zmax = 1800.0
+    local dz = (zmax-zmin)/float(nb)
+    local cnt = array.create(nb)
+    local act = array.create(nb)
+    local tcs = array.create(nb)
+    local i = 1
+    loop while i <= nb
+        cnt(i)=0
+        act(i)=0
+        tcs(i)=0.0
+        i=i+1
+    end_loop
+    ; radial bins (from tunnel center 1299,1747) 0-5,5-10,10-20,20-40,40+
+    local rc = array.create(5)
+    local ra = array.create(5)
+    i = 1
+    loop while i <= 5
+        rc(i)=0
+        ra(i)=0
+        i=i+1
+    end_loop
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pm = (s1+s3)/2.0 - pore
+            local q = (s1-s3)/2.0
+            local c = zone.prop(z,'cohesion')
+            local phi = zone.prop(z,'friction')
+            local strength = c + pm*math.tan(phi*math.degrad)
+            local tc = 0.0
+            if strength > 1.0 then
+                tc = q/strength
+            end_if
+            local p = zone.pos(z)
+            local zc = comp.z(p)
+            local ib = int((zc-zmin)/dz)+1
+            if ib < 1 then
+                ib = 1
+            end_if
+            if ib > nb then
+                ib = nb
+            end_if
+            cnt(ib) = cnt(ib)+1
+            tcs(ib) = tcs(ib)+tc
+            if tc >= 0.8 then
+                act(ib) = act(ib)+1
+            end_if
+            ; radial
+            local dxr = comp.x(p)-1299.0
+            local dzr = zc-1747.0
+            local rr = math.sqrt(dxr*dxr + dzr*dzr)
+            local rb = 5
+            if rr < 40.0 then
+                rb = 4
+            end_if
+            if rr < 20.0 then
+                rb = 3
+            end_if
+            if rr < 10.0 then
+                rb = 2
+            end_if
+            if rr < 5.0 then
+                rb = 1
+            end_if
+            rc(rb) = rc(rb)+1
+            if tc >= 0.8 then
+                ra(rb) = ra(rb)+1
+            end_if
+        end_if
+    end_loop
+    io.out('INV-DEPTH active(T>=0.8) by z band (tunnel z~1747):')
+    i = 1
+    loop while i <= nb
+        local zlo = zmin+float(i-1)*dz
+        local mt = 0.0
+        if cnt(i) > 0 then
+            mt = tcs(i)/float(cnt(i))
+        end_if
+        local pa = 0.0
+        if cnt(i) > 0 then
+            pa = 100.0*float(act(i))/float(cnt(i))
+        end_if
+        io.out('  z'+string(int(zlo))+'-'+string(int(zlo+dz))+': '+string(act(i))+'/'+string(cnt(i))+'='+string(pa)+'% active, meanT='+string(mt))
+        i = i+1
+    end_loop
+    io.out('INV-RADIAL active by distance from tunnel:')
+    local rlab = array.create(5)
+    rlab(1)='r0-5'
+    rlab(2)='r5-10'
+    rlab(3)='r10-20'
+    rlab(4)='r20-40'
+    rlab(5)='r40+'
+    i = 1
+    loop while i <= 5
+        local pr = 0.0
+        if rc(i) > 0 then
+            pr = 100.0*float(ra(i))/float(rc(i))
+        end_if
+        io.out('  '+rlab(i)+': '+string(ra(i))+'/'+string(rc(i))+'='+string(pr)+'% active')
+        i = i+1
+    end_loop
+    ; export y885 T_crit field
+    local fo = file.open('small_tcrit_y885.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x z tcrit'
+    fo = file.write(a,1)
+    loop foreach local z2 zone.list
+        if zone.group(z2,'mat') = 'rock' then
+            local p2 = zone.pos(z2)
+            if comp.y(p2) > 884.0 then
+            if comp.y(p2) < 886.0 then
+                local s1b = -zone.stress.prin.x(z2)
+                local s3b = -zone.stress.prin.z(z2)
+                local pmb = (s1b+s3b)/2.0 - zone.pp(z2)
+                local qb = (s1b-s3b)/2.0
+                local strb = zone.prop(z2,'cohesion') + pmb*math.tan(zone.prop(z2,'friction')*math.degrad)
+                local tcb = 0.0
+                if strb > 1.0 then
+                    tcb = qb/strb
+                end_if
+                a(1) = string(comp.x(p2))+' '+string(comp.z(p2))+' '+string(tcb)
+                fo = file.write(a,1)
+            end_if
+            end_if
+        end_if
+    end_loop
+    fo = file.close
+    io.out('INV-EXP exported small_tcrit_y885.txt')
+end
+[_inv]
+[io.out('INV-DONE')]
+program quit

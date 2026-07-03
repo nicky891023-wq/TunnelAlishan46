@@ -1,0 +1,275 @@
+; ============================================================================
+; couple_servo_v5.f3dat -- Alishan #46 COUPLED initial force-balance, REBUILT FROM
+;   THE CLEAN BASE Couple_Model (03_CoupleModel) so the PFC bonded-ball lining is
+;   INTACT and CONFINED, then force-balanced.  (Wade 2026-06-26.)
+;
+;   WHY START FROM Couple_Model (not Couple_CC_built / nf_rockeq_map):
+;     Couple_Model already contains, built CLEAN by build_Couple_mb3.f3dat:
+;       * rock O-grid zones (groups layer2..6 slot 'type'; group 'rock' slot 'mat'),
+;       * wall-zone 'wz_outter' (couples balls <-> rock bore wall),
+;       * THREE RIGID imported walls 'w_inner' + 'w_860' + 'w_910' (clearance + mouths),
+;       * ~456302 PFC balls, currently UNBONDED (linear cmat, fric 0.5).
+;     => the rigid walls are ALREADY present and valid -- we do NOT re-import w_inner,
+;        so we AVOID the "*** Polygon with ID 2 does not share an Edge" failure that
+;        killed couple_servo_v4 (which re-imported w_inner.stl into Couple_CC_built --
+;        a model that did NOT already have those rigid walls).  See report.
+;
+;   THE CRITICAL STEP (3) -- SELECTIVE BOND:
+;     * ball-ball  : linearpbond D7 BREAKABLE (pb_ten/pb_coh/pb_fa) -- the lining BPM,
+;                    bonded EVERYWHERE among balls.
+;     * ball-facet : linearpbond 1e20 UNBREAKABLE -- ONLY on the 'wz_outter' wall
+;                    (rock coupling, solve stability).
+;     * ball-facet on the RIGID walls (w_inner / w_860 / w_910): stays FRICTIONAL
+;                    (plain linear, NO bond) -- the lining slides/deforms against the
+;                    rigid confining walls (frictional confinement, NO free face).
+;     METHOD: a FISH loop tags each ball-facet contact with a contact GROUP according
+;             to its parent wall's name (verified intrinsic chain
+;             contact.end2 -> wall.facet.wall -> wall.name, per the official
+;             "callbacks" tutorial), then we bond ONLY the 'bf_couple' group and leave
+;             the 'bf_rigid' group as plain linear.  (Doc citations in the report.)
+;
+;   FORCE-FREE install is done ONCE here in step (3) at ZERO in-situ stress (lin_mode 1),
+;   matching build_couple_cc_build.f3dat L172-208.  The solve (step 6) therefore does
+;   NOT re-zero forces in A2 -- it only re-frees the balls (NO double force-zeroing).
+;
+;   Host: flac3d600_console.exe (FLAC3D-6 + PFC + wallzone).  cwd = couple_solve.
+;   All command/FISH spellings cross-checked vs the bundled PFC 6.0 + FLAC3D 6.00 docs.
+; ============================================================================
+program log-file 'couple_servo_v5.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+
+; ----------------------------------------------------------------------------
+; (1) Restore the CLEAN coupled base + parameters + environment.
+; ----------------------------------------------------------------------------
+model restore '../../../03_CoupleModel/output/Couple_Model'
+call '../../parameter.f3dat'
+model largestrain on
+[global ovb = -1.40e6]
+[io.out('V5-0 restored Couple_Model: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num)+' wall_facets='+string(wall.facet.num))]
+
+; ----------------------------------------------------------------------------
+; (2) Rock = ELASTIC for the initial balance (per-layer E_S_n, nu).
+; ----------------------------------------------------------------------------
+zone cmodel assign elastic
+zone property young [E_S_2] poisson [nu] range group 'layer2' slot 'type'
+zone property young [E_S_3] poisson [nu] range group 'layer3' slot 'type'
+zone property young [E_S_4] poisson [nu] range group 'layer4' slot 'type'
+zone property young [E_S_5] poisson [nu] range group 'layer5' slot 'type'
+zone property young [E_S_6] poisson [nu] range group 'layer6' slot 'type'
+; rock DENSITY per layer (Couple_Model only set ball density; rock needs it for gravity) --
+zone initialize density [den_S_2] range group 'layer2' slot 'type'
+zone initialize density [den_S_3] range group 'layer3' slot 'type'
+zone initialize density [den_S_4] range group 'layer4' slot 'type'
+zone initialize density [den_S_5] range group 'layer5' slot 'type'
+zone initialize density [den_S_6] range group 'layer6' slot 'type'
+[io.out('V5-1 rock elastic + density assigned')]
+
+; ============================================================================
+; (3) BOND THE LINING -- THE CRITICAL STEP.  Force-free recipe replicated from
+;     build_couple_cc_build.f3dat L172-208, WITH ONE DIFFERENCE: ball-facet is bonded
+;     (1e20 unbreakable) ONLY on 'wz_outter'; ball-facet on the RIGID walls stays
+;     frictional (plain linear).
+; ----------------------------------------------------------------------------
+; (3a) SETTLE the raw-distributed overlaps (rock frozen), linear cmat, density-scaled.
+;      Couple_Model balls are freshly distributed/inset-clipped (never settled), so we
+;      settle first -- exactly as build_couple_cc L172-181.
+; ----------------------------------------------------------------------------
+zone gridpoint fix velocity                 ; freeze rock during the ball settle
+model mechanical timestep scale             ; density scaling (stability)
+cmat default type 'ball-ball'  model linear method deformability emod [pfc_emod] kratio [pfc_kratio] property fric [pfc_fric]
+cmat default type 'ball-facet' model linear method deformability emod [pfc_emod] kratio [pfc_kratio] property fric [pfc_fric]
+cmat apply
+model calm
+model cycle 3000
+model calm
+[io.out('V5-3a balls settled: balls='+string(ball.num)+' contacts='+string(contact.num))]
+
+; ----------------------------------------------------------------------------
+; (3b) Promote ALL contacts to linearpbond + instantiate contacts (model cycle 1),
+;      then TAG every ball-facet contact by its parent wall name into a contact group:
+;        - 'wz_outter'                  -> group 'bf_couple'  (will be bonded 1e20)
+;        - w_inner / w_860 / w_910 etc. -> group 'bf_rigid'   (stays frictional linear)
+;      Verified intrinsic chain (PFC "callbacks" tutorial, EXACT pattern):
+;        type.pointer(c) == 'ball-facet'      ; it is a ball-facet contact
+;        wfp = contact.end2(c)                ; end2 = the WALL-FACET piece (end1 = ball)
+;        w   = wall.facet.wall(wfp)           ; the parent wall pointer
+;        wall.name(w)                         ; the wall name string
+; ----------------------------------------------------------------------------
+cmat default type 'ball-ball'  model linearpbond method deformability emod [pfc_emod] kratio [pfc_kratio] proximity [pfc_bondgap] property fric [pfc_fric]
+cmat default type 'ball-facet' model linearpbond method deformability emod [pfc_emod] kratio [pfc_kratio] proximity [pfc_bondgap] property fric [pfc_fric]
+cmat apply
+model cycle 1                               ; instantiate / refresh contacts so the loop sees them
+
+fish define tag_bf_contacts
+    local n_couple = 0
+    local n_rigid  = 0
+    local n_other  = 0
+    loop foreach local c contact.list
+        if type.pointer(c) = 'ball-facet' then
+            local wfp = contact.end2(c)          ; end2 = wall-facet piece (end1 = ball)
+            local w   = wall.facet.wall(wfp)
+            local wn  = wall.name(w)
+            if wn = 'wz_outter' then
+                contact.group(c) = 'bf_couple'        ; Default slot (contacts are fresh, no prior groups)
+                n_couple = n_couple + 1
+            else
+                contact.group(c) = 'bf_rigid'         ; Default slot
+                n_rigid = n_rigid + 1
+            end_if
+        else
+            n_other = n_other + 1
+        end_if
+    end_loop
+    io.out('V5-3b TAG ball-facet: bf_couple(wz_outter)='+string(n_couple)+' bf_rigid(w_inner/860/910)='+string(n_rigid)+' | non-ballfacet contacts='+string(n_other))
+end
+[tag_bf_contacts]
+
+; ----------------------------------------------------------------------------
+; (3c) BOND.
+;   ball-ball : linearpbond, breakable D7 lining (pb_ten/pb_coh/pb_fa from parameter).
+;   ball-facet on 'bf_couple' (= wz_outter ONLY): linearpbond, 1e20 UNBREAKABLE coupling.
+;   ball-facet on 'bf_rigid'  (= w_inner/w_860/w_910): RESET to plain linear (FRICTIONAL,
+;       NO parallel bond) -- the lining slides against the rigid confining walls.
+; ----------------------------------------------------------------------------
+; -- SAFETY (match CC recipe): explicitly promote the to-be-bonded contacts to linearpbond
+;    + set linear deformability, in case cmat apply did not fully promote existing contacts --
+contact model linearpbond range contact type 'ball-ball'
+contact model linearpbond range contact group 'bf_couple'
+contact method deformability emod [pfc_emod] kratio [pfc_kratio] range contact type 'ball-ball'
+contact method deformability emod [pfc_emod] kratio [pfc_kratio] range contact group 'bf_couple'
+
+; -- ball-ball: parallel-bond deformability, bond within gap, breakable strengths --
+contact method pb_deform emod [pfc_pb_emod] kratio [pfc_pb_krat] range contact type 'ball-ball'
+contact method bond gap [pfc_bondgap] range contact type 'ball-ball'
+contact property pb_ten [pfc_pb_ten] pb_coh [pfc_pb_coh] pb_fa [pfc_pb_fa] range contact type 'ball-ball'
+
+; -- ball-facet coupling on wz_outter ONLY: 1e20 unbreakable parallel bond --
+contact method pb_deform emod [pfc_pb_emod] kratio [pfc_pb_krat] range contact group 'bf_couple'
+contact method bond gap [pfc_bondgap] range contact group 'bf_couple'
+contact property pb_ten [pfc_bf_strong] pb_coh [pfc_bf_strong] pb_fa [pfc_pb_fa] range contact group 'bf_couple'
+
+; -- ball-facet on the RIGID walls: revert to plain linear (frictional, NO bond) --
+contact model linear range contact group 'bf_rigid'
+contact method deformability emod [pfc_emod] kratio [pfc_kratio] range contact group 'bf_rigid'
+
+; -- friction everywhere (linear part of all contacts) --
+contact property fric [pfc_fric]
+[io.out('V5-3c BONDED: ball-ball D7 breakable + ball-facet 1e20 unbreakable on wz_outter; rigid-wall ball-facet kept frictional (plain linear)')]
+
+; ----------------------------------------------------------------------------
+; (3d) FORCE-FREE install (proven lin_mode 1).  Done ONCE here at ZERO in-situ stress.
+;      The solve (step 6) does NOT re-zero forces -- see A2 note.
+; ----------------------------------------------------------------------------
+model calm
+ball fix velocity spin
+ball attribute force-contact multiply 0.0
+ball attribute moment-contact multiply 0.0
+contact property lin_force 0.0 0.0 0.0 lin_mode 1
+model cycle 2
+ball free velocity spin
+[io.out('V5-3d install forces zeroed (force-free, lin_mode 1)')]
+
+; ============================================================================
+; (4) IN-SITU: map the LARGE field over the WHOLE domain (proven-clean method, the
+;     same as the small -> no box artifact).  idw_map.f3dat maps onto rock+lining zones.
+; ============================================================================
+model gravity 0 0 [-grav]
+call '../idw_map.f3dat'
+[ReadFile_ss('../../output/large_stress_coarse.dat')]
+[MapStress_IDW(40.0)]
+[io.out('V5-4 in-situ: mapped large field over whole domain (no box)')]
+
+; ============================================================================
+; (5) BC: 6 outer faces velocity-fixed (submodel held at parent).
+; ============================================================================
+zone gridpoint fix velocity range position-x 1276.7 1277.3
+zone gridpoint fix velocity range position-x 1316.7 1317.3
+zone gridpoint fix velocity range position-y 859.7 860.3
+zone gridpoint fix velocity range position-y 909.7 910.3
+zone gridpoint fix velocity range position-z 1727.7 1728.3
+zone gridpoint fix velocity range position-z 1767.7 1768.3
+[io.out('V5-5 6 outer faces velocity-fixed')]
+model save 'v5_preA'      ; checkpoint: bonds + in-situ + BC done, before the gravity solve (continue here if STEP A errors)
+
+; ============================================================================
+; (6) SOLVE (gradual) -- same sequence as couple_servo_v4, EXCEPT A2 does NOT re-zero
+;     forces (force-free install already done ONCE in step 3 -> no double-zeroing).
+; ----------------------------------------------------------------------------
+; STEP A: rock equilibrium with balls FROZEN.
+;   NOTE: step 3d ended with balls FREE; STEP A re-freezes them for the rock-eq.  The
+;   wz_outter facets move with the rock, so the frozen-ball coupling contacts pick up
+;   overlap forces -- which is exactly why A2 (below) re-frees the balls so they can
+;   relax those forces under the rigid-wall confinement.
+; ----------------------------------------------------------------------------
+ball fix velocity spin
+model solve ratio-average 1e-4 cycles 8000
+[io.out('V5-A STEP A done (rock-eq, balls frozen)')]
+model save 'v5_rockeq'
+
+; --- A1: support pressure on the bore (balls still frozen) ---
+zone face apply stress-normal [ovb] range group 'rock' slot 'mat' position-x 1292 1303 position-y 860.05 909.95 position-z 1743 1752
+model solve ratio-average 1e-4 cycles 3000
+[io.out('V5-A1 support pressure applied (balls frozen)')]
+
+; --- A2: FREE the balls (NO re-zeroing of forces -- force-free install was step 3d).
+;     Balls are CONFINED by wz_outter (rock) + rigid w_inner/w_860/w_910 -> no free face.
+; ----------------------------------------------------------------------------
+ball free velocity spin
+ball attribute displacement multiply 0.0     ; reset disp datum for the solve-phase disp report (NOT a force op)
+model mechanical timestep automatic
+[io.out('V5-A2 balls freed (no double force-zeroing); confined by wz_outter + rigid walls')]
+
+; --- B: servo reduce -> gradually bleed the bore support pressure toward 0 ---
+zone face apply stress-normal [ovb] servo reduce ratio average lower-bound 2e-3 upper-bound 1e-2 upper-multiplier 0.95 latency 30 range group 'rock' slot 'mat' position-x 1292 1303 position-y 860.05 909.95 position-z 1743 1752
+model solve ratio-average 1e-4 cycles 2000
+[io.out('V5-B1 servo ~2000')]
+model save 'v5_servo_m1'
+model solve ratio-average 1e-4 cycles 3000
+[io.out('V5-B2 servo ~5000')]
+model solve ratio-average 1e-4 cycles 5000
+[io.out('V5-B3 servo ~10000')]
+
+; --- FINALIZE: zero residual bore pressure + re-converge ---
+zone face apply stress-normal 0 range group 'rock' slot 'mat' position-x 1292 1303 position-y 860.05 909.95 position-z 1743 1752
+model solve ratio-average 1e-4 cycles 8000
+[io.out('V5-FIN residual bore pressure zeroed + re-converged')]
+model save 'Couple_Initial_v5'
+
+; ============================================================================
+; (7) VERIFY.
+; ----------------------------------------------------------------------------
+; -- bond state + ball/rock disp_max at the y~885 slice (count_bonds filters ball-ball
+;    bonds by pb_ten<1e10, so the 1e20 wz_outter coupling + linear rigid-wall contacts
+;    are correctly excluded; only the breakable D7 lining bonds are counted) --
+call 'count_bonds.f3fis'
+[io.out('V5-BONDCHK at Couple_Initial_v5:')]
+[count_state]
+
+; -- export full stress tensor at y~885 (rock zones only, 884<y<886) --
+fish define _exp_v5
+    local fz = file.open('couple_v5_y885.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x z sxx syy szz sxy sxz syz'
+    fz = file.write(a,1)
+    local n = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            local p = zone.pos(z)
+            if comp.y(p) > 884.0 then
+            if comp.y(p) < 886.0 then
+                a(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))
+                fz = file.write(a,1)
+                n = n + 1
+            end_if
+            end_if
+        end_if
+    end_loop
+    fz = file.close
+    io.out('V5-EXP exported '+string(n)+' rock zones @y885 -> couple_v5_y885.txt')
+end
+[_exp_v5]
+[io.out('V5-DONE')]
+program log off
+program quit

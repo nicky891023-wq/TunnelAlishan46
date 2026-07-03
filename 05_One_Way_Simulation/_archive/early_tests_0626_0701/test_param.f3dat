@@ -1,0 +1,13 @@
+program log-file 'test_param.log'
+program log on
+model new
+zone create brick size 2 2 2
+fish automatic-create on
+fish define myf(stg)
+    io.out('MYF-RAN stg='+string(stg)+' g='+string(g_prefix))
+end
+[global g_prefix = 's4']
+[myf(1)]
+[myf(2)]
+[io.out('TEST-DONE')]
+program quit

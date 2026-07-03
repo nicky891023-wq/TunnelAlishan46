@@ -1,0 +1,7 @@
+program log-file 'proto_disp_export.log'
+program log on
+model restore 'proto_s2'
+history list
+history export 'crown_dz' 'side_dx' 'nactive' file 'proto_disp_vsstep.txt' truncate
+[io.out('DISP-EXPORT-DONE')]
+program quit

@@ -1,0 +1,221 @@
+I now have everything install-verified and grounded in the actual 04 project files. Here is the synthesized 05 implementation plan.
+
+---
+
+# 05 IMPLEMENTATION PLAN — Alishan #46 3-Scale Groundwater-Driven Creep
+
+**Grounded in:** the real 04 saves/scripts (`run_large_init.f3dat`, `run_small_init.f3dat`, `parameter.f3dat`, `idw_map.f3dat`), the two existing STLs in `05_One_Way_Simulation/` (`watertable_lower.stl`, `watertable_higher.stl`), and install-verified FLAC3D 6.00 commands. **Assumptions:** SI units, compression-negative, small-strain (`model largestrain off` — matches all of 04), one-way top-down coupling (Large→Small→Coupled), creep model = `burgers-mohr` (= cvisc; alias confirmed live in `datafiles/Creep/`).
+
+## CRITICAL INSTALL FINDINGS that reshape the reference recipes
+
+1. **The reference's "event 23 / cycle-point 43" callback number is NOT how FLAC3D 6.00 works.** Per `cmd_fish.callback.html`: numeric callbacks use a **real-number cycle-point `f`** (e.g. `-1.0`); the *integer* event triggers (creation/deletion, contact, solve-termination) are a *separate* mechanism. The validated threshold logic must therefore be inserted as a **`whilestepping`** FISH function (auto-inserts at `f = -1.0`, runs every cycle) — `fish callback add @threshold -100.0` to force it to run **after** the constitutive stress update each step. Do **not** copy a literal "23"/"43" — that came from a different code base and will silently not register.
+
+2. **`burgers-mohr` note 3 (propcvisc.html):** *"creep behavior is triggered by deviatoric stress; volumetric behavior does not consider creep."* This validates the threshold using deviatoric `q` — but it means **pore-pressure/effective-stress only enters through the MC `p'` term in the threshold**, exactly as the reference FISH does. Good.
+
+3. **`burgers-mohr` note (propcvisc.html), load-bearing:** *"If the stresses are changed with `zone initialize`… the internal Kelvin strains will not be compatible… movement will occur until the strains adjust."* The 04 `idw_map.f3dat` **sets `zone.stress.*` directly**. Therefore at the moment you switch the rock to `burgers-mohr`, you MUST run the install's `SetKStrain.f3fis` (referenced from `modelburgers.html`) **once, immediately after assigning burgers-mohr on the restored in-situ field**, or you get a spurious creep transient unrelated to water. This is a NEW step the reference recipes omit.
+
+4. **Effective stress needs `zone water density`.** `zone face apply pore-pressure`/`zone water plane` only produce effective-stress behavior when `zone water density 1000` is set (verified in BracedExcavation). The project STLs are water-table surfaces → use `zone water plane`-style assignment via the STL geometry (see §1).
+
+---
+
+## 1. PER-SCALE SOLVE SEQUENCE (one 30-day stage) + 4-stage chain
+
+### The single-stage macro (identical structure for all 3 scales)
+
+One stage = water set → steady flow → mechanical re-equilibrium → threshold creep for 30 d. Install-verified commands:
+
+```
+; ---- (A) set water table for this stage (low or high STL) ----
+zone water density 1000
+zone water plane origin <pt_on_STL> normal (0,0,1)     ; <VERIFY geometry-from-STL>: 
+;   the two project STLs are near-planar tables; if truly planar, read one node ->
+;   origin + (0,0,1) normal reproduces them. If non-planar, use the
+;   geometry-set import + per-gridpoint pore-pressure init fallback (see note *).
+
+; ---- (B) steady-state flow to the new table (mech frozen) ----
+model fluid active on
+model mechanical active off
+model solve fluid ratio-flow 1.0e-5            ; install-verified (Fluid datafiles)
+model fluid active off
+model mechanical active on
+
+; ---- (C) mechanical re-equilibrium BEFORE any creep (kills the pp-jump transient) ----
+model calm                                     ; zero kinetic energy after the pp step
+model solve elastic ratio-local 1e-3 cycles 6000   ; same guard style as 04 run_small_init
+
+; ---- (D) threshold creep, 30 days ----
+model creep active on
+model creep timestep fix [crp_dt]              ; crp_dt = 600 s (parameter.f3dat)
+model solve time-total [t_now + 30*86400]      ; ABSOLUTE cumulative time (install form)
+model creep active off
+zone gridpoint initialize velocity 0 0 0       ; zero velocity at stage end (see §3)
+model save '<scale>_stageN'
+```
+
+\* **STL fallback** (if `watertable_*.stl` are not planar): `geometry import 'watertable_lower.stl'` then a FISH loop setting `gp.pp` hydrostatically below the surface and `zone.fluid... ` — but **prefer `zone water plane`** first; it is one line and the project STLs look like gentle tables. Flag the planarity check as the first thing to confirm in the prototype (§7).
+
+### Why this exact order (the reference's "do NOT change water mid-solve")
+Steady flow (B) and creep (D) are **never** in the same solve. The mechanical re-equilibrium (C) absorbs the abrupt effective-stress change as a *static* step so the *creep* phase starts from a balanced state — this is the single most important divergence guard (§4).
+
+### The 4-stage chain (120 d, low→high→low→high)
+
+| Stage | Days | Table | `time-total` arg |
+|---|---|---|---|
+| 1 | 0–30 | **low** (`watertable_lower.stl`) | `30*86400` |
+| 2 | 30–60 | **high** (`watertable_higher.stl`) | `60*86400` |
+| 3 | 60–90 | **low** | `90*86400` |
+| 4 | 90–120 | **high** | `120*86400` |
+
+`time-total` is **cumulative absolute** (verified: `model solve time-total 2e6` style) — never reset the creep clock between stages.
+
+### Per-scale entry points
+- **LARGE:** `model restore '../04_InitialBalance/Large_Initial'` → assign `burgers-mohr` on `range group 'rock'` (4 layers, props from `parameter.f3dat`) → `SetKStrain` → run 4 stages → after EACH stage export the near-field displacement (§2).
+- **SMALL:** `model restore '../04_InitialBalance/Small_Initial'` → assign `burgers-mohr` on `range group 'rock' slot 'mat'` (6 layers; **lining stays elastic D7**) → `SetKStrain` → for each stage: apply large's stage-displacement as boundary velocity (§2) **and** its own water table → run the stage → monitor y[860,910].
+- **COUPLED:** `model restore '../04_InitialBalance/Couple_Initial'` (+ `program load module 'pfc'` + `'wallzone'`) → rock zones → `burgers-mohr`; **PFC lining balls keep their D7 bonded contacts** → for each stage: small's stage-displacement → wall-zone outer-boundary velocity (§2,§5) + own water → run → bond-break pattern.
+
+---
+
+## 2. INTER-SCALE COUPLING (parent displacement → child boundary velocity)
+
+The 04 `idw_map.f3dat` maps **stress** (for in-situ consistency). For 05 you need a **displacement→velocity** IDW, identical *structure* but on `gp.disp`/`gp.vel`. Reuse the proven 260529 pattern (`ApplyVel_IDW`) and the 04 IDW skeleton.
+
+**Export (parent, after each stage):** write `gpid x y z ux uy uz` for parent gridpoints inside the child footprint box. Boxes are already defined in 04:
+- Large→Small footprint = the small box `x[1249,1351] y[849,951] z[1699,1801]` (the 04 small fix-box).
+- Small→Coupled footprint = the coupled box `x[1268,1306] z[1738,1758]` (from `idw_map_couple.f3dat`).
+
+```
+fish define export_disp(fn, x0,x1, y0,y1, z0,z1)
+    local st = file.open(fn,1,1)
+    local fl = array.create(1)
+    fl(1) = 'gpid x y z ux uy uz'
+    st = file.write(fl,1)
+    loop foreach local gp gp.list
+        local p = gp.pos(gp)
+        if comp.x(p)>x0 then ... if comp.z(p)<z1 then     ; nested guards as in 04
+            local u = gp.disp(gp)
+            fl(1)=string(gp.id(gp))+' '+...+' '+string(comp.x(u))+' '+string(comp.y(u))+' '+string(comp.z(u))
+            st=file.write(fl,1)
+        ...
+    end_loop
+    st=file.close
+end
+```
+
+**Apply on child (per stage), the displacement→velocity conversion (the core of one-way coupling):**
+
+```
+fish define ApplyVel_IDW(creep_time_s, search_radius)
+    loop foreach local gp gp.list
+        if <gp on child outer boundary box-face>          ; same 6 faces as 04 fix
+            local p = gp.pos(gp)
+            ; --- IDW over parent export arrays (reuse idw_map.f3dat read + weighting) ---
+            local target_u = <IDW of ux,uy,uz at p, w = 1/d^2, radius search_radius>
+            local curr_u   = gp.disp(gp)
+            gp.vel(gp) = (target_u - curr_u) / creep_time_s   ; <<< disp increment / 30d
+            gp.fix(gp) = vector(1,1,1)                          ; boundary DRIVEN
+        else
+            gp.fix(gp) = vector(0,0,0)                          ; interior FREE to creep
+        endif
+    end_loop
+end
+[ApplyVel_IDW(30.0*86400.0, 40.0)]    ; 30 d in seconds; radius 40 m (same as 04 small)
+```
+
+Key points, install/grounded:
+- `creep_time_s = 30*86400 = 2,592,000 s` so the boundary moves **exactly the parent's per-stage displacement increment** over the 30-day creep phase. This makes the child's boundary rate physically consistent with the parent's creep.
+- **One velocity field per 30-d stage** (recompute `target_u` from the new parent export each stage) — matches Wade's "ONE velocity boundary output per 30d stage."
+- The 04 small model already **fixes the same 6 box faces** with `zone gridpoint fix velocity` — in 05 those fixed faces instead carry the **non-zero IDW velocity** (drive instead of hold). The interior tunnel/lining is freed.
+- Coupled: the velocity is applied to the **wall-zone outer-boundary gridpoints** (`wz_outter` region / `wallzone_outter.stl`), NOT to PFC balls — the balls respond through the wall-zone contact (§5).
+
+---
+
+## 3. ZEROING DECISIONS (Q1)
+
+| Field | When zeroed | Scale | Justification |
+|---|---|---|---|
+| **Displacement** | **Once, at t=0 only** (`zone gridpoint initialize displacement 0 0 0` right after restore, before stage 1) | **All 3** | We want **cumulative** disp over 120 d for the disp-time validity curve (§6). The restored 04 saves already carry the tiny init-settle disp; zeroing once gives a clean creep-only baseline. **Never** zero displacement between stages (would destroy the cumulative onset curve). |
+| **Velocity** | **End of every stage** (`zone gridpoint initialize velocity 0 0 0`) | **All 3** | Prevents velocity ratcheting/carry-over between stages (the reference's "CRITICAL" rule, and 260529's `hold_gp`). Each new stage's velocity is then re-imposed by `ApplyVel_IDW`. |
+| **Kelvin strain (`SetKStrain`)** | **Once**, immediately after assigning `burgers-mohr` on the in-situ field | All 3 | Install-mandated (propcvisc note): otherwise the direct-set in-situ stress is incompatible with zero Kelvin strain → spurious creep. |
+| **`model calm`** | After each **pore-pressure step** (step C), before the static re-equilibrium | All 3 (most important: Large slope + Coupled) | Kills the kinetic spike from the abrupt effective-stress change so the static solve converges quickly and the creep phase starts at rest. Cheaper/safer than reducing timestep. |
+
+**Do NOT zero displacement per stage.** The whole validity test (flat 0–30 d, onset 30–60 d…) requires the **monotonic cumulative** curve.
+
+---
+
+## 4. DIVERGENCE CONTROL at water-level changes (Q2)
+
+The danger is the **abrupt** dry→wet jump: pore pressure up → effective `p'` down → Mohr circle grows → many zones cross the 0.6× threshold at once → creep + unbalanced force can blow up. Mitigations, in priority order:
+
+1. **Decouple flow from creep (the §1 B→C→D order).** Steady-state flow with mechanics OFF, then a **static** `model solve elastic` re-equilibrium, *then* creep. Never run `solve fluid` and `solve … creep` together. This alone prevents most blow-ups.
+2. **`model calm` after the pp step** (§3) — resets kinetic energy before the static solve.
+3. **Ramp the water table over 2–3 sub-steps if the static solve (C) struggles.** Instead of low→high in one shot, set an intermediate plane (e.g. mid-elevation), `solve fluid`, `solve elastic`, then the final high plane. The threshold then activates progressively, not all-at-once. (Same philosophy as the coupled gradual-loading cure, §5.)
+4. **Cap the creep timestep** at `fix 600 s` (parameter.f3dat). Do **not** use `timestep auto` across a water jump — auto can overshoot right after the effective-stress change. Verified: both `fix` and `auto` exist; `fix` is the stable choice here.
+5. **Slope-stability watch (Large only):** after each stage, FISH-report `zone.state` plastic fraction per layer (reuse the 04 `_srep` pattern) and max `gp.vel`. If layer-1 colluvium goes >~50% yielded or boundary disp rate explodes (>~0.1 m/stage), the slope is failing globally, not creeping — **stop and reduce the high-water table** (the reference's pilot_selflimit collapse at dx=−1.5 m is the cautionary precedent). The Large's threshold-creep is the physical brake; the watchdog confirms it's holding.
+6. **Per-stage guard cycles** (`cycles 6000` cap on the static solve, like 04) so a stubborn imbalance can't run unbounded.
+
+---
+
+## 5. COUPLED STABILITY (Q3) — gradual loading is the cure
+
+04's hard-won lesson (README §"耦合解配方"): one-shot loading shears a toe facet of `wz_outter` to near-zero area → `solveForX` singularity. The cure was **gradual** (servo). Apply the same principle to 05 creep:
+
+1. **Drive the wall-zone outer boundary by VELOCITY, never by a one-shot displacement.** `ApplyVel_IDW` already does this — the small's per-stage increment is spread over 2,592,000 s. The facets move quasi-statically, exactly the regime that survived in 04.
+2. **Sub-step the boundary velocity within the stage** if needed: apply the stage's `target_u` over N internal creep sub-solves (e.g. 6 × 5-day) rather than one 30-day solve, so per-step facet motion ≤ a small fraction of facet size (260529 used `≤0.1×r_min`). This is the direct analog of the servo `latency`.
+3. **Monitor minimum wall-zone facet area every stage** (FISH over the `wz_outter` facets; the build made 25752 of them). If `min_area / initial_min_area < ~0.3`, the toe is degenerating → **abort and re-run that stage with finer sub-stepping** (Picard-style, as in the Alishan ANALYSIS_PIPELINE §2.3). Track it like a watchdog — do not let it run blind.
+4. **PFC lining stays in pure mechanics** (no creep on balls). Only the **rock zones** get `burgers-mohr`. The balls respond elastically/with-bond-break to the wall motion — this is the 260529 "decoupled, no timestep-mismatch" insight, applied live but safely because the rock-side creep is slow and the wall is velocity-driven.
+5. **Cumulative 120-day deformation risk:** four stages of inward wall convergence accumulate. The toe facet that failed in 04 is the same one at risk here. **De-risk fallback:** if the toe degenerates despite sub-stepping, fall back to the 260529 **fully-decoupled** path — run the coupled rock-creep WITHOUT the PFC lining to get the cavity-wall displacement history, then drive the PFC lining as a separate pure-mechanics post-process (`build_deformation_fields.py` Kabsch + cap → `step_f` velocity driving). Keep this as the documented Plan B before starting the long coupled run.
+
+---
+
+## 6. MONITORING + VALIDATION (Q4)
+
+### Histories (Small model, focus y∈[860,910]) — install-verified `zone history` form
+```
+; crown rock vertical, sidewall rock horizontal (positions in the y[860,910] focus)
+zone history name 'crown_dz'  displacement-z position (<x_crown>, 885, <z_crown>)
+zone history name 'side_dx'   displacement-x position (<x_side>,  885, <z_side>)
+model history creep time-total              ; install-verified (creep clock as x-axis)
+zone history name 'unbal' mechanical ratio  ; convergence watch
+```
+- Pick the crown/sidewall positions from the small geometry at y=885 (mid of the focus band). `<x>,<z>` are the nearest rock gridpoints just outside `tunnel_inner.stl`. Use `<TODO from geometry>` — read them in the prototype, don't guess.
+- For the **Coupled** scale, the equivalent validity metric is the **cumulative bond-break count per stage** (FISH count of broken parallel bonds), expected monotone non-decreasing.
+
+### Expected-physics checkpoints (the validity test)
+| Stage | Table | Expected disp-time | Pass criterion |
+|---|---|---|---|
+| 0–30 d | low | **flat** (`q < 0.6× envelope`, creep OFF) | crown/side rate ≈ 0; threshold FISH reports ~0 zones "CreepActive" |
+| 30–60 d | high | **onset** — disp rises steadily | rate jumps; many rock zones flip to CreepActive as `p'` drops |
+| 60–90 d | low | **slows** | rate decreases vs stage 2 (threshold recovers) |
+| 90–120 d | high | **re-accelerates** | rate rises again |
+| Coupled | — | bond-break: ~0 → clear → plateau → more | monotone, springline ≥ crown density (260529 field match) |
+
+If 0–30 d is **not flat**, the most likely cause is the **omitted `SetKStrain`** (spurious Kelvin transient) — that's the first thing to check. If it diverges at 30 d, the water-jump guard (§4) is insufficient → add the ramp.
+
+---
+
+## 7. CONCRETE FIRST STEP — prototype + de-risk (do this before the full chain)
+
+**Run the threshold creep on the SMALL model alone, ONE low→high two-stage sequence (60 days), no inter-scale coupling yet.** This isolates the creep+water+threshold physics from the IDW coupling.
+
+Ordered prototype steps:
+1. **STL planarity check (2 min):** `geometry import` both `watertable_*.stl`, FISH-report z-range of their nodes. If near-constant z → use `zone water plane origin (…, z) normal (0,0,1)`. If not → commit to the per-gridpoint pp fallback now, before anything else.
+2. Build `prototype_small_creep.f3dat`: `model restore '../04_InitialBalance/Small_Initial'` → `model configure creep` + `model configure fluid` → `zone fluid cmodel isotropic` + fluid props from `parameter.f3dat` (`poro 0.1`, mobility `pmb 1e-5`, `zone water density 1000`) → assign `burgers-mohr` on `range group 'rock' slot 'mat'` with per-layer `bulk/shear-maxwell/shear-kelvin/viscosity-maxwell/viscosity-kelvin` + `cohesion/friction/tension` (props already in `parameter.f3dat`: `eta_m 6.0e15`, `eta_k 2.4e13`) → **`call SetKStrain.f3fis`** → keep the 04 box-fix boundary (no IDW yet) → install the threshold `whilestepping` FISH (`crp_threshold 0.6`) → histories (§6).
+3. Run **stage 1 (low, 0–30 d)**: confirm disp-time is **flat** and threshold FISH reports ~0 CreepActive zones. *Gate: if not flat → fix SetKStrain / threshold sign before going further.*
+4. Run **stage 2 (high, 30–60 d)**: confirm **onset** — crown_dz/side_dx rise, CreepActive zone count jumps, `unbal` ratio stays bounded through the water change.
+5. **Verify-before-long-run discipline:** first run only ~2 min / a few thousand cycles of stage 1 to confirm no immediate divergence, THEN launch the full 60-day prototype.
+6. Only after the onset is reproduced and stable: add `ApplyVel_IDW` (Large→Small), then scale to the full 4-stage Large→Small→Coupled chain.
+
+This first step de-risks the three things most likely to break (SetKStrain transient, threshold registration as a real cycle-point not "23", water-jump divergence) on the **cheapest** of the two coupled-capable models (~10 min, not the 4 GB coupled) before any inter-scale or PFC complexity.
+
+---
+
+## KEY FILE PATHS (for implementation)
+- Restore points: `C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/{Large_Initial,Small_Initial,Couple_Initial}.f3sav`
+- Material params (creep `eta_m/eta_k/crp_threshold/crp_dt`, all layers, PFC D7): `C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/parameter.f3dat`
+- IDW skeleton to clone for disp→vel: `C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/idw_map.f3dat` (+ `idw_map_couple.f3dat` for the coupled box)
+- Water STLs: `C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/{watertable_lower,watertable_higher}.stl`
+- Coupled wall-zone facet boundary: `C:/Users/Wade/Desktop/Tunnel_TX/03_CoupleModel/wallzone_outter.stl`; focus walls `wall_860.stl`/`wall_910.stl`
+- Install-mandated Kelvin-strain fixup: `SetKStrain.f3fis` (FLAC3D install, referenced from `common/models/burgers/doc/modelburgers.html`)
+- 260529 proven coupling refs (Plan B + ApplyVel_IDW): `C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/02_small_model/helpers/io_disp.f3dat`, `03_PFC_FLAC_coupling/decoupled_driver/`
+
+**Most important corrections to the reference recipes:** (a) the threshold callback is a **real-number cycle-point `whilestepping` FISH**, not integer "event 23/43"; (b) **`SetKStrain` is mandatory** after assigning burgers-mohr onto the directly-set in-situ stress field, or 0–30 d won't be flat; (c) **B→C→D ordering + `model calm`** is the primary water-jump divergence guard; (d) keep the **decoupled PFC path as documented Plan B** for the coupled toe-facet risk.

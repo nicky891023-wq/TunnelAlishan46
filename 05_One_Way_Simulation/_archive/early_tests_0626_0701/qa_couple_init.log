@@ -1,0 +1,63 @@
+**********************************************
+* Logging started at 週二 六月 30 20:04:15 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../04_InitialBalance/Couple_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 08:35:04 2026
+Total Cycles: 21005  Super Cycles: 21005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('QAC-0 restored Couple_Initial balls='+string(ball.num)+' zones='+string(zone.num)+' walls='+string(wall.num))]
+QAC-0 restored Couple_Initial balls=456302 zones=424908 walls=4
+flac3d>fish define qa_couple
+   Def>    local mv = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local v = ball.vel(b)
+   Def>        local m = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+   Def>        if m > mv then
+   Def>            mv = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    loop foreach local w wall.list
+   Def>        local fc = wall.force.contact(w)
+   Def>        local fm = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+   Def>        io.out('QAC-WALL '+wall.name(w)+' |Fc|='+string(fm)+'MN comp('+string(comp.x(fc)/1e6)+','+string(comp.y(fc)/1e6)+','+string(comp.z(fc)/1e6)+')')
+   Def>    end_loop
+   Def>    local nlin = 0
+   Def>    local ncoup = 0
+   Def>    loop foreach local c contact.list
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_ten') >= 1.0e10 then
+   Def>                ncoup = ncoup + 1
+   Def>            else
+   Def>                nlin = nlin + 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('QAC-STATE max_ball_vel='+string(mv)+' lining_bonds(pb_ten<1e10)='+string(nlin)+' coupling_contacts(pb_ten>=1e10)='+string(ncoup))
+   Def>end
+flac3d>[qa_couple]
+QAC-WALL wz_outter |Fc|=1.8818MN comp(-0.223941,0.411921,-1.82245)
+QAC-WALL w_inner |Fc|=1.37817MN comp(-0.16894,-0.358089,-1.32006)
+QAC-WALL w_860 |Fc|=0.000851515MN comp(1.17832e-05,-0.000842353,0.000124023)
+QAC-WALL w_910 |Fc|=0.000748862MN comp(1.84687e-05,0.000746234,5.98913e-05)
+QAC-STATE max_ball_vel=2.16046 lining_bonds(pb_ten<1e10)=2268276 coupling_contacts(pb_ten>=1e10)=62556
+0 (integer)
+flac3d>[io.out('QAC-DONE')]
+QAC-DONE
+0 (integer)
+flac3d>program quit

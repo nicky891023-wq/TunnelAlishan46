@@ -1,0 +1,65 @@
+**********************************************
+* Logging started at 週三 七月 1 13:24:01 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../04_InitialBalance/Small_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週三 七月 1 13:22:40 2026
+Total Cycles: 26482  Super Cycles: 26482
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish define exp_slice
+   Def>    local st = file.open('slice_small_initial.txt',1,1)
+   Def>    local b = array.create(1)
+   Def>    b(1) = 'x z szz sxx syy prinz state dispmag velmag'
+   Def>    file.write(b,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local yc = comp.y(p)
+   Def>            if yc > 884.0 then
+   Def>            if yc < 886.0 then
+   Def>                ; zone-centroid disp/vel via the zone's gridpoints (avg)
+   Def>                local dsum = 0.0
+   Def>                local vsum = 0.0
+   Def>                local ng = 0
+   Def>                loop local i (1,4)
+   Def>                    local g = zone.gp(z,i)
+   Def>                    if g # null then
+   Def>                        local dd = gp.disp(g)
+   Def>                        dsum = dsum + math.sqrt(comp.x(dd)^2+comp.y(dd)^2+comp.z(dd)^2)
+   Def>                        local vv = gp.vel(g)
+   Def>                        vsum = vsum + math.sqrt(comp.x(vv)^2+comp.y(vv)^2+comp.z(vv)^2)
+   Def>                        ng = ng + 1
+   Def>                    end_if
+   Def>                end_loop
+   Def>                local dm = 0.0
+   Def>                local vm = 0.0
+   Def>                if ng > 0 then
+   Def>                    dm = dsum/float(ng)
+   Def>                    vm = vsum/float(ng)
+   Def>                end_if
+   Def>                b(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.prin.z(z))+' '+string(zone.state(z,1))+' '+string(dm*1000.0)+' '+string(vm)
+   Def>                file.write(b,1)
+   Def>                n = n + 1
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local cl = file.close
+   Def>    io.out('RS exported '+string(n)+' zones (y884-886) -> slice_small_initial.txt')
+   Def>end
+flac3d>[exp_slice]
+RS exported 23263 zones (y884-886) -> slice_small_initial.txt
+0 (integer)
+flac3d>[io.out('RS-DONE')]
+RS-DONE
+0 (integer)
+flac3d>program quit

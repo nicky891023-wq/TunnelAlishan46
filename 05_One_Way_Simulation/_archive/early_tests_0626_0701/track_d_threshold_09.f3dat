@@ -1,0 +1,100 @@
+; track_d_threshold_09.f3dat -- CONFIRM the physics with the FULL fix: per-stage threshold
+;   (stability, proven in Track C) + threshold 0.9 (physics). Track C @0.6 was stable but
+;   front-loaded creep at LOW water (active 597909) and high water added ~nothing (active
+;   13457) -- WRONG direction. Diagnostic showed dry max T_crit=0.866, so 0.9 => ~0 active
+;   at low water (FLAT); high water effective-stress drop => onset. Zero disp before EACH
+;   stage's creep so dmax = that stage's creep increment alone. restore small_ep. cwd=05.
+program log-file 'track_d.log'
+program log on
+model restore 'small_ep'
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain off
+fish automatic-create on
+[io.out('TD0 restored small_ep; zones='+string(zone.num))]
+
+fish define dmax_all
+    local dm = 0.0
+    loop foreach local gp gp.list
+        local d = gp.disp(gp)
+        local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+        if mm > dm then
+            dm = mm
+        end_if
+    end_loop
+    dmax_all = dm
+end
+[global threhold = 0.9]
+fish define do_threshold
+    local na = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pmean = (s1 + s3)/2.0 - pore
+            local q = (s1 - s3)/2.0
+            local c = zone.prop(z,'cohesion')
+            local phi = zone.prop(z,'friction')
+            local q_th = threhold*c + pmean*threhold*math.tan(phi*math.degrad)
+            if q >= q_th then
+                zone.prop(z,'viscosity-kelvin')  = eta_k
+                zone.prop(z,'viscosity-maxwell') = eta_m
+                zone.group(z,'creep') = 'CreepActive'
+                na = na + 1
+            else
+                zone.prop(z,'viscosity-kelvin')  = 1e100
+                zone.prop(z,'viscosity-maxwell') = 1e100
+                zone.group(z,'creep') = 'CreepOff'
+            end_if
+        end_if
+    end_loop
+    global n_active = na
+end
+fish define run_stage(d0, d1, dd)
+    local d = d0 + dd
+    loop while d <= (d1 + 0.1)
+        command
+            model solve time-total [d*86400.0]
+        endcommand
+        io.out('   TDcreep day='+string(d)+' dmax='+string(dmax_all)+' m  (active='+string(n_active)+')')
+        d = d + dd
+    endloop
+end
+model history creep time-total
+zone history name 'crown_dz' displacement-z position (1297, 885, 1752)
+
+; === STAGE 1: LOW water z1724 ===
+zone water plane origin (1297, 885, 1724) normal (0,0,1)
+model calm
+model solve ratio-average 1e-5 cycles 40000
+[setKstrains]
+[do_threshold]
+[setKstrains]
+zone gridpoint initialize displacement 0 0 0
+zone gridpoint initialize velocity 0 0 0
+[io.out('TD-S1eq LOW-water threshold 0.9 ONCE; active='+string(n_active)+' (expect ~0 => FLAT)')]
+model creep active on
+model creep timestep fix [crp_dt]
+[run_stage(0.0, 30.0, 5.0)]
+model creep active off
+model save 'td_s1'
+[io.out('TD-S1done LOW-water dmax='+string(dmax_all))]
+
+; === STAGE 2: HIGH water z1807 (disp re-zeroed => stage-2 creep increment alone) ===
+zone water plane origin (1297, 885, 1807) normal (0,0,1)
+model calm
+model solve ratio-average 1e-5 cycles 40000
+[setKstrains]
+[do_threshold]
+[setKstrains]
+zone gridpoint initialize displacement 0 0 0
+zone gridpoint initialize velocity 0 0 0
+[io.out('TD-S2eq HIGH-water threshold 0.9 ONCE; active='+string(n_active)+' (expect >>S1 => ONSET)')]
+model creep active on
+model creep timestep fix [crp_dt]
+[run_stage(30.0, 60.0, 5.0)]
+model creep active off
+model save 'td_s2'
+[io.out('TD-DONE per-stage 0.9; S1 vs S2 creep increment = flat-then-onset?')]
+program log off
+program quit

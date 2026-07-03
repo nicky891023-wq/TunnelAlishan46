@@ -1,0 +1,164 @@
+; ============================================================================
+; Large_Model.f3dat
+; FLAC3D 6.00 import + verify -- Alishan #46 LARGE (far-field) model, TET.
+;
+; Mesh source:
+;   large_tet.inp   (all C3D4 / 4-node tetrahedra, ELSETs layer1..layer4)
+;   built by build_large_tet.py from the v3 geology pipeline (gen_large_geo.py)
+;   on the 4 STLs in this folder (DEM/F01/F02/F03), byte-identical to the
+;   proven 2026-06-13 v3 inputs (md5 verified).
+;
+; NO TUNNEL (far field): box x[0,2000] y[-100,2000] z[800,DEM], 4 geology
+; layers:
+;   layer1 clv  = DEM ~ F01, ONLY inside the F01 footprint (local colluvium)
+;   layer2 ssh  = top_rock ~ F02   (top_rock = F01 in fp, DEM outside fp)
+;   layer3 bed  = F02 ~ F03
+;   layer4 base = F03 ~ z=800  (basement)
+; Clip rule (d): f02<=top_rock, f03<=f02, all <=DEM (rock never above clv /
+; never pierces terrain).  DEM is the true top.
+;
+; Build stage ONLY -- elastic placeholder cmodel, NO property values (real
+; material params + K0/gravity/water/creep belong to the later analysis stage).
+;
+; Working dir = Tunnel_TX\01_Large.  Run e.g.:
+;   flac3d600_console.exe Large_Model.f3dat   (file as argv; DO NOT pipe stdin)
+;   MUST end with program quit.
+; ============================================================================
+
+model new
+model largestrain off
+model title 'Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)'
+
+program log-file 'Large_Model.log'
+program log on
+
+; --- import the tet mesh (C3D4 -> 4-node tetra zones) ----------------------
+zone import 'large_tet.inp'
+
+; --- copy the imported ELSET layer groups into slot 'type' (geology) -------
+zone group 'layer1' slot 'type' range group 'layer1'
+zone group 'layer2' slot 'type' range group 'layer2'
+zone group 'layer3' slot 'type' range group 'layer3'
+zone group 'layer4' slot 'type' range group 'layer4'
+
+; --- bookkeeping slots: material, model-region, gridpoint-region -----------
+zone group 'rock'  slot 'mat'
+zone group 'm_far' slot 'model'
+zone gridpoint group 'gp_far'
+
+; --- build stage: elastic placeholder cmodel (params from site, NOT faked) -
+zone cmodel assign elastic
+
+; --- skin + boundary face groups by position -------------------------------
+;   skin auto-groups live in slot 'skin'; the irregular DEM top can split into
+;   several collections that get NUMBERED names (doc: "East1 and East2").
+;   break-angle 89 (default 45) keeps the top contiguous; the Top1 collection
+;   below enumerates numbered leftovers, with the range slot locked explicitly.
+;   CAVEAT: skin names faces by DOMINANT normal -- top faces steeper than the
+;   break angle land in side groups; the position-slab side groups (assigned
+;   after, Default slot) overwrite rim overlaps.  Check Top1 count/area in
+;   LARGE_TOP_CHECK after any mesh rebuild.
+zone face skin break-angle 89
+zone face group 'Top1' slot 'Default' ...
+     range group 'Top' or 'Top1' or 'Top2' slot 'skin'
+zone face group 'Bottom1' range position-z 799 801
+zone face group 'West1'   range position-x -1 1
+zone face group 'East1'   range position-x 1999 2001
+zone face group 'South1'  range position-y -101 -99
+zone face group 'North1'  range position-y 1999 2001
+
+model save '../output/Large_Model'
+
+; --- verify -----------------------------------------------------------------
+fish define large_check
+    local nz   = 0
+    local vmin = 1e300
+    local vsum = 0.0
+    local lc   = array.create(4)
+    loop local i (1,4)
+        lc(i) = 0
+    end_loop
+    loop foreach local z zone.list
+        nz = nz + 1
+        local v = zone.vol(z)
+        vsum = vsum + v
+        if v < vmin then
+            vmin = v
+        end_if
+        local g = zone.group(z,'type')
+        loop local j (1,4)
+            if g = 'layer'+string(j) then
+                lc(j) = lc(j) + 1
+            end_if
+        end_loop
+    end_loop
+    local ung = nz - lc(1) - lc(2) - lc(3) - lc(4)
+    local fl = array.create(1)
+    local st = file.open('Large_Model_check.txt',1,1)
+    fl(1) = 'zones '+string(nz)
+    st = file.write(fl,1)
+    loop local k (1,4)
+        fl(1) = 'layer'+string(k)+' '+string(lc(k))
+        st = file.write(fl,1)
+    end_loop
+    fl(1) = 'ungrouped '+string(ung)
+    st = file.write(fl,1)
+    fl(1) = 'vol_min '+string(vmin)
+    st = file.write(fl,1)
+    fl(1) = 'vol_sum '+string(vsum)
+    st = file.write(fl,1)
+    st = file.close
+    io.out('=== LARGE_VERIFY ===')
+    io.out('zones_total = '+string(nz))
+    loop local kk (1,4)
+        io.out('  layer'+string(kk)+' = '+string(lc(kk)))
+    end_loop
+    io.out('  ungrouped(type) = '+string(ung))
+    io.out('vol_min = '+string(vmin))
+    io.out('vol_sum = '+string(vsum))
+    io.out('LARGE_DONE')
+end
+[large_check]
+
+; --- verify the DEM-top face collection (RUN AFTER ANY MESH REBUILD) --------
+fish define large_top_check
+    local ntop1 = 0          ; faces collected into Default-slot 'Top1'
+    local atop1 = 0.0
+    local ns0 = 0            ; skin-slot fragmentation census
+    local ns1 = 0
+    local ns2 = 0
+    local ns3 = 0
+    loop foreach local z zone.list
+        loop local isd (1,6)
+            if zone.face.size(z,isd) > 2 then
+                if zone.face.isgroup(z,isd,'Top1','Default') then
+                    ntop1 = ntop1 + 1
+                    atop1 = atop1 + zone.face.area(z,isd)
+                end_if
+                if zone.face.isgroup(z,isd,'Top','skin') then
+                    ns0 = ns0 + 1
+                end_if
+                if zone.face.isgroup(z,isd,'Top1','skin') then
+                    ns1 = ns1 + 1
+                end_if
+                if zone.face.isgroup(z,isd,'Top2','skin') then
+                    ns2 = ns2 + 1
+                end_if
+                if zone.face.isgroup(z,isd,'Top3','skin') then
+                    ns3 = ns3 + 1
+                end_if
+            end_if
+        end_loop
+    end_loop
+    io.out('=== LARGE_TOP_CHECK ===')
+    io.out('Top1_faces(Default) = '+string(ntop1)+'  (expect > 0)')
+    io.out('Top1_area = '+string(atop1)+'  (expect >= plan 2000x2100 = 4.2e6 m^2)')
+    io.out('skin census: Top='+string(ns0)+' Top1='+string(ns1)+ ...
+           ' Top2='+string(ns2)+' Top3='+string(ns3))
+    io.out('  (Top3 > 0 -> enumeration in the collection block is TOO SHORT)')
+    io.out('LARGE_TOP_DONE')
+end
+[large_top_check]
+
+program log off
+program quit

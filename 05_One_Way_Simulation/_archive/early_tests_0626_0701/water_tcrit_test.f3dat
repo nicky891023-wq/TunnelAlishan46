@@ -1,0 +1,88 @@
+; water_tcrit_test.f3dat -- ROOT CAUSE of "no onset": Track C/D set the water PLANE but I
+;   omitted `zone water density` => pore pressure = 0 everywhere (diagnostic proved max_pp=0
+;   for BOTH water states => identical => no onset). FIX = set zone water density. Verify the
+;   pore pressure now applies (high water z1807 => ~0.59MPa pp at tunnel z1747) and the T_crit
+;   distribution differs low vs high (=> onset window). cwd = 05.
+program log-file 'water_tcrit_test.log'
+program log on
+model restore 'small_ep'
+call '../04_InitialBalance/parameter.f3dat'
+fish automatic-create on
+fish define tcrit_report
+    local tmax = 0.0
+    local n07=0
+    local n08=0
+    local n0866=0
+    local n09=0
+    local n10=0
+    local n11=0
+    local n12=0
+    local nrock=0
+    local sum_pp=0.0
+    local ppmax=0.0
+    local sum_q=0.0
+    local sum_pm=0.0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            nrock = nrock + 1
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pm = (s1 + s3)/2.0 - pore
+            local q = (s1 - s3)/2.0
+            local c = zone.prop(z,'cohesion')
+            local phi = zone.prop(z,'friction')
+            local strength = c + pm*math.tan(phi*math.degrad)
+            local tc = 0.0
+            if strength > 1.0 then
+                tc = q/strength
+            end_if
+            if tc > tmax then
+                tmax = tc
+            end_if
+            if tc >= 0.7 then
+                n07 = n07 + 1
+            end_if
+            if tc >= 0.8 then
+                n08 = n08 + 1
+            end_if
+            if tc >= 0.866 then
+                n0866 = n0866 + 1
+            end_if
+            if tc >= 0.9 then
+                n09 = n09 + 1
+            end_if
+            if tc >= 1.0 then
+                n10 = n10 + 1
+            end_if
+            if tc >= 1.1 then
+                n11 = n11 + 1
+            end_if
+            if tc >= 1.2 then
+                n12 = n12 + 1
+            end_if
+            sum_pp = sum_pp + pore
+            sum_q = sum_q + q
+            sum_pm = sum_pm + pm
+            if pore > ppmax then
+                ppmax = pore
+            end_if
+        end_if
+    end_loop
+    io.out('TCRIT max='+string(tmax)+' | >=0.7:'+string(n07)+' >=0.8:'+string(n08)+' >=0.866:'+string(n0866)+' >=0.9:'+string(n09)+' >=1.0:'+string(n10)+' >=1.1:'+string(n11)+' >=1.2:'+string(n12))
+    io.out('TCRIT-MEAN rock='+string(nrock)+' mean_pp='+string(sum_pp/nrock)+' MAX_pp='+string(ppmax)+' mean_q='+string(sum_q/nrock)+' mean_pmean_eff='+string(sum_pm/nrock))
+end
+
+zone water density [rho_w]      ; <<< THE FIX (was omitted in Track C/D -> pp was 0)
+
+zone water plane origin (1297, 885, 1724) normal (0,0,1)
+model solve ratio-average 1e-5 cycles 40000
+[io.out('=== LOW water z1724 (density NOW set) ===')]
+[tcrit_report]
+
+zone water plane origin (1297, 885, 1807) normal (0,0,1)
+model solve ratio-average 1e-5 cycles 40000
+[io.out('=== HIGH water z1807 (density NOW set) ===')]
+[tcrit_report]
+[io.out('WT-DONE pore pressure working? high MAX_pp should be ~0.6MPa, T_crit should rise')]
+program quit

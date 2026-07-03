@@ -1,0 +1,118 @@
+**********************************************
+* Logging started at 週一 六月 29 09:31:49 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>fish automatic-create on
+flac3d>model restore 's4_s1'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:30:08 2026
+Total Cycles: 15428  Super Cycles: 15428
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>call 'gate1_funcs.fis'
+flac3d>; gate1_funcs.fis -- Phase 1: small-model lining reaction (virtual interface traction over lining
+flac3d>;   OUTER faces) + tunnel-wall convergence at reference points (Gate-0 C6: not global dmax).
+flac3d>;   CALL after EACH restore (restore clears FISH state). pfx/stg params, no return-value assignment.
+flac3d>;   tunnel axis along y at (cx,cz)=(1297,1747.5). lining = group 'lining' slot 'type' (elastic).
+flac3d>fish define lining_react(stg, pfx)
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    local fnx = 0.0
+   Def>    local fny = 0.0
+   Def>    local fnz = 0.0
+   Def>    local frad = 0.0      ; net radial-directed force magnitude (inward+) integrated
+   Def>    local aout = 0.0
+   Def>    local nlin = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.group(z,'type') = 'lining' then
+   Def>            nlin = nlin + 1
+   Def>            ; outer face = max radial-centroid face of this lining zone (tet=4 faces)
+   Def>            local imax = 1
+   Def>            local rmax = -1.0
+   Def>            local i = 1
+   Def>            loop while i <= 4
+   Def>                local fp = zone.face.pos(z,i)
+   Def>                local rr = math.sqrt((comp.x(fp)-cx)*(comp.x(fp)-cx)+(comp.z(fp)-cz)*(comp.z(fp)-cz))
+   Def>                if rr > rmax then
+   Def>                    rmax = rr
+   Def>                    imax = i
+   Def>                end_if
+   Def>                i = i + 1
+   Def>            end_loop
+   Def>            local nn = zone.face.normal(z,imax)
+   Def>            local ar = zone.face.area(z,imax)
+   Def>            local fp2 = zone.face.pos(z,imax)
+   Def>            local nx = comp.x(nn)
+   Def>            local ny = comp.y(nn)
+   Def>            local nz = comp.z(nn)
+   Def>            ; traction t = sigma.n (sigma compression-negative), force = t*area
+   Def>            local sxx = zone.stress.xx(z)
+   Def>            local syy = zone.stress.yy(z)
+   Def>            local szz = zone.stress.zz(z)
+   Def>            local sxy = zone.stress.xy(z)
+   Def>            local sxz = zone.stress.xz(z)
+   Def>            local syz = zone.stress.yz(z)
+   Def>            local tx = (sxx*nx+sxy*ny+sxz*nz)*ar
+   Def>            local ty = (sxy*nx+syy*ny+syz*nz)*ar
+   Def>            local tz = (sxz*nx+syz*ny+szz*nz)*ar
+   Def>            fnx = fnx + tx
+   Def>            fny = fny + ty
+   Def>            fnz = fnz + tz
+   Def>            ; radial unit (outward) at this face
+   Def>            local rx = comp.x(fp2)-cx
+   Def>            local rz = comp.z(fp2)-cz
+   Def>            local rm = math.sqrt(rx*rx+rz*rz)
+   Def>            if rm > 0.01 then
+   Def>                ; radial force component (project t onto outward radial; negative=compression inward)
+   Def>                frad = frad + (tx*rx/rm + tz*rz/rm)
+   Def>            end_if
+   Def>            aout = aout + ar
+   Def>        end_if
+   Def>    end_loop
+   Def>    local fmag = math.sqrt(fnx*fnx+fny*fny+fnz*fnz)
+   Def>    io.out('LREACT '+pfx+'_s'+string(stg)+' lining_zones='+string(nlin)+' outerA='+string(aout)+'m2 net|F|='+string(fmag/1e6)+'MN (Fx='+string(fnx/1e6)+' Fy='+string(fny/1e6)+' Fz='+string(fnz/1e6)+') net_radial='+string(frad/1e6)+'MN')
+   Def>end
+flac3d>; convergence: radial inward disp at tunnel-wall reference points (nearest gp within 0.6m box)
+flac3d>fish define conv_at(stg, pfx, px, pz, lbl)
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    local best = 1e20
+   Def>    local bdr = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        if comp.y(p) > 884.0 then
+   Def>        if comp.y(p) < 886.0 then
+   Def>            local dd = math.sqrt((comp.x(p)-px)*(comp.x(p)-px)+(comp.z(p)-pz)*(comp.z(p)-pz))
+   Def>            if dd < best then
+   Def>                best = dd
+   Def>                local d = gp.disp(g)
+   Def>                ; radial inward = -(disp . outward radial unit)
+   Def>                local rx = px-cx
+   Def>                local rz = pz-cz
+   Def>                local rm = math.sqrt(rx*rx+rz*rz)
+   Def>                bdr = -(comp.x(d)*rx/rm + comp.z(d)*rz/rm)
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('CONV '+pfx+'_s'+string(stg)+' '+lbl+' radial_inward='+string(bdr*1000.0)+'mm (nearest_gp_dist='+string(best)+'m)')
+   Def>end
+flac3d>[lining_react(1,'s4')]
+LREACT s4_s1 lining_zones=335011 outerA=-6.89936e+10m2 net|F|=8.4267e+14MN (Fx=4.8313e+14 Fy=1.7447e+14 Fz=6.6801e+14) net_radial=-7.03068e+13MN
+0 (integer)
+flac3d>[conv_at(1,'s4', 1297.0, 1752.0, 'crown')]
+CONV s4_s1 crown radial_inward=-0.226871mm (nearest_gp_dist=0.273887m)
+0 (integer)
+flac3d>[conv_at(1,'s4', 1303.0, 1747.0, 'springR')]
+CONV s4_s1 springR radial_inward=-0.22537mm (nearest_gp_dist=0.040415m)
+0 (integer)
+flac3d>[io.out('TEST-GATE1-DONE')]
+TEST-GATE1-DONE
+0 (integer)
+flac3d>program quit

@@ -1,0 +1,60 @@
+**********************************************
+* Logging started at 週日 六月 28 13:15:56 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../04_InitialBalance/Couple_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 08:35:04 2026
+Total Cycles: 21005  Super Cycles: 21005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define _ext
+   Def>    local xmn=1e20
+   Def>    local xmx=-1e20
+   Def>    local ymn=1e20
+   Def>    local ymx=-1e20
+   Def>    local zmn=1e20
+   Def>    local zmx=-1e20
+   Def>    loop foreach local gp gp.list
+   Def>        local p = gp.pos(gp)
+   Def>        if comp.x(p)<xmn then
+   Def>            xmn=comp.x(p)
+   Def>        end_if
+   Def>        if comp.x(p)>xmx then
+   Def>            xmx=comp.x(p)
+   Def>        end_if
+   Def>        if comp.y(p)<ymn then
+   Def>            ymn=comp.y(p)
+   Def>        end_if
+   Def>        if comp.y(p)>ymx then
+   Def>            ymx=comp.y(p)
+   Def>        end_if
+   Def>        if comp.z(p)<zmn then
+   Def>            zmn=comp.z(p)
+   Def>        end_if
+   Def>        if comp.z(p)>zmx then
+   Def>            zmx=comp.z(p)
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('QCE coupled domain x['+string(xmn)+','+string(xmx)+'] y['+string(ymn)+','+string(ymx)+'] z['+string(zmn)+','+string(zmx)+']')
+   Def>end
+flac3d>[_ext]
+QCE coupled domain x[1277,1317] y[860,910] z[1728,1768]
+0 (integer)
+flac3d>[io.out('QCE-DONE')]
+QCE-DONE
+0 (integer)
+flac3d>program quit

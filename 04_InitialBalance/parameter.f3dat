@@ -1,0 +1,115 @@
+; ============================================================================
+; parameter.f3dat -- Alishan #46 UNIFIED material parameters (Wade-ruled, 2026-06-22)
+; Large(4-layer) / Small(6-layer) rock + lining(D7) + coupled PFC(D7 calib).
+;
+; Unification rulings (Wade):
+;   * nu = 0.25 single value (static MC + creep bulk same source).
+;   * E is PER-LAYER (not uniform): lithology-based within Hoek-Diederichs
+;     rock-mass range (sandstone 3-8, sandshale 1-3 GPa; colluvium/weathered soft).
+;     -> GSI/E have NO field data: per-layer E are documented-range central
+;        judgements, GSI-basis TODO (D3). c/phi are GSI-reduced placeholders.
+;   * Burgers creep: shear-maxwell = shear-kelvin = the layer ELASTIC G,
+;     bulk = the layer elastic K  (instantaneous static==creep, no spurious soften).
+;   * viscosity-maxwell eta_m = 6.0e15 Pa.s ; viscosity-kelvin eta_k = 2.4e13 Pa.s.
+;   * creep threshold ratio = 0.6 :  q_th = 0.6*(c*cos(phi)+p'*sin(phi)).
+;   * creep timestep = 600 s (fixed).
+;   * layer4 sandshale(WET): c = 100 kPa, phi = 30 deg (Wade).
+; Units: SI (Pa, kg/m3, deg, m, Pa.s).  Sign: compression negative.
+; ============================================================================
+
+; ---------- global / environment ----------
+[global nu     = 0.25]            ; single Poisson, all rock layers
+[global K0     = 0.7]             ; lateral stress ratio (placeholder, no field basis)
+[global grav   = 9.81]            ; m/s2
+[global poro   = 0.1]             ; porosity n
+[global satr   = 0.1]             ; saturation S
+[global rho_w  = 1000.0]          ; water density kg/m3
+[global pmb    = 1.0e-5]          ; FLAC mobility coeff m2/(Pa.s); near-tunnel x100
+[global ten_r  = 1.0e5]           ; rock tension cutoff 100 kPa (all layers)
+
+; ---------- elastic helpers (nu=0.25 -> G=E/2.5, K=E/1.5) ----------
+fish define _gk(ee)
+    _gk = ee / (2.0*(1.0+nu))     ; shear  G
+end
+fish define _bk(ee)
+    _bk = ee / (3.0*(1.0-2.0*nu)) ; bulk   K
+end
+
+; ====================== LARGE model : 4 layers ======================
+; layer1 colluvium / layer2 ssh / layer3 bedrock / layer4 basement
+[global E_L_1 = 0.5e9 ]
+[global co_L_1 = 1.9e5]
+[global fr_L_1 = 29.1]
+[global den_L_1 = 2150.0]
+[global E_L_2 = 2.0e9 ]
+[global co_L_2 = 2.9e5]
+[global fr_L_2 = 35.1]
+[global den_L_2 = 2630.0]
+[global E_L_3 = 5.0e9 ]
+[global co_L_3 = 4.7e5]
+[global fr_L_3 = 44.3]
+[global den_L_3 = 2600.0]
+[global E_L_4 = 7.0e9 ]
+[global co_L_4 = 8.0e5]
+[global fr_L_4 = 51.5]
+[global den_L_4 = 2600.0]
+
+; ====================== SMALL model : 6 layers ======================
+; l1 weathered-ss / l2 ss+sandshale / l3 ss+shale / l4 sandshale(WET) / l5 sandshale / l6 basement
+[global E_S_1 = 1.0e9 ]
+[global co_S_1 = 1.9e5 ]
+[global fr_S_1 = 29.1]
+[global den_S_1 = 2600.0]
+[global E_S_2 = 2.0e9 ]
+[global co_S_2 = 2.9e5 ]
+[global fr_S_2 = 35.1]
+[global den_S_2 = 2630.0]
+[global E_S_3 = 3.5e9 ]
+[global co_S_3 = 4.7e5 ]
+[global fr_S_3 = 44.3]
+[global den_S_3 = 2630.0]
+[global E_S_4 = 1.5e9 ]
+[global co_S_4 = 1.0e5 ]   ; WET, Wade c100/phi30
+[global fr_S_4 = 30.0]
+[global den_S_4 = 2630.0]
+[global E_S_5 = 3.0e9 ]
+[global co_S_5 = 8.0e5 ]
+[global fr_S_5 = 51.5]
+[global den_S_5 = 2630.0]
+[global E_S_6 = 7.0e9 ]
+[global co_S_6 = 20.6e5]
+[global fr_S_6 = 56.3]
+[global den_S_6 = 2600.0]
+
+; ---------- creep (Burgers-Mohr) : per-layer G_m=G_k=G(E,nu), bulk=K(E,nu) ----------
+[global eta_m = 1.2e15]           ; viscosity-maxwell (Wade 2026-07-02: 6e15 -> 1.2e15 = 260529 n_m value)
+[global eta_k = 2.4e13]           ; viscosity-kelvin (proven)
+[global crp_threshold = 0.8]      ; q_th = T*(c*cosphi + p'*sinphi). Wade 2026-07-02: T=0.8 UNIFIED
+                                  ; (all stages, large+small). 0.6 gave 77% active at DRY W-110 ->
+                                  ; "low-water flat" physically impossible + interior creep runaway.
+                                  ; 0.8 validated flat-then-onset (track E 06-27).
+[global crp_dt = 600.0]           ; creep timestep (s) (Wade)
+
+; ---------- lining (R.C. continuum, D7 DECIDED) ----------
+[global shot_E   = 25e9]
+[global shot_v   = 0.2]
+[global shot_t   = 0.40]
+[global shot_den = 2400.0]
+[global shot_fc  = 41.2e6]
+[global shot_ft  = 4.12e6]
+
+; ---------- coupled PFC lining BPM micro (D7 FINAL_CALIB) ----------
+[global pfc_emod    = 9.65e9]     ; linear deformability
+[global pfc_kratio  = 1.0]
+[global pfc_pb_emod = 5.88e9]     ; parallel-bond deformability
+[global pfc_pb_krat = 0.6]
+[global pfc_pb_ten  = 2.10e6]     ; Pa
+[global pfc_pb_coh  = 2.30e7]     ; Pa
+[global pfc_pb_fa   = 25.0]       ; deg
+[global pfc_bondgap = 0.03]       ; m  (= cmat proximity)
+[global pfc_ball_den  = 2400.0]
+[global pfc_ball_damp = 0.7]
+[global pfc_fric      = 0.5]
+[global pfc_bf_strong = 1.0e20]   ; ball-facet pb (unbreakable coupling, NOT material)
+
+[io.out('=== parameter.f3dat loaded : nu='+string(nu)+' K0='+string(K0)+' eta_m='+string(eta_m)+' crp_dt='+string(crp_dt)+' ===')]

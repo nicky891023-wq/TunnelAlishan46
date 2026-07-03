@@ -1,0 +1,37 @@
+program log-file 'qa_couple_init.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../04_InitialBalance/Couple_Initial'
+fish automatic-create on
+[io.out('QAC-0 restored Couple_Initial balls='+string(ball.num)+' zones='+string(zone.num)+' walls='+string(wall.num))]
+fish define qa_couple
+    local mv = 0.0
+    loop foreach local b ball.list
+        local v = ball.vel(b)
+        local m = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+        if m > mv then
+            mv = m
+        end_if
+    end_loop
+    loop foreach local w wall.list
+        local fc = wall.force.contact(w)
+        local fm = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+        io.out('QAC-WALL '+wall.name(w)+' |Fc|='+string(fm)+'MN comp('+string(comp.x(fc)/1e6)+','+string(comp.y(fc)/1e6)+','+string(comp.z(fc)/1e6)+')')
+    end_loop
+    local nlin = 0
+    local ncoup = 0
+    loop foreach local c contact.list
+        if contact.model(c) = 'linearpbond' then
+            if contact.prop(c,'pb_ten') >= 1.0e10 then
+                ncoup = ncoup + 1
+            else
+                nlin = nlin + 1
+            end_if
+        end_if
+    end_loop
+    io.out('QAC-STATE max_ball_vel='+string(mv)+' lining_bonds(pb_ten<1e10)='+string(nlin)+' coupling_contacts(pb_ten>=1e10)='+string(ncoup))
+end
+[qa_couple]
+[io.out('QAC-DONE')]
+program quit

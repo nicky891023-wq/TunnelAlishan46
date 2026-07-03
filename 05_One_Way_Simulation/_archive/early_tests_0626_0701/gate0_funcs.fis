@@ -1,0 +1,109 @@
+; gate0_funcs.fis -- Gate-0 dump functions (stg, pfx params). MUST be `call`ed AFTER EACH
+;   model restore (restore clears FISH state). No return-value assignment (else param ignored).
+fish define count_active(stg, pfx)
+    local t1=0
+    local a1=0
+    local t2=0
+    local a2=0
+    local t3=0
+    local a3=0
+    local t4=0
+    local a4=0
+    local t5=0
+    local a5=0
+    local t6=0
+    local a6=0
+    loop foreach local z zone.list
+        local lay = zone.group(z,'type')
+        local cr = 0
+        if zone.group(z,'creep') = 'CreepActive' then
+            cr = 1
+        end_if
+        if lay = 'layer1' then
+            t1 = t1 + 1
+            a1 = a1 + cr
+        end_if
+        if lay = 'layer2' then
+            t2 = t2 + 1
+            a2 = a2 + cr
+        end_if
+        if lay = 'layer3' then
+            t3 = t3 + 1
+            a3 = a3 + cr
+        end_if
+        if lay = 'layer4' then
+            t4 = t4 + 1
+            a4 = a4 + cr
+        end_if
+        if lay = 'layer5' then
+            t5 = t5 + 1
+            a5 = a5 + cr
+        end_if
+        if lay = 'layer6' then
+            t6 = t6 + 1
+            a6 = a6 + cr
+        end_if
+    end_loop
+    io.out('ACTBYLAYER '+pfx+'_s'+string(stg)+' L1='+string(a1)+'/'+string(t1)+' L2='+string(a2)+'/'+string(t2)+' L3='+string(a3)+'/'+string(t3)+' L4='+string(a4)+'/'+string(t4)+' L5='+string(a5)+'/'+string(t5)+' L6='+string(a6)+'/'+string(t6))
+end
+fish define dump_zone(stg, pfx)
+    local fname = 'z_'+pfx+'_s'+string(stg)+'.txt'
+    local fo = file.open(fname,1,1)
+    local a = array.create(1)
+    a(1) = 'xc yc zc s1 s3 pp coh phi layer creep'
+    fo = file.write(a,1)
+    local n = 0
+    loop foreach local z zone.list
+        local p = zone.pos(z)
+        if comp.y(p) > 884.0 then
+        if comp.y(p) < 886.0 then
+            local cs = zone.group(z,'creep')
+            local isrock = 0
+            if cs = 'CreepActive' then
+                isrock = 1
+            end_if
+            if cs = 'CreepOff' then
+                isrock = 1
+            end_if
+            if isrock = 1 then
+                local cr = 0
+                if cs = 'CreepActive' then
+                    cr = 1
+                end_if
+                local s1 = -zone.stress.prin.x(z)
+                local s3 = -zone.stress.prin.z(z)
+                local pp = zone.pp(z)
+                local cc = zone.prop(z,'cohesion')
+                local ff = zone.prop(z,'friction')
+                local lay = zone.group(z,'type')
+                a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(s1)+' '+string(s3)+' '+string(pp)+' '+string(cc)+' '+string(ff)+' '+lay+' '+string(cr)
+                fo = file.write(a,1)
+                n = n + 1
+            end_if
+        end_if
+        end_if
+    end_loop
+    fo = file.close
+    io.out('ZDUMP '+fname+' slice_zones='+string(n))
+end
+fish define dump_gp(stg, pfx)
+    local fname = 'g_'+pfx+'_s'+string(stg)+'.txt'
+    local fo = file.open(fname,1,1)
+    local a = array.create(1)
+    a(1) = 'x y z dx dy dz'
+    fo = file.write(a,1)
+    local n = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        if comp.y(p) > 884.0 then
+        if comp.y(p) < 886.0 then
+            local d = gp.disp(g)
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+            fo = file.write(a,1)
+            n = n + 1
+        end_if
+        end_if
+    end_loop
+    fo = file.close
+    io.out('GDUMP '+fname+' slice_gps='+string(n))
+end

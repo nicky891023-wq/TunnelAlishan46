@@ -1,0 +1,657 @@
+**********************************************
+* Logging started at 週一 六月 29 10:21:28 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../04_InitialBalance/Couple_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 08:35:04 2026
+Total Cycles: 21005  Super Cycles: 21005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>call '../04_InitialBalance/parameter.f3dat'
+flac3d>; ============================================================================
+flac3d>; parameter.f3dat -- Alishan #46 UNIFIED material parameters (Wade-ruled, 2026-06-22)
+flac3d>; Large(4-layer) / Small(6-layer) rock + lining(D7) + coupled PFC(D7 calib).
+flac3d>;
+flac3d>; Unification rulings (Wade):
+flac3d>;   * nu = 0.25 single value (static MC + creep bulk same source).
+flac3d>;   * E is PER-LAYER (not uniform): lithology-based within Hoek-Diederichs
+flac3d>;     rock-mass range (sandstone 3-8, sandshale 1-3 GPa; colluvium/weathered soft).
+flac3d>;     -> GSI/E have NO field data: per-layer E are documented-range central
+flac3d>;        judgements, GSI-basis TODO (D3). c/phi are GSI-reduced placeholders.
+flac3d>;   * Burgers creep: shear-maxwell = shear-kelvin = the layer ELASTIC G,
+flac3d>;     bulk = the layer elastic K  (instantaneous static==creep, no spurious soften).
+flac3d>;   * viscosity-maxwell eta_m = 6.0e15 Pa.s ; viscosity-kelvin eta_k = 2.4e13 Pa.s.
+flac3d>;   * creep threshold ratio = 0.6 :  q_th = 0.6*(c*cos(phi)+p'*sin(phi)).
+flac3d>;   * creep timestep = 600 s (fixed).
+flac3d>;   * layer4 sandshale(WET): c = 100 kPa, phi = 30 deg (Wade).
+flac3d>; Units: SI (Pa, kg/m3, deg, m, Pa.s).  Sign: compression negative.
+flac3d>; ============================================================================
+flac3d>
+flac3d>; ---------- global / environment ----------
+flac3d>[global nu     = 0.25]            ; single Poisson, all rock layers
+flac3d>[global K0     = 0.7]             ; lateral stress ratio (placeholder, no field basis)
+flac3d>[global grav   = 9.81]            ; m/s2
+flac3d>[global poro   = 0.1]             ; porosity n
+flac3d>[global satr   = 0.1]             ; saturation S
+flac3d>[global rho_w  = 1000.0]          ; water density kg/m3
+flac3d>[global pmb    = 1.0e-5]          ; FLAC mobility coeff m2/(Pa.s); near-tunnel x100
+flac3d>[global ten_r  = 1.0e5]           ; rock tension cutoff 100 kPa (all layers)
+flac3d>
+flac3d>; ---------- elastic helpers (nu=0.25 -> G=E/2.5, K=E/1.5) ----------
+flac3d>fish define _gk(ee)
+   Def>    _gk = ee / (2.0*(1.0+nu))     ; shear  G
+   Def>end
+flac3d>fish define _bk(ee)
+   Def>    _bk = ee / (3.0*(1.0-2.0*nu)) ; bulk   K
+   Def>end
+flac3d>
+flac3d>; ====================== LARGE model : 4 layers ======================
+flac3d>; layer1 colluvium / layer2 ssh / layer3 bedrock / layer4 basement
+flac3d>[global E_L_1 = 0.5e9 ]
+flac3d>[global co_L_1 = 1.9e5]
+flac3d>[global fr_L_1 = 29.1]
+flac3d>[global den_L_1 = 2150.0]
+flac3d>[global E_L_2 = 2.0e9 ]
+flac3d>[global co_L_2 = 2.9e5]
+flac3d>[global fr_L_2 = 35.1]
+flac3d>[global den_L_2 = 2630.0]
+flac3d>[global E_L_3 = 5.0e9 ]
+flac3d>[global co_L_3 = 4.7e5]
+flac3d>[global fr_L_3 = 44.3]
+flac3d>[global den_L_3 = 2600.0]
+flac3d>[global E_L_4 = 7.0e9 ]
+flac3d>[global co_L_4 = 8.0e5]
+flac3d>[global fr_L_4 = 51.5]
+flac3d>[global den_L_4 = 2600.0]
+flac3d>
+flac3d>; ====================== SMALL model : 6 layers ======================
+flac3d>; l1 weathered-ss / l2 ss+sandshale / l3 ss+shale / l4 sandshale(WET) / l5 sandshale / l6 basement
+flac3d>[global E_S_1 = 1.0e9 ]
+flac3d>[global co_S_1 = 1.9e5 ]
+flac3d>[global fr_S_1 = 29.1]
+flac3d>[global den_S_1 = 2600.0]
+flac3d>[global E_S_2 = 2.0e9 ]
+flac3d>[global co_S_2 = 2.9e5 ]
+flac3d>[global fr_S_2 = 35.1]
+flac3d>[global den_S_2 = 2630.0]
+flac3d>[global E_S_3 = 3.5e9 ]
+flac3d>[global co_S_3 = 4.7e5 ]
+flac3d>[global fr_S_3 = 44.3]
+flac3d>[global den_S_3 = 2630.0]
+flac3d>[global E_S_4 = 1.5e9 ]
+flac3d>[global co_S_4 = 1.0e5 ]   ; WET, Wade c100/phi30
+flac3d>[global fr_S_4 = 30.0]
+flac3d>[global den_S_4 = 2630.0]
+flac3d>[global E_S_5 = 3.0e9 ]
+flac3d>[global co_S_5 = 8.0e5 ]
+flac3d>[global fr_S_5 = 51.5]
+flac3d>[global den_S_5 = 2630.0]
+flac3d>[global E_S_6 = 7.0e9 ]
+flac3d>[global co_S_6 = 20.6e5]
+flac3d>[global fr_S_6 = 56.3]
+flac3d>[global den_S_6 = 2600.0]
+flac3d>
+flac3d>; ---------- creep (Burgers-Mohr) : per-layer G_m=G_k=G(E,nu), bulk=K(E,nu) ----------
+flac3d>[global eta_m = 6.0e15]           ; viscosity-maxwell (Wade)
+flac3d>[global eta_k = 2.4e13]           ; viscosity-kelvin (proven)
+flac3d>[global crp_threshold = 0.6]      ; q_th = 0.6*(c*cosphi + p'*sinphi)
+flac3d>[global crp_dt = 600.0]           ; creep timestep (s) (Wade)
+flac3d>
+flac3d>; ---------- lining (R.C. continuum, D7 DECIDED) ----------
+flac3d>[global shot_E   = 25e9]
+flac3d>[global shot_v   = 0.2]
+flac3d>[global shot_t   = 0.40]
+flac3d>[global shot_den = 2400.0]
+flac3d>[global shot_fc  = 41.2e6]
+flac3d>[global shot_ft  = 4.12e6]
+flac3d>
+flac3d>; ---------- coupled PFC lining BPM micro (D7 FINAL_CALIB) ----------
+flac3d>[global pfc_emod    = 9.65e9]     ; linear deformability
+flac3d>[global pfc_kratio  = 1.0]
+flac3d>[global pfc_pb_emod = 5.88e9]     ; parallel-bond deformability
+flac3d>[global pfc_pb_krat = 0.6]
+flac3d>[global pfc_pb_ten  = 2.10e6]     ; Pa
+flac3d>[global pfc_pb_coh  = 2.30e7]     ; Pa
+flac3d>[global pfc_pb_fa   = 25.0]       ; deg
+flac3d>[global pfc_bondgap = 0.03]       ; m  (= cmat proximity)
+flac3d>[global pfc_ball_den  = 2400.0]
+flac3d>[global pfc_ball_damp = 0.7]
+flac3d>[global pfc_fric      = 0.5]
+flac3d>[global pfc_bf_strong = 1.0e20]   ; ball-facet pb (unbreakable coupling, NOT material)
+flac3d>
+flac3d>[io.out('=== parameter.f3dat loaded : nu='+string(nu)+' K0='+string(K0)+' eta_m='+string(eta_m)+' crp_dt='+string(crp_dt)+' ===')]
+=== parameter.f3dat loaded : nu=0.25 K0=0.7 eta_m=6e+15 crp_dt=600 ===
+flac3d>model largestrain on
+flac3d>model mechanical timestep scale
+--- density scaling activated in mechanical process with a target timestep of 1.
+flac3d>call 'fracture_track.fis'
+flac3d>; fname: fracture.fis
+flac3d>;
+flac3d>; Simple environment to track fragmentation in a BPM.
+flac3d>; Track LinearPBond model "bond_change" events and turn them into fractures.
+flac3d>; Use Fragment logic and Ball Result logic to record fragemnt ids 
+flac3d>;
+flac3d>; ============================================================================
+flac3d>
+flac3d>fish define add_crack(entries)
+   Def>    local contact    = entries(1)
+   Def>    local mode       = entries(3)
+   Def>    local  frac_pos   = contact.pos(contact)
+   Def>    local norm       = contact.normal(contact)
+   Def>    local dfn_label  = 'crack'
+   Def>    local  frac_size
+   Def>    local  bp1 = contact.end1(contact)
+   Def>    local  bp2 = contact.end2(contact)
+   Def>    local  ret = math.min(ball.radius(bp1),ball.radius(bp2))
+   Def>                 ; (  contact.method(contact,'pb_radius')  )
+   Def>    frac_size = ret
+   Def>    local arg = array.create(5)
+   Def>    arg(1) = 'disk'
+   Def>    arg(2) = frac_pos
+   Def>    arg(3) = frac_size
+   Def>    arg(4) = math.dip.from.normal(norm)/math.degrad
+   Def>    arg(5) = math.ddir.from.normal(norm)/math.degrad
+   Def>    if arg(5) < 0.0
+   Def>      arg(5) = 360.0+arg(5)
+   Def>    end_if
+   Def>    global crack_num
+   Def>    crack_num = crack_num + 1
+   Def>    
+   Def>    if mode = 1 then 
+   Def>        ; failed in tension
+   Def>        dfn_label = dfn_label + '_tension'
+   Def>    else if mode = 2 then
+   Def>        ; failed in shear
+   Def>        dfn_label = dfn_label + '_shear'
+   Def>    endif
+   Def>        
+   Def>    global dfn = dfn.find(dfn_label)
+   Def>    if dfn = null then
+   Def>        dfn = dfn.create(dfn_label)
+   Def>    endif
+   Def>    local fnew = fracture.create(dfn,arg)
+   Def>    fracture.prop(fnew,'age')  = mech.time.total
+   Def>    fracture.extra(fnew,1) = bp1
+   Def>    fracture.extra(fnew,2) = bp2
+   Def>    crack_accum += 1
+   Def>    global frag_time
+   Def>    global xmin,xmax,ymin,ymax,zmin,zmax
+   Def>    if crack_accum > 50
+   Def>        if frag_time < mech.time.total
+   Def>            frag_time = mech.time.total
+   Def>            crack_accum = 0
+   Def>            command 
+   Def>                fragment compute
+   Def>            endcommand
+   Def>            ; go through and update the fracture positions
+   Def>            loop for (local i = 0, i < 2, i = i + 1)
+   Def>                local name = 'crack_tension'
+   Def>                if i = 1
+   Def>                    name = 'crack_shear'
+   Def>                endif
+   Def>                dfn = dfn.find(name)
+   Def>                if dfn # null
+   Def>                    loop foreach local frac dfn.fracturelist(dfn)
+   Def>                        local ball1 = fracture.extra(frac,1)
+   Def>                        local ball2 = fracture.extra(frac,2)
+   Def>                        if ball1 # null
+   Def>                            if ball2 # null
+   Def>                                local len = fracture.diameter(frac)/2.0
+   Def>                                local pos = (ball.pos(ball1)+ ...
+   Def>                                             ball.pos(ball2))/2.0
+   Def>                                if comp.x(pos)-len > xmin
+   Def>                                    if comp.x(pos)+len < xmax
+   Def>                                        if comp.y(pos)-len > ymin
+   Def>                                            if comp.y(pos)+len < ymax
+   Def>                                                if comp.z(pos)-len > zmin
+   Def>                                                    if comp.z(pos)+len < zmax
+   Def>                                                       fracture.pos(frac) = pos
+   Def>                                                    end_if
+   Def>                                                end_if
+   Def>                                            endif
+   Def>                                        endif
+   Def>                                    endif
+   Def>                                endif
+   Def>                            endif
+   Def>                        endif
+   Def>                    endloop
+   Def>                endif
+   Def>            endloop
+   Def>        endif
+   Def>    endif
+   Def>end
+flac3d>
+flac3d>fish define track_init
+   Def>    command
+   Def>        fracture delete
+   Def>        model results clear-map
+   Def>        fragment clear
+   Def>        fragment register ball-ball
+   Def>    endcommand
+   Def>  ; activate fishcalls
+   Def>    command
+   Def>        fish callback remove add_crack event bond_break
+   Def>        fish callback add add_crack event bond_break
+   Def>    endcommand
+   Def>    ; reset global variables
+   Def>    global crack_accum = 0
+   Def>    global crack_num = 0
+   Def>    global track_time0 = mech.time.total
+   Def>    global frag_time = mech.time.total
+   Def>    global xmin = domain.min.x()
+   Def>    global ymin = domain.min.y()
+   Def>    global xmax = domain.max.x()
+   Def>    global ymax = domain.max.y()
+   Def>    global zmin = domain.min.z()
+   Def>    global zmax = domain.max.z()
+   Def>
+   Def>end
+flac3d>
+flac3d>; ============================================================================
+flac3d>; eof: fracture.fis
+flac3d>[track_init]
+flac3d>fracture delete
++++ No fractures found in range.
+flac3d>model results clear-map
+flac3d>fragment clear
+--- The previous fragment computations have been cleared and automatic updates disabled.
+flac3d>fragment register ball-ball
+--- 2267902 contacts of type ball-ball have been registered.
+flac3d>fish callback remove add_crack event bond_break
+flac3d>fish callback add add_crack event bond_break
+0 (integer)
+flac3d>ball attribute damp 0.8
+--- Attribute damp initialized in 456302 ball(s).
+flac3d>[io.out('C0-0 dt='+string(mech.timestep)+' zones='+string(zone.num)+' balls='+string(ball.num)+' track_baseline_cracks='+string(crack_num))]
+C0-0 dt=2.52176e-06 zones=424908 balls=456302 track_baseline_cracks=0
+flac3d>
+flac3d>fish define wall_forces
+   Def>    loop foreach local w wall.list
+   Def>        local fc = wall.force.contact(w)
+   Def>        local m = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+   Def>        if wall.name(w) = 'wz_outter' then
+   Def>            global wzN = m
+   Def>        end_if
+   Def>        if wall.name(w) = 'w_inner' then
+   Def>            global wiN = m
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>fish define maxbvel
+   Def>    local mv = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local v = ball.vel(b)
+   Def>        local mm = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+   Def>        if mm > mv then
+   Def>            mv = mv*0.0 + mm
+   Def>        end_if
+   Def>    end_loop
+   Def>    global mbv = mv
+   Def>end
+flac3d>[wall_forces]
+0 (integer)
+flac3d>[io.out('C0-insitu wz_outter='+string(wzN)+'MN w_inner='+string(wiN)+'MN')]
+C0-insitu wz_outter=1.8818MN w_inner=1.37817MN
+flac3d>
+flac3d>; --- load residual targets, tag + fix driven, HARD ABORT if count off ---
+flac3d>fish define load_targets
+   Def>    local lines = array.create(40000)
+   Def>    local st = file.open('couple_bnd_disp.txt',0,1)
+   Def>    local nn = file.read(lines, 40000)
+   Def>    st = file.close
+   Def>    global ndriven = 0
+   Def>    global nmiss = 0
+   Def>    local i = 2
+   Def>    loop while i <= nn
+   Def>        local gid = int(string.token(lines(i),1))
+   Def>        local g = gp.find(gid)
+   Def>        if g = null then
+   Def>            nmiss = nmiss + 1
+   Def>        else
+   Def>            gp.extra(g,1) = vector(string.token(lines(i),2),string.token(lines(i),3),string.token(lines(i),4))
+   Def>            gp.extra(g,2) = vector(string.token(lines(i),5),string.token(lines(i),6),string.token(lines(i),7))
+   Def>            gp.extra(g,3) = vector(string.token(lines(i),8),string.token(lines(i),9),string.token(lines(i),10))
+   Def>            gp.extra(g,4) = vector(string.token(lines(i),11),string.token(lines(i),12),string.token(lines(i),13))
+   Def>            gp.group(g,'drive') = 'driven'
+   Def>            ndriven = ndriven + 1
+   Def>        end_if
+   Def>        i = i + 1
+   Def>    end_loop
+   Def>    io.out('C0-LT driven='+string(ndriven)+' miss='+string(nmiss)+' (require 28304/0)')
+   Def>end
+flac3d>[load_targets]
+C0-LT driven=28304 miss=0 (require 28304/0)
+0 (integer)
+flac3d>fish define check_count
+   Def>    if ndriven # 28304 then
+   Def>        io.out('C0-ABORT ndriven='+string(ndriven)+' != 28304')
+   Def>        global okc = 0
+   Def>    else
+   Def>        if nmiss # 0 then
+   Def>            io.out('C0-ABORT nmiss='+string(nmiss)+' != 0')
+   Def>            global okc = 0
+   Def>        else
+   Def>            global okc = 1
+   Def>        end_if
+   Def>    end_if
+   Def>end
+flac3d>[check_count]
+0 (integer)
+flac3d>zone gridpoint fix velocity range group 'driven' slot 'drive'
+--- Fix velocity         specified in 28304 gridpoints.
+flac3d>; datum reset so gp.disp tracks applied displacement from clean zero
+flac3d>zone gridpoint initialize displacement 0 0 0
+--- displacement modified in 441728 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 441728 gridpoints.
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456302 ball(s).
+flac3d>[global base_cracks = crack_num]
+flac3d>
+flac3d>; --- ZERO-increment cycle (driven vel stays 0) + maxbvel BEFORE calm, 30 substeps of 10 ---
+flac3d>fish define ctrl0_run(nsub, ncyc)
+   Def>    local j = 1
+   Def>    loop while j <= nsub
+   Def>        ; driven vel already 0 (fixed); just cycle, sample maxbvel BEFORE calm
+   Def>        command
+   Def>            model cycle [ncyc]
+   Def>        endcommand
+   Def>        maxbvel
+   Def>        io.out('   C0-sub j='+string(j)+'/'+string(nsub)+' cracks='+string(crack_num)+' (d='+string(crack_num-base_cracks)+') maxbvel_precalm='+string(mbv))
+   Def>        command
+   Def>            model calm
+   Def>        endcommand
+   Def>        j = j + 1
+   Def>    end_loop
+   Def>end
+flac3d>[ctrl0_run(30, 10)]
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21015 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:50:52
+   C0-sub j=1/30 cracks=0 (d=0) maxbvel_precalm=4.3921e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21025 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:51:11
+   C0-sub j=2/30 cracks=0 (d=0) maxbvel_precalm=0.000794454
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21035 00:00:00:18        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:51:30
+   C0-sub j=3/30 cracks=0 (d=0) maxbvel_precalm=5.93027e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21045 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:51:49
+   C0-sub j=4/30 cracks=2 (d=2) maxbvel_precalm=0.000352406
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21055 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:52:08
+   C0-sub j=5/30 cracks=12 (d=12) maxbvel_precalm=1.08401e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21065 00:00:00:18        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:52:28
+   C0-sub j=6/30 cracks=13 (d=13) maxbvel_precalm=2.25822e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21075 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:52:47
+   C0-sub j=7/30 cracks=13 (d=13) maxbvel_precalm=1.84264e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21085 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:53:06
+   C0-sub j=8/30 cracks=13 (d=13) maxbvel_precalm=5.90256e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21095 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:53:25
+   C0-sub j=9/30 cracks=13 (d=13) maxbvel_precalm=7.47531e-06
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21105 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:53:44
+   C0-sub j=10/30 cracks=13 (d=13) maxbvel_precalm=1.4571e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21115 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:54:02
+   C0-sub j=11/30 cracks=13 (d=13) maxbvel_precalm=3.17727e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21125 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:54:21
+   C0-sub j=12/30 cracks=13 (d=13) maxbvel_precalm=3.17537e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21135 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:54:40
+   C0-sub j=13/30 cracks=13 (d=13) maxbvel_precalm=1.49423e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21145 00:00:00:18        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:55:00
+   C0-sub j=14/30 cracks=13 (d=13) maxbvel_precalm=1.78633e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21155 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:55:19
+   C0-sub j=15/30 cracks=13 (d=13) maxbvel_precalm=2.35243e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21165 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:55:38
+   C0-sub j=16/30 cracks=13 (d=13) maxbvel_precalm=7.81433e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21175 00:00:00:18        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:55:57
+   C0-sub j=17/30 cracks=13 (d=13) maxbvel_precalm=3.41801e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21185 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:56:16
+   C0-sub j=18/30 cracks=14 (d=14) maxbvel_precalm=5.98963e-06
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21195 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:56:35
+   C0-sub j=19/30 cracks=14 (d=14) maxbvel_precalm=2.53171e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21205 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:56:54
+   C0-sub j=20/30 cracks=14 (d=14) maxbvel_precalm=1.12202e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21215 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:57:13
+   C0-sub j=21/30 cracks=14 (d=14) maxbvel_precalm=0.00019412
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21225 00:00:00:18        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:57:32
+   C0-sub j=22/30 cracks=14 (d=14) maxbvel_precalm=8.14116e-06
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21235 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:57:51
+   C0-sub j=23/30 cracks=14 (d=14) maxbvel_precalm=2.67103e-06
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21245 00:00:00:18        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:58:11
+   C0-sub j=24/30 cracks=14 (d=14) maxbvel_precalm=2.50964e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21255 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:58:30
+   C0-sub j=25/30 cracks=14 (d=14) maxbvel_precalm=0.000233468
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21265 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:58:49
+   C0-sub j=26/30 cracks=14 (d=14) maxbvel_precalm=9.05509e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21275 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:59:08
+   C0-sub j=27/30 cracks=14 (d=14) maxbvel_precalm=6.00921e-06
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21285 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:59:27
+   C0-sub j=28/30 cracks=14 (d=14) maxbvel_precalm=2.83008e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21295 00:00:00:17        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 10:59:46
+   C0-sub j=29/30 cracks=15 (d=15) maxbvel_precalm=3.48018e-05
+flac3d>model calm
+flac3d>model cycle [ncyc]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      21305 00:00:00:18        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 11:00:05
+   C0-sub j=30/30 cracks=20 (d=20) maxbvel_precalm=0.000120641
+flac3d>model calm
+0 (integer)
+flac3d>model solve ratio-average 1e-4 cycles 6000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+     4372      25677 9.7096e-05 00:01:50:26      6000            1.0000e-04             
+--- Limit ratio-average of 1.0000e-04 met in process(es): mech Zone Main (0.0000e+00),mech Struct Main (0.0000e+00),mech Ball (9.7096e-05),mech Clump (0.0000e+00).
+--- Cycling ended at: 2026-06-29 12:50:33
+flac3d>[wall_forces]
+0 (integer)
+flac3d>[maxbvel]
+0 (integer)
+flac3d>fish define dmax_driven_drift
+   Def>    local dm = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            local d = gp.disp(g)
+   Def>            local m = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+   Def>            if m > dm then
+   Def>                dm = dm*0.0 + m
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    global drift_max = dm
+   Def>end
+flac3d>[dmax_driven_drift]
+0 (integer)
+flac3d>[io.out('C0-RESULT new_cracks='+string(crack_num-base_cracks)+' wz_outter='+string(wzN)+'MN w_inner='+string(wiN)+'MN maxbvel='+string(mbv)+' driven_drift_max='+string(drift_max*1000.0)+'mm')]
+C0-RESULT new_cracks=21 wz_outter=1.83809MN w_inner=1.29693MN maxbvel=8.98265e-07 driven_drift_max=0mm
+flac3d>[io.out('C0-PASS-CRITERIA: new_cracks==0? drift<0.05mm? wz/wi drift<2%? ratio<=6.1e-3?')]
+C0-PASS-CRITERIA: new_cracks==0? drift<0.05mm? wz/wi drift<2%? ratio<=6.1e-3?
+flac3d>model save 'cb_control0'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/cb_control0.f3sav.
+flac3d>[io.out('CONTROL0-DONE')]
+CONTROL0-DONE
+0 (integer)
+flac3d>program quit

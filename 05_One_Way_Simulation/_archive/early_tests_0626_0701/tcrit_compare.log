@@ -1,0 +1,173 @@
+**********************************************
+* Logging started at 週六 六月 27 14:30:18 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>
+flac3d>model restore 'td_s1'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 14:22:54 2026
+Total Cycles: 15428  Super Cycles: 15428
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define tcrit_report
+   Def>    local tmax = 0.0
+   Def>    local n06=0
+   Def>    local n07=0
+   Def>    local n08=0
+   Def>    local n0866=0
+   Def>    local n09=0
+   Def>    local n10=0
+   Def>    local n11=0
+   Def>    local nrock=0
+   Def>    local sum_pp=0.0
+   Def>    local sum_q=0.0
+   Def>    local sum_pm=0.0
+   Def>    local ppmax=0.0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.group(z,'mat') = 'rock' then
+   Def>            nrock = nrock + 1
+   Def>            local s1 = -zone.stress.prin.x(z)
+   Def>            local s3 = -zone.stress.prin.z(z)
+   Def>            local pore = zone.pp(z)
+   Def>            local pm = (s1 + s3)/2.0 - pore
+   Def>            local q = (s1 - s3)/2.0
+   Def>            local c = zone.prop(z,'cohesion')
+   Def>            local phi = zone.prop(z,'friction')
+   Def>            local strength = c + pm*math.tan(phi*math.degrad)
+   Def>            local tc = 0.0
+   Def>            if strength > 1.0 then
+   Def>                tc = q/strength
+   Def>            end_if
+   Def>            if tc > tmax then
+   Def>                tmax = tc
+   Def>            end_if
+   Def>            if tc >= 0.6 then
+   Def>                n06 = n06 + 1
+   Def>            end_if
+   Def>            if tc >= 0.7 then
+   Def>                n07 = n07 + 1
+   Def>            end_if
+   Def>            if tc >= 0.8 then
+   Def>                n08 = n08 + 1
+   Def>            end_if
+   Def>            if tc >= 0.866 then
+   Def>                n0866 = n0866 + 1
+   Def>            end_if
+   Def>            if tc >= 0.9 then
+   Def>                n09 = n09 + 1
+   Def>            end_if
+   Def>            if tc >= 1.0 then
+   Def>                n10 = n10 + 1
+   Def>            end_if
+   Def>            if tc >= 1.1 then
+   Def>                n11 = n11 + 1
+   Def>            end_if
+   Def>            sum_pp = sum_pp + pore
+   Def>            sum_q = sum_q + q
+   Def>            sum_pm = sum_pm + pm
+   Def>            if pore > ppmax then
+   Def>                ppmax = pore
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('TCRIT max='+string(tmax)+' | >=0.6:'+string(n06)+' >=0.7:'+string(n07)+' >=0.8:'+string(n08)+' >=0.866:'+string(n0866)+' >=0.9:'+string(n09)+' >=1.0:'+string(n10)+' >=1.1:'+string(n11))
+   Def>    io.out('TCRIT-MEAN rock='+string(nrock)+' mean_pp='+string(sum_pp/nrock)+' max_pp='+string(ppmax)+' mean_q='+string(sum_q/nrock)+' mean_pmean_eff='+string(sum_pm/nrock))
+   Def>end
+flac3d>[io.out('=== LOW water (td_s1) ===')]
+=== LOW water (td_s1) ===
+flac3d>[tcrit_report]
+TCRIT max=0.866025 | >=0.6:597901 >=0.7:495315 >=0.8:214278 >=0.866:41640 >=0.9:0 >=1.0:0 >=1.1:0
+TCRIT-MEAN rock=1098455 mean_pp=0 max_pp=0 mean_q=665150 mean_pmean_eff=1.32775e+06
+0 (integer)
+flac3d>
+flac3d>model restore 'td_s2'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 14:29:11 2026
+Total Cycles: 19749  Super Cycles: 19749
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define tcrit_report
+   Def>    local tmax = 0.0
+   Def>    local n06=0
+   Def>    local n07=0
+   Def>    local n08=0
+   Def>    local n0866=0
+   Def>    local n09=0
+   Def>    local n10=0
+   Def>    local n11=0
+   Def>    local nrock=0
+   Def>    local sum_pp=0.0
+   Def>    local sum_q=0.0
+   Def>    local sum_pm=0.0
+   Def>    local ppmax=0.0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.group(z,'mat') = 'rock' then
+   Def>            nrock = nrock + 1
+   Def>            local s1 = -zone.stress.prin.x(z)
+   Def>            local s3 = -zone.stress.prin.z(z)
+   Def>            local pore = zone.pp(z)
+   Def>            local pm = (s1 + s3)/2.0 - pore
+   Def>            local q = (s1 - s3)/2.0
+   Def>            local c = zone.prop(z,'cohesion')
+   Def>            local phi = zone.prop(z,'friction')
+   Def>            local strength = c + pm*math.tan(phi*math.degrad)
+   Def>            local tc = 0.0
+   Def>            if strength > 1.0 then
+   Def>                tc = q/strength
+   Def>            end_if
+   Def>            if tc > tmax then
+   Def>                tmax = tc
+   Def>            end_if
+   Def>            if tc >= 0.6 then
+   Def>                n06 = n06 + 1
+   Def>            end_if
+   Def>            if tc >= 0.7 then
+   Def>                n07 = n07 + 1
+   Def>            end_if
+   Def>            if tc >= 0.8 then
+   Def>                n08 = n08 + 1
+   Def>            end_if
+   Def>            if tc >= 0.866 then
+   Def>                n0866 = n0866 + 1
+   Def>            end_if
+   Def>            if tc >= 0.9 then
+   Def>                n09 = n09 + 1
+   Def>            end_if
+   Def>            if tc >= 1.0 then
+   Def>                n10 = n10 + 1
+   Def>            end_if
+   Def>            if tc >= 1.1 then
+   Def>                n11 = n11 + 1
+   Def>            end_if
+   Def>            sum_pp = sum_pp + pore
+   Def>            sum_q = sum_q + q
+   Def>            sum_pm = sum_pm + pm
+   Def>            if pore > ppmax then
+   Def>                ppmax = pore
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('TCRIT max='+string(tmax)+' | >=0.6:'+string(n06)+' >=0.7:'+string(n07)+' >=0.8:'+string(n08)+' >=0.866:'+string(n0866)+' >=0.9:'+string(n09)+' >=1.0:'+string(n10)+' >=1.1:'+string(n11))
+   Def>    io.out('TCRIT-MEAN rock='+string(nrock)+' mean_pp='+string(sum_pp/nrock)+' max_pp='+string(ppmax)+' mean_q='+string(sum_q/nrock)+' mean_pmean_eff='+string(sum_pm/nrock))
+   Def>end
+flac3d>[io.out('=== HIGH water (td_s2) ===')]
+=== HIGH water (td_s2) ===
+flac3d>[tcrit_report]
+TCRIT max=0.866025 | >=0.6:597899 >=0.7:495313 >=0.8:214278 >=0.866:41770 >=0.9:0 >=1.0:0 >=1.1:0
+TCRIT-MEAN rock=1098455 mean_pp=0 max_pp=0 mean_q=665150 mean_pmean_eff=1.32775e+06
+0 (integer)
+flac3d>[io.out('TCRIT-DONE')]
+TCRIT-DONE
+0 (integer)
+flac3d>program quit

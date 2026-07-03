@@ -1,0 +1,154 @@
+**********************************************
+* Logging started at 週二 六月 30 20:01:46 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../04_InitialBalance/Small_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週二 六月 23 10:12:10 2026
+Total Cycles: 11106  Super Cycles: 11106
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('QAS-0 restored Small_Initial zones='+string(zone.num)+' gps='+string(gp.num))]
+QAS-0 restored Small_Initial zones=1433466 gps=269452
+flac3d>fish define qa_small
+   Def>    local nplas = 0
+   Def>    local szmn = 1e30
+   Def>    local szmx = -1e30
+   Def>    local bz = array.create(5)
+   Def>    local bx = array.create(5)
+   Def>    local bn = array.create(5)
+   Def>    local k = 1
+   Def>    loop while k <= 5
+   Def>        bz(k) = 0.0
+   Def>        bx(k) = 0.0
+   Def>        bn(k) = 0
+   Def>        k = k + 1
+   Def>    end_loop
+   Def>    local rock_sz = 0.0
+   Def>    local rock_n = 0
+   Def>    local lin_sz = 0.0
+   Def>    local lin_n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.state(z,1) # 0 then
+   Def>            nplas = nplas + 1
+   Def>        end_if
+   Def>        local s = zone.stress.zz(z)
+   Def>        if s < szmn then
+   Def>            szmn = s
+   Def>        end_if
+   Def>        if s > szmx then
+   Def>            szmx = s
+   Def>        end_if
+   Def>        local j = int((zone.pos.z(z)-1700.0)/20.0) + 1
+   Def>        if j < 1 then
+   Def>            j = 1
+   Def>        end_if
+   Def>        if j > 5 then
+   Def>            j = 5
+   Def>        end_if
+   Def>        bz(j) = bz(j) + s
+   Def>        bx(j) = bx(j) + zone.stress.xx(z)
+   Def>        bn(j) = bn(j) + 1
+   Def>        ; rock vs lining szz (interface continuity, focus near tunnel y860-910)
+   Def>        local yc = zone.pos.y(z)
+   Def>        if yc > 860.0 then
+   Def>        if yc < 910.0 then
+   Def>            if zone.group(z,'type') = 'lining' then
+   Def>                lin_sz = lin_sz + s
+   Def>                lin_n = lin_n + 1
+   Def>            else
+   Def>                local rx = zone.pos.x(z) - 1297.0
+   Def>                local rz = zone.pos.z(z) - 1747.5
+   Def>                if (rx*rx+rz*rz) < 64.0 then
+   Def>                    rock_sz = rock_sz + s
+   Def>                    rock_n = rock_n + 1
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local mv = 0.0
+   Def>    local fx = 0
+   Def>    local fy = 0
+   Def>    local fz = 0
+   Def>    loop foreach local g gp.list
+   Def>        local v = gp.vel(g)
+   Def>        local m = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+   Def>        if m > mv then
+   Def>            mv = m
+   Def>        end_if
+   Def>        if gp.fix.x(g) then
+   Def>            fx = fx + 1
+   Def>        end_if
+   Def>        if gp.fix.y(g) then
+   Def>            fy = fy + 1
+   Def>        end_if
+   Def>        if gp.fix.z(g) then
+   Def>            fz = fz + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('QAS-STATE plastic_zones='+string(nplas)+'/'+string(zone.num)+' max_gp_vel='+string(mv)+' szz[min='+string(szmn)+',max='+string(szmx)+']')
+   Def>    io.out('QAS-BC fixed_x='+string(fx)+' fixed_y='+string(fy)+' fixed_z='+string(fz))
+   Def>    local mr = 0.0
+   Def>    if rock_n > 0 then
+   Def>        mr = rock_sz/float(rock_n)
+   Def>    end_if
+   Def>    local ml = 0.0
+   Def>    if lin_n > 0 then
+   Def>        ml = lin_sz/float(lin_n)
+   Def>    end_if
+   Def>    io.out('QAS-INTERFACE near-tunnel szz: rock_mean='+string(mr)+'(n'+string(rock_n)+') lining_mean='+string(ml)+'(n'+string(lin_n)+') ratio='+string(ml/mr))
+   Def>    local jj = 1
+   Def>    loop while jj <= 5
+   Def>        if bn(jj) > 0 then
+   Def>            local mz = bz(jj)/float(bn(jj))
+   Def>            local mxx = bx(jj)/float(bn(jj))
+   Def>            io.out('QAS-PROFILE zbin'+string(jj)+' z['+string(1700+(jj-1)*20)+'-'+string(1700+jj*20)+'] szz='+string(mz)+' sxx='+string(mxx)+' K0='+string(mxx/mz)+' n='+string(bn(jj)))
+   Def>        end_if
+   Def>        jj = jj + 1
+   Def>    end_loop
+   Def>end
+flac3d>[qa_small]
+QAS-STATE plastic_zones=128459/1433466 max_gp_vel=5.47733e-09 szz[min=-4.9262e+07,max=1.27701e+07]
+QAS-BC fixed_x=14946 fixed_y=14946 fixed_z=14946
+QAS-INTERFACE near-tunnel szz: rock_mean=-1.94809e+06(n363933) lining_mean=-5.41033e+06(n156560) ratio=2.77724
+QAS-PROFILE zbin1 z[1700-1720] szz=-2.94369e+06 sxx=-1.47385e+06 K0=0.50068 n=15466
+QAS-PROFILE zbin2 z[1720-1740] szz=-2.22172e+06 sxx=-1.14258e+06 K0=0.514279 n=74566
+QAS-PROFILE zbin3 z[1740-1760] szz=-2.57049e+06 sxx=-1.36586e+06 K0=0.531363 n=1283580
+QAS-PROFILE zbin4 z[1760-1780] szz=-1.35095e+06 sxx=-742581 K0=0.549675 n=44999
+QAS-PROFILE zbin5 z[1780-1800] szz=-838234 sxx=-479082 K0=0.571537 n=14855
+0 (integer)
+flac3d>fish define exp_slice
+   Def>    local st = file.open('qa_small_slice.txt',1,1)
+   Def>    local b = array.create(1)
+   Def>    b(1) = 'x z szz sxx state'
+   Def>    file.write(b,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        local yc = zone.pos.y(z)
+   Def>        if yc > 883.0 then
+   Def>        if yc < 887.0 then
+   Def>            local p = zone.pos(z)
+   Def>            b(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.state(z,1))
+   Def>            file.write(b,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local cl = file.close
+   Def>    io.out('QAS-SLICE exported '+string(n)+' zones (y883-887) -> qa_small_slice.txt')
+   Def>end
+flac3d>[exp_slice]
+QAS-SLICE exported 62788 zones (y883-887) -> qa_small_slice.txt
+0 (integer)
+flac3d>[io.out('QAS-DONE')]
+QAS-DONE
+0 (integer)
+flac3d>program quit

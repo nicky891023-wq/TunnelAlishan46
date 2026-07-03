@@ -1,0 +1,997 @@
+**********************************************
+* Logging started at 週一 六月 29 23:17:25 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore 'cb_control0'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週一 六月 29 12:50:33 2026
+Total Cycles: 25677  Super Cycles: 25677
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>call '../04_InitialBalance/parameter.f3dat'
+flac3d>; ============================================================================
+flac3d>; parameter.f3dat -- Alishan #46 UNIFIED material parameters (Wade-ruled, 2026-06-22)
+flac3d>; Large(4-layer) / Small(6-layer) rock + lining(D7) + coupled PFC(D7 calib).
+flac3d>;
+flac3d>; Unification rulings (Wade):
+flac3d>;   * nu = 0.25 single value (static MC + creep bulk same source).
+flac3d>;   * E is PER-LAYER (not uniform): lithology-based within Hoek-Diederichs
+flac3d>;     rock-mass range (sandstone 3-8, sandshale 1-3 GPa; colluvium/weathered soft).
+flac3d>;     -> GSI/E have NO field data: per-layer E are documented-range central
+flac3d>;        judgements, GSI-basis TODO (D3). c/phi are GSI-reduced placeholders.
+flac3d>;   * Burgers creep: shear-maxwell = shear-kelvin = the layer ELASTIC G,
+flac3d>;     bulk = the layer elastic K  (instantaneous static==creep, no spurious soften).
+flac3d>;   * viscosity-maxwell eta_m = 6.0e15 Pa.s ; viscosity-kelvin eta_k = 2.4e13 Pa.s.
+flac3d>;   * creep threshold ratio = 0.6 :  q_th = 0.6*(c*cos(phi)+p'*sin(phi)).
+flac3d>;   * creep timestep = 600 s (fixed).
+flac3d>;   * layer4 sandshale(WET): c = 100 kPa, phi = 30 deg (Wade).
+flac3d>; Units: SI (Pa, kg/m3, deg, m, Pa.s).  Sign: compression negative.
+flac3d>; ============================================================================
+flac3d>
+flac3d>; ---------- global / environment ----------
+flac3d>[global nu     = 0.25]            ; single Poisson, all rock layers
+flac3d>[global K0     = 0.7]             ; lateral stress ratio (placeholder, no field basis)
+flac3d>[global grav   = 9.81]            ; m/s2
+flac3d>[global poro   = 0.1]             ; porosity n
+flac3d>[global satr   = 0.1]             ; saturation S
+flac3d>[global rho_w  = 1000.0]          ; water density kg/m3
+flac3d>[global pmb    = 1.0e-5]          ; FLAC mobility coeff m2/(Pa.s); near-tunnel x100
+flac3d>[global ten_r  = 1.0e5]           ; rock tension cutoff 100 kPa (all layers)
+flac3d>
+flac3d>; ---------- elastic helpers (nu=0.25 -> G=E/2.5, K=E/1.5) ----------
+flac3d>fish define _gk(ee)
+   Def>    _gk = ee / (2.0*(1.0+nu))     ; shear  G
+   Def>end
+flac3d>fish define _bk(ee)
+   Def>    _bk = ee / (3.0*(1.0-2.0*nu)) ; bulk   K
+   Def>end
+flac3d>
+flac3d>; ====================== LARGE model : 4 layers ======================
+flac3d>; layer1 colluvium / layer2 ssh / layer3 bedrock / layer4 basement
+flac3d>[global E_L_1 = 0.5e9 ]
+flac3d>[global co_L_1 = 1.9e5]
+flac3d>[global fr_L_1 = 29.1]
+flac3d>[global den_L_1 = 2150.0]
+flac3d>[global E_L_2 = 2.0e9 ]
+flac3d>[global co_L_2 = 2.9e5]
+flac3d>[global fr_L_2 = 35.1]
+flac3d>[global den_L_2 = 2630.0]
+flac3d>[global E_L_3 = 5.0e9 ]
+flac3d>[global co_L_3 = 4.7e5]
+flac3d>[global fr_L_3 = 44.3]
+flac3d>[global den_L_3 = 2600.0]
+flac3d>[global E_L_4 = 7.0e9 ]
+flac3d>[global co_L_4 = 8.0e5]
+flac3d>[global fr_L_4 = 51.5]
+flac3d>[global den_L_4 = 2600.0]
+flac3d>
+flac3d>; ====================== SMALL model : 6 layers ======================
+flac3d>; l1 weathered-ss / l2 ss+sandshale / l3 ss+shale / l4 sandshale(WET) / l5 sandshale / l6 basement
+flac3d>[global E_S_1 = 1.0e9 ]
+flac3d>[global co_S_1 = 1.9e5 ]
+flac3d>[global fr_S_1 = 29.1]
+flac3d>[global den_S_1 = 2600.0]
+flac3d>[global E_S_2 = 2.0e9 ]
+flac3d>[global co_S_2 = 2.9e5 ]
+flac3d>[global fr_S_2 = 35.1]
+flac3d>[global den_S_2 = 2630.0]
+flac3d>[global E_S_3 = 3.5e9 ]
+flac3d>[global co_S_3 = 4.7e5 ]
+flac3d>[global fr_S_3 = 44.3]
+flac3d>[global den_S_3 = 2630.0]
+flac3d>[global E_S_4 = 1.5e9 ]
+flac3d>[global co_S_4 = 1.0e5 ]   ; WET, Wade c100/phi30
+flac3d>[global fr_S_4 = 30.0]
+flac3d>[global den_S_4 = 2630.0]
+flac3d>[global E_S_5 = 3.0e9 ]
+flac3d>[global co_S_5 = 8.0e5 ]
+flac3d>[global fr_S_5 = 51.5]
+flac3d>[global den_S_5 = 2630.0]
+flac3d>[global E_S_6 = 7.0e9 ]
+flac3d>[global co_S_6 = 20.6e5]
+flac3d>[global fr_S_6 = 56.3]
+flac3d>[global den_S_6 = 2600.0]
+flac3d>
+flac3d>; ---------- creep (Burgers-Mohr) : per-layer G_m=G_k=G(E,nu), bulk=K(E,nu) ----------
+flac3d>[global eta_m = 6.0e15]           ; viscosity-maxwell (Wade)
+flac3d>[global eta_k = 2.4e13]           ; viscosity-kelvin (proven)
+flac3d>[global crp_threshold = 0.6]      ; q_th = 0.6*(c*cosphi + p'*sinphi)
+flac3d>[global crp_dt = 600.0]           ; creep timestep (s) (Wade)
+flac3d>
+flac3d>; ---------- lining (R.C. continuum, D7 DECIDED) ----------
+flac3d>[global shot_E   = 25e9]
+flac3d>[global shot_v   = 0.2]
+flac3d>[global shot_t   = 0.40]
+flac3d>[global shot_den = 2400.0]
+flac3d>[global shot_fc  = 41.2e6]
+flac3d>[global shot_ft  = 4.12e6]
+flac3d>
+flac3d>; ---------- coupled PFC lining BPM micro (D7 FINAL_CALIB) ----------
+flac3d>[global pfc_emod    = 9.65e9]     ; linear deformability
+flac3d>[global pfc_kratio  = 1.0]
+flac3d>[global pfc_pb_emod = 5.88e9]     ; parallel-bond deformability
+flac3d>[global pfc_pb_krat = 0.6]
+flac3d>[global pfc_pb_ten  = 2.10e6]     ; Pa
+flac3d>[global pfc_pb_coh  = 2.30e7]     ; Pa
+flac3d>[global pfc_pb_fa   = 25.0]       ; deg
+flac3d>[global pfc_bondgap = 0.03]       ; m  (= cmat proximity)
+flac3d>[global pfc_ball_den  = 2400.0]
+flac3d>[global pfc_ball_damp = 0.7]
+flac3d>[global pfc_fric      = 0.5]
+flac3d>[global pfc_bf_strong = 1.0e20]   ; ball-facet pb (unbreakable coupling, NOT material)
+flac3d>
+flac3d>[io.out('=== parameter.f3dat loaded : nu='+string(nu)+' K0='+string(K0)+' eta_m='+string(eta_m)+' crp_dt='+string(crp_dt)+' ===')]
+=== parameter.f3dat loaded : nu=0.25 K0=0.7 eta_m=6e+15 crp_dt=600 ===
+flac3d>model largestrain on
+flac3d>model mechanical timestep scale
+--- density scaling activated in mechanical process with a target timestep of 1.
+flac3d>call 'fracture_track.fis'
+flac3d>; fname: fracture.fis
+flac3d>;
+flac3d>; Simple environment to track fragmentation in a BPM.
+flac3d>; Track LinearPBond model "bond_change" events and turn them into fractures.
+flac3d>; Use Fragment logic and Ball Result logic to record fragemnt ids 
+flac3d>;
+flac3d>; ============================================================================
+flac3d>
+flac3d>fish define add_crack(entries)
+   Def>    local contact    = entries(1)
+   Def>    local mode       = entries(2)    ; FIX: slot2=failure mode {1=tension,2=shear}; slot3=strength(force). Was entries(3)=strength -> mode never 1/2 -> crack_tension/crack_shear DFNs never created (QA empty). Verified vs PFC linearpbond cmlinearpbond.html Table3 + official fracture.p3fis.
+   Def>    local  frac_pos   = contact.pos(contact)
+   Def>    local norm       = contact.normal(contact)
+   Def>    local dfn_label  = 'crack'
+   Def>    local  frac_size
+   Def>    local  bp1 = contact.end1(contact)
+   Def>    local  bp2 = contact.end2(contact)
+   Def>    local  ret = math.min(ball.radius(bp1),ball.radius(bp2))
+   Def>                 ; (  contact.method(contact,'pb_radius')  )
+   Def>    frac_size = ret
+   Def>    local arg = array.create(5)
+   Def>    arg(1) = 'disk'
+   Def>    arg(2) = frac_pos
+   Def>    arg(3) = frac_size
+   Def>    arg(4) = math.dip.from.normal(norm)/math.degrad
+   Def>    arg(5) = math.ddir.from.normal(norm)/math.degrad
+   Def>    if arg(5) < 0.0
+   Def>      arg(5) = 360.0+arg(5)
+   Def>    end_if
+   Def>    global crack_num
+   Def>    crack_num = crack_num + 1
+   Def>    
+   Def>    if mode = 1 then 
+   Def>        ; failed in tension
+   Def>        dfn_label = dfn_label + '_tension'
+   Def>    else if mode = 2 then
+   Def>        ; failed in shear
+   Def>        dfn_label = dfn_label + '_shear'
+   Def>    endif
+   Def>        
+   Def>    global dfn = dfn.find(dfn_label)
+   Def>    if dfn = null then
+   Def>        dfn = dfn.create(dfn_label)
+   Def>    endif
+   Def>    local fnew = fracture.create(dfn,arg)
+   Def>    fracture.prop(fnew,'age')  = mech.time.total
+   Def>    fracture.extra(fnew,1) = bp1
+   Def>    fracture.extra(fnew,2) = bp2
+   Def>    crack_accum += 1
+   Def>    global frag_time
+   Def>    global xmin,xmax,ymin,ymax,zmin,zmax
+   Def>    if crack_accum > 50
+   Def>        if frag_time < mech.time.total
+   Def>            frag_time = mech.time.total
+   Def>            crack_accum = 0
+   Def>            command 
+   Def>                fragment compute
+   Def>            endcommand
+   Def>            ; go through and update the fracture positions
+   Def>            loop for (local i = 0, i < 2, i = i + 1)
+   Def>                local name = 'crack_tension'
+   Def>                if i = 1
+   Def>                    name = 'crack_shear'
+   Def>                endif
+   Def>                dfn = dfn.find(name)
+   Def>                if dfn # null
+   Def>                    loop foreach local frac dfn.fracturelist(dfn)
+   Def>                        local ball1 = fracture.extra(frac,1)
+   Def>                        local ball2 = fracture.extra(frac,2)
+   Def>                        if ball1 # null
+   Def>                            if ball2 # null
+   Def>                                local len = fracture.diameter(frac)/2.0
+   Def>                                local pos = (ball.pos(ball1)+ ...
+   Def>                                             ball.pos(ball2))/2.0
+   Def>                                if comp.x(pos)-len > xmin
+   Def>                                    if comp.x(pos)+len < xmax
+   Def>                                        if comp.y(pos)-len > ymin
+   Def>                                            if comp.y(pos)+len < ymax
+   Def>                                                if comp.z(pos)-len > zmin
+   Def>                                                    if comp.z(pos)+len < zmax
+   Def>                                                       fracture.pos(frac) = pos
+   Def>                                                    end_if
+   Def>                                                end_if
+   Def>                                            endif
+   Def>                                        endif
+   Def>                                    endif
+   Def>                                endif
+   Def>                            endif
+   Def>                        endif
+   Def>                    endloop
+   Def>                endif
+   Def>            endloop
+   Def>        endif
+   Def>    endif
+   Def>end
+flac3d>
+flac3d>fish define track_init
+   Def>    command
+   Def>        fracture delete
+   Def>        model results clear-map
+   Def>        fragment clear
+   Def>        fragment register ball-ball
+   Def>    endcommand
+   Def>  ; activate fishcalls
+   Def>    command
+   Def>        fish callback remove add_crack event bond_break
+   Def>        fish callback add add_crack event bond_break
+   Def>    endcommand
+   Def>    ; reset global variables
+   Def>    global crack_accum = 0
+   Def>    global crack_num = 0
+   Def>    global track_time0 = mech.time.total
+   Def>    global frag_time = mech.time.total
+   Def>    global xmin = domain.min.x()
+   Def>    global ymin = domain.min.y()
+   Def>    global xmax = domain.max.x()
+   Def>    global ymax = domain.max.y()
+   Def>    global zmin = domain.min.z()
+   Def>    global zmax = domain.max.z()
+   Def>
+   Def>end
+flac3d>
+flac3d>; ============================================================================
+flac3d>; eof: fracture.fis
+flac3d>[track_init]
+flac3d>fracture delete
+--- DFN crack with ID 1 has been deleted.
+--- 21 fractures have been deleted.
+flac3d>model results clear-map
+flac3d>fragment clear
+--- The previous fragment computations have been cleared and automatic updates disabled.
+flac3d>fragment register ball-ball
+--- 2267881 contacts of type ball-ball have been registered.
+flac3d>fish callback remove add_crack event bond_break
+flac3d>fish callback add add_crack event bond_break
+0 (integer)
+flac3d>ball attribute damp 0.8
+--- Attribute damp initialized in 456302 ball(s).
+flac3d>call 'couple_qa_funcs.fis'
+flac3d>; couple_qa_funcs.fis -- Visual QA extraction for coupled stages (call AFTER each restore).
+flac3d>;   dump_cracks(pfx): write <pfx>_cracks.txt (x y z type diam age) for crack_tension + crack_shear DFNs.
+flac3d>;   qa_walls(pfx,stg): io.out wz_outter / w_inner net contact force per stage.
+flac3d>;   crack_sectors(pfx): bin tension+shear crack count by circumferential sector (12 x 30deg) + axial band.
+flac3d>;   tunnel axis along y, centre (cx,cz)=(1297,1747.5).
+flac3d>fish define dump_cracks(pfx)
+   Def>    local fname = pfx+'_cracks.txt'
+   Def>    local st = file.open(fname,1,1)
+   Def>    local buf = array.create(1)
+   Def>    buf(1) = 'x y z type diam age'
+   Def>    file.write(buf,1)
+   Def>    global ncr_t = 0
+   Def>    global ncr_s = 0
+   Def>    local ii = 0
+   Def>    loop while ii < 2
+   Def>        local nm = 'crack_tension'
+   Def>        local ty = 1
+   Def>        if ii = 1 then
+   Def>            nm = 'crack_shear'
+   Def>            ty = 2
+   Def>        end_if
+   Def>        local d = dfn.find(nm)
+   Def>        if d # null then
+   Def>            loop foreach local fr dfn.fracturelist(d)
+   Def>                local p = fracture.pos(fr)
+   Def>                local dm = fracture.diameter(fr)
+   Def>                local ag = fracture.prop(fr,'age')
+   Def>                buf(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(ty)+' '+string(dm)+' '+string(ag)
+   Def>                file.write(buf,1)
+   Def>                if ty = 1 then
+   Def>                    ncr_t = ncr_t + 1
+   Def>                else
+   Def>                    ncr_s = ncr_s + 1
+   Def>                end_if
+   Def>            end_loop
+   Def>        end_if
+   Def>        ii = ii + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('QA-CRACKS '+pfx+' tension='+string(ncr_t)+' shear='+string(ncr_s)+' total='+string(ncr_t+ncr_s)+' -> '+fname)
+   Def>end
+flac3d>fish define qa_walls(pfx, stg)
+   Def>    loop foreach local w wall.list
+   Def>        local fc = wall.force.contact(w)
+   Def>        local m = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+   Def>        if wall.name(w) = 'wz_outter' then
+   Def>            io.out('QA-WALL '+pfx+' s'+string(stg)+' wz_outter='+string(m)+'MN ('+string(comp.x(fc)/1e6)+','+string(comp.y(fc)/1e6)+','+string(comp.z(fc)/1e6)+')')
+   Def>        end_if
+   Def>        if wall.name(w) = 'w_inner' then
+   Def>            io.out('QA-WALL '+pfx+' s'+string(stg)+' w_inner='+string(m)+'MN')
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>; mid-band only wz_outter reaction: integrate bf_couple ball-facet contact forces over y in [y0,y1]
+flac3d>;   (total wall.force.contact is end-contaminated; this isolates the mid-tunnel lining reaction)
+flac3d>fish define mid_wall_force(pfx, y0, y1)
+   Def>    global fmid_sum = 0.0      ; signed sum of normal force (compression>0 per PFC convention varies)
+   Def>    global fmid_abs = 0.0      ; sum |normal force| = contact-load magnitude proxy
+   Def>    global nmid_c = 0
+   Def>    ; coupling (ball-facet on wz_outter) = linearpbond unbreakable pb_ten>=1e10 (cb_control0 has NO
+   Def>    ;   'bf_couple' group; identify by pb_ten instead verified 62556 coupling contacts, 47806 in mid)
+   Def>    loop foreach local c contact.list
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_ten') >= 1.0e10 then
+   Def>                local p = contact.pos(c)
+   Def>                local yy = comp.y(p)
+   Def>                if yy >= y0 then
+   Def>                    if yy <= y1 then
+   Def>                        local fn = contact.force.normal(c)
+   Def>                        fmid_sum = fmid_sum + fn
+   Def>                        local af = fn
+   Def>                        if af < 0.0 then
+   Def>                            af = -af
+   Def>                        end_if
+   Def>                        fmid_abs = fmid_abs + af
+   Def>                        nmid_c = nmid_c + 1
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('MID-WALL '+pfx+' y['+string(y0)+','+string(y1)+'] bf_couple_n='+string(nmid_c)+' sum_normal='+string(fmid_sum/1e6)+'MN abs_normal='+string(fmid_abs/1e6)+'MN')
+   Def>end
+flac3d>; mid-band tunnel-wall convergence (Codex Q2 2nd proof): lining-ball radial-inward displacement in
+flac3d>;   y[y0,y1]. ball.disp tracks drive-induced motion (datum reset zeroed it). reports mean/max + inner-band.
+flac3d>fish define mid_convergence(pfx, y0, y1)
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    ; INNER-WALL (r 1.35-2.0m) radial convergence, split by region (Codex): blue-line load region
+   Def>    ;   (ang NOT in 250-320deg = sidewalls+crown) vs fixed-corner band (ang 250-320 = artifact).
+   Def>    global cv_blue = 0.0
+   Def>    global mx_blue = 0.0
+   Def>    global nb_blue = 0
+   Def>    global cv_corner = 0.0
+   Def>    global mx_corner = 0.0
+   Def>    global nb_corner = 0
+   Def>    local sblue = 0.0
+   Def>    local scorner = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local yy = comp.y(p)
+   Def>        if yy >= y0 then
+   Def>        if yy <= y1 then
+   Def>            local rx = comp.x(p) - cx
+   Def>            local rz = comp.z(p) - cz
+   Def>            local rr = math.sqrt(rx*rx + rz*rz)
+   Def>            if rr >= 1.35 then
+   Def>            if rr <= 2.0 then
+   Def>                local ang = math.atan2(rz, rx)/math.degrad
+   Def>                if ang < 0.0 then
+   Def>                    ang = 360.0 + ang
+   Def>                end_if
+   Def>                local d = ball.disp(b)
+   Def>                local ri = -(comp.x(d)*rx/rr + comp.z(d)*rz/rr)
+   Def>                local iscorner = 0
+   Def>                if ang >= 250.0 then
+   Def>                    if ang <= 320.0 then
+   Def>                        iscorner = 1
+   Def>                    end_if
+   Def>                end_if
+   Def>                if iscorner = 1 then
+   Def>                    scorner = scorner + ri
+   Def>                    nb_corner = nb_corner + 1
+   Def>                    if ri > mx_corner then
+   Def>                        mx_corner = ri
+   Def>                    end_if
+   Def>                else
+   Def>                    sblue = sblue + ri
+   Def>                    nb_blue = nb_blue + 1
+   Def>                    if ri > mx_blue then
+   Def>                        mx_blue = ri
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    if nb_blue > 0 then
+   Def>        cv_blue = sblue/float(nb_blue)
+   Def>    end_if
+   Def>    if nb_corner > 0 then
+   Def>        cv_corner = scorner/float(nb_corner)
+   Def>    end_if
+   Def>    io.out('MID-CONV '+pfx+' INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n='+string(nb_blue)+' radial_inward mean='+string(cv_blue*1000.0)+'mm max='+string(mx_blue*1000.0)+'mm | fixed-corner n='+string(nb_corner)+' mean='+string(cv_corner*1000.0)+'mm max='+string(mx_corner*1000.0)+'mm')
+   Def>end
+flac3d>fish define crack_sectors(pfx)
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    local sect = array.create(12)
+   Def>    local kk = 1
+   Def>    loop while kk <= 12
+   Def>        sect(kk) = 0
+   Def>        kk = kk + 1
+   Def>    end_loop
+   Def>    local ii = 0
+   Def>    loop while ii < 2
+   Def>        local nm = 'crack_tension'
+   Def>        if ii = 1 then
+   Def>            nm = 'crack_shear'
+   Def>        end_if
+   Def>        local d = dfn.find(nm)
+   Def>        if d # null then
+   Def>            loop foreach local fr dfn.fracturelist(d)
+   Def>                local p = fracture.pos(fr)
+   Def>                local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+   Def>                if ang < 0.0 then
+   Def>                    ang = 360.0 + ang
+   Def>                end_if
+   Def>                local s = int(ang/30.0) + 1
+   Def>                if s > 12 then
+   Def>                    s = 12
+   Def>                end_if
+   Def>                sect(s) = sect(s) + 1
+   Def>            end_loop
+   Def>        end_if
+   Def>        ii = ii + 1
+   Def>    end_loop
+   Def>    io.out('QA-SECTORS '+pfx+' (30deg bins 0..360): '+string(sect(1))+' '+string(sect(2))+' '+string(sect(3))+' '+string(sect(4))+' '+string(sect(5))+' '+string(sect(6))+' '+string(sect(7))+' '+string(sect(8))+' '+string(sect(9))+' '+string(sect(10))+' '+string(sect(11))+' '+string(sect(12)))
+   Def>end
+flac3d>model cycle 1
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+        1      25678 00:00:00:04         1                        
+--- Global cycle limit of 1 met.
+--- Cycling ended at: 2026-06-29 23:46:52
+flac3d>[global dt_now = mech.timestep]
+flac3d>[io.out('FULL-0 dt_now='+string(dt_now)+' base_cracks='+string(crack_num))]
+FULL-0 dt_now=1 base_cracks=0
+flac3d>fish define hard_dt
+   Def>    if dt_now < 0.5 then
+   Def>        io.out('FULL-HARD-ABORT dt_now='+string(dt_now))
+   Def>        command
+   Def>            program quit
+   Def>        endcommand
+   Def>    end_if
+   Def>end
+flac3d>[hard_dt]
+0 (integer)
+flac3d>
+flac3d>fish define wall_forces
+   Def>    loop foreach local w wall.list
+   Def>        local fc = wall.force.contact(w)
+   Def>        local m = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+   Def>        if wall.name(w) = 'wz_outter' then
+   Def>            global wzN = m
+   Def>        end_if
+   Def>        if wall.name(w) = 'w_inner' then
+   Def>            global wiN = m
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>fish define maxbvel
+   Def>    local mv = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local v = ball.vel(b)
+   Def>        local mm = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+   Def>        if mm > mv then
+   Def>            mv = mv*0.0 + mm
+   Def>        end_if
+   Def>    end_loop
+   Def>    global mbv = mv
+   Def>end
+flac3d>fish define mid_count(y0, y1)
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    global n_mid = 0       ; BLUE-LINE deliverable: y in band AND ang NOT in 250-320 (sidewalls+crown)
+   Def>    global n_corner = 0    ; fixed-corner band: y in band AND ang 250-320 = artifact (Codex)
+   Def>    global n_end = 0       ; y-end band = artifact
+   Def>    local ii = 0
+   Def>    loop while ii < 2
+   Def>        local nm = 'crack_tension'
+   Def>        if ii = 1 then
+   Def>            nm = 'crack_shear'
+   Def>        end_if
+   Def>        local d = dfn.find(nm)
+   Def>        if d # null then
+   Def>            loop foreach local fr dfn.fracturelist(d)
+   Def>                local p = fracture.pos(fr)
+   Def>                local yy = comp.y(p)
+   Def>                if yy >= y0 then
+   Def>                    if yy <= y1 then
+   Def>                        local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+   Def>                        if ang < 0.0 then
+   Def>                            ang = 360.0 + ang
+   Def>                        end_if
+   Def>                        local isc = 0
+   Def>                        if ang >= 250.0 then
+   Def>                            if ang <= 320.0 then
+   Def>                                isc = 1
+   Def>                            end_if
+   Def>                        end_if
+   Def>                        if isc = 1 then
+   Def>                            n_corner = n_corner + 1
+   Def>                        else
+   Def>                            n_mid = n_mid + 1
+   Def>                        end_if
+   Def>                    else
+   Def>                        n_end = n_end + 1
+   Def>                    end_if
+   Def>                else
+   Def>                    n_end = n_end + 1
+   Def>                end_if
+   Def>            end_loop
+   Def>        end_if
+   Def>        ii = ii + 1
+   Def>    end_loop
+   Def>end
+flac3d>
+flac3d>fish define load_targets
+   Def>    local lines = array.create(30000)
+   Def>    local st = file.open('couple_bnd_disp.txt',0,1)
+   Def>    local nn = file.read(lines, 30000)
+   Def>    st = file.close
+   Def>    global ndriven = 0
+   Def>    global nmiss = 0
+   Def>    local i = 2
+   Def>    loop while i <= nn
+   Def>        local gid = int(string.token(lines(i),1))
+   Def>        local g = gp.find(gid)
+   Def>        if g = null then
+   Def>            nmiss = nmiss + 1
+   Def>        else
+   Def>            gp.extra(g,1) = vector(string.token(lines(i),2),string.token(lines(i),3),string.token(lines(i),4))
+   Def>            gp.extra(g,2) = vector(string.token(lines(i),5),string.token(lines(i),6),string.token(lines(i),7))
+   Def>            gp.extra(g,3) = vector(string.token(lines(i),8),string.token(lines(i),9),string.token(lines(i),10))
+   Def>            gp.extra(g,4) = vector(string.token(lines(i),11),string.token(lines(i),12),string.token(lines(i),13))
+   Def>            gp.group(g,'drive') = 'driven'
+   Def>            local py2 = comp.y(gp.pos(g))
+   Def>            if py2 < 860.6 then
+   Def>                gp.group(g,'cap') = 'ycap'
+   Def>            end_if
+   Def>            if py2 > 909.4 then
+   Def>                gp.group(g,'cap') = 'ycap'
+   Def>            end_if
+   Def>            ndriven = ndriven + 1
+   Def>        end_if
+   Def>        i = i + 1
+   Def>    end_loop
+   Def>    io.out('FULL-LT driven='+string(ndriven)+' miss='+string(nmiss))
+   Def>end
+flac3d>; --- Codex CRITICAL fix: clear STALE drive tags+extras from cb_control0 (created with 28304; we
+flac3d>;     now drive the filtered 23530). Without this, the 4774 excluded near-tunnel y-cap gps keep their
+flac3d>;     old 'driven' tag + gp.extra from cb_control0 and stay driven -> BC fix never applied. ---
+flac3d>zone gridpoint free velocity
+--- Free velocity         specified in 441728 gridpoints.
+flac3d>fish define clear_drive
+   Def>    loop foreach local g gp.list
+   Def>        gp.group(g,'drive') = 'none'
+   Def>        gp.group(g,'cap') = 'none'
+   Def>        gp.extra(g,1) = vector(0,0,0)
+   Def>        gp.extra(g,2) = vector(0,0,0)
+   Def>        gp.extra(g,3) = vector(0,0,0)
+   Def>        gp.extra(g,4) = vector(0,0,0)
+   Def>    end_loop
+   Def>end
+flac3d>[clear_drive]
+0 (integer)
+flac3d>[load_targets]
+FULL-LT driven=23530 miss=0
+0 (integer)
+flac3d>; count the ACTUAL 'driven' group (not file lines) -> hard abort if != 23530
+flac3d>fish define count_actual
+   Def>    global nact = 0
+   Def>    loop foreach local g2 gp.list
+   Def>        if gp.group(g2,'drive') = 'driven' then
+   Def>            nact = nact + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>[count_actual]
+0 (integer)
+flac3d>fish define hard_count
+   Def>    if nact # 23530 then
+   Def>        io.out('FULL-HARD-ABORT actual driven group='+string(nact)+' != 23530 (stale tags?)')
+   Def>        command
+   Def>            program quit
+   Def>        endcommand
+   Def>    end_if
+   Def>    io.out('FULL-COUNT-OK actual_driven='+string(nact)+' (file_loaded='+string(ndriven)+')')
+   Def>end
+flac3d>[hard_count]
+FULL-COUNT-OK actual_driven=23530 (file_loaded=23530)
+0 (integer)
+flac3d>zone gridpoint fix velocity range group 'driven' slot 'drive'
+--- Fix velocity         specified in 23530 gridpoints.
+flac3d>zone gridpoint initialize displacement 0 0 0
+--- displacement modified in 441728 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 441728 gridpoints.
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456302 ball(s).
+flac3d>[global guard_base = crack_num]
+flac3d>model cycle 200
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 5 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 5 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 6 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 7 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 9 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 10 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 12 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 15 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 15 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 15 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 15 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 15 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 15 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 15 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 15 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 16 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 16 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 16 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 16 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 16 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 16 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 17 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 17 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 17 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 19 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 19 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 19 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 19 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 19 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 20 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 21 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 22 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 22 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 23 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 23 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 23 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 23 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 23 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 24 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 24 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 25 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 25 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 26 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 26 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 26 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      200      25878 00:00:06:18       200                        
+--- Global cycle limit of 200 met.
+--- Cycling ended at: 2026-06-29 23:53:18
+flac3d>[maxbvel]
+0 (integer)
+flac3d>fish define guard_check
+   Def>    if (crack_num - guard_base) > 0 then
+   Def>        io.out('FULL-GUARD-FAIL '+string(crack_num-guard_base))
+   Def>        command
+   Def>            program quit
+   Def>        endcommand
+   Def>    else
+   Def>        io.out('FULL-GUARD-PASS (maxbvel='+string(mbv)+')')
+   Def>    end_if
+   Def>end
+flac3d>[guard_check]
+FULL-GUARD-FAIL 3973
+flac3d>program quit
+0 (integer)
+flac3d>model calm
+flac3d>[global base_cracks = crack_num]
+flac3d>
+flac3d>; --- per-stage ramp (cumulative target gp.extra(.,stg)), mid breaker y870-900 ---
+flac3d>fish define ramp_stage(stg, nsub, ncyc)
+   Def>    global abort_flag = 0
+   Def>    mid_count(870.0, 900.0)
+   Def>    global prev_mid = n_mid
+   Def>    local j = 1
+   Def>    loop while j <= nsub
+   Def>        local subs_left = float(nsub-j+1)
+   Def>        loop foreach local g gp.list
+   Def>            if gp.group(g,'drive') = 'driven' then
+   Def>                local rem = gp.extra(g,stg) - gp.disp(g)
+   Def>                if gp.group(g,'cap') = 'ycap' then
+   Def>                    rem = vector(comp.x(rem), 0.0, comp.z(rem))
+   Def>                end_if
+   Def>                gp.vel(g) = rem/(subs_left*float(ncyc)*dt_now)
+   Def>            end_if
+   Def>        end_loop
+   Def>        command
+   Def>            model cycle [ncyc]
+   Def>        endcommand
+   Def>        mid_count(870.0, 900.0)
+   Def>        local dmid = n_mid - prev_mid
+   Def>        if dmid > 50 then
+   Def>            io.out('FULL-MID-BREAK s'+string(stg)+' dmid='+string(dmid)+'>50 at j='+string(j))
+   Def>            abort_flag = 1
+   Def>            exit
+   Def>        end_if
+   Def>        prev_mid = n_mid
+   Def>        j = j + 1
+   Def>    end_loop
+   Def>    io.out('   FULL-ramp s'+string(stg)+' done BLUELINE='+string(n_mid)+' corner(excl)='+string(n_corner)+' yend(excl)='+string(n_end)+' total='+string(crack_num-base_cracks)+' abort='+string(abort_flag))
+   Def>end
+flac3d>
+flac3d>fish define do_stage(stg)
+   Def>    ramp_stage(stg, 30, 10)
+   Def>    command
+   Def>        zone gridpoint fix velocity 0 0 0 range group 'driven' slot 'drive'
+   Def>    endcommand
+   Def>    if abort_flag = 0 then
+   Def>        command
+   Def>            model solve ratio-average 1e-4 cycles 3000
+   Def>        endcommand
+   Def>    end_if
+   Def>    maxbvel
+   Def>    wall_forces
+   Def>    mid_count(870.0, 900.0)
+   Def>    local pfx = 'full_s'+string(stg)
+   Def>    dump_cracks(pfx)
+   Def>    crack_sectors(pfx)
+   Def>    mid_wall_force(pfx, 870.0, 900.0)
+   Def>    mid_convergence(pfx, 870.0, 900.0)
+   Def>    io.out('FULL-RESULT-s'+string(stg)+' abort='+string(abort_flag)+' BLUELINE_cracks='+string(n_mid)+' fixedcorner_cracks(excl)='+string(n_corner)+' yend_cracks(excl)='+string(n_end)+' wz_total='+string(wzN)+'MN w_inner='+string(wiN)+'MN maxbvel='+string(mbv))
+   Def>    local sname = 'cb_full_s'+string(stg)
+   Def>    if abort_flag = 1 then
+   Def>        sname = 'cb_full_s'+string(stg)+'_BREAK'
+   Def>    end_if
+   Def>    command
+   Def>        model save [sname]
+   Def>    endcommand
+   Def>    io.out('FULL-SAVED s'+string(stg)+' -> '+sname)
+   Def>end
+flac3d>
+flac3d>fish define run_all
+   Def>    do_stage(1)
+   Def>    if abort_flag = 0 then
+   Def>        do_stage(2)
+   Def>    end_if
+   Def>    if abort_flag = 0 then
+   Def>        do_stage(3)
+   Def>    end_if
+   Def>    if abort_flag = 0 then
+   Def>        do_stage(4)
+   Def>    end_if
+   Def>end
+flac3d>[run_all]
+flac3d>model cycle [ncyc]
+flac3d>fragment compute
+--- 26 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 26 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 26 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 26 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+       10      25888 00:00:00:21        10                        
+--- Global cycle limit of 10 met.
+--- Cycling ended at: 2026-06-29 23:53:40
+FULL-MID-BREAK s1 dmid=102>50 at j=1
+flac3d>zone gridpoint fix velocity 0 0 0 range group 'driven' slot 'drive'
+--- Fix velocity         specified in 23530 gridpoints.
+QA-CRACKS full_s1 tension=3976 shear=166 total=4142 -> full_s1_cracks.txt
+QA-SECTORS full_s1 (30deg bins 0..360): 692 354 222 177 523 234 632 378 344 32 147 407
+MID-WALL full_s1 y[870,900] bf_couple_n=37691 sum_normal=580.43MN abs_normal=602.718MN
+MID-CONV full_s1 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33995 radial_inward mean=0.0234412mm max=0.101692mm | fixed-corner n=4403 mean=0.0370805mm max=0.0883559mm
+FULL-RESULT-s1 abort=1 BLUELINE_cracks=2694 fixedcorner_cracks(excl)=172 yend_cracks(excl)=1276 wz_total=313.191MN w_inner=330.625MN maxbvel=0.000111511
+flac3d>model save [sname]
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/cb_full_s1_BREAK.f3sav.
+FULL-SAVED s1 -> cb_full_s1_BREAK
+0 (integer)
+flac3d>[io.out('FULL4-DONE final_abort='+string(abort_flag))]
+FULL4-DONE final_abort=1
+flac3d>program quit

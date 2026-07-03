@@ -1,0 +1,175 @@
+**********************************************
+* Logging started at 週六 六月 27 18:16:41 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore 'small_ep'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 13:49:33 2026
+Total Cycles: 11107  Super Cycles: 11107
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define _inv
+   Def>    local nb = 10
+   Def>    local zmin = 1700.0
+   Def>    local zmax = 1800.0
+   Def>    local dz = (zmax-zmin)/float(nb)
+   Def>    local cnt = array.create(nb)
+   Def>    local act = array.create(nb)
+   Def>    local tcs = array.create(nb)
+   Def>    local i = 1
+   Def>    loop while i <= nb
+   Def>        cnt(i)=0
+   Def>        act(i)=0
+   Def>        tcs(i)=0.0
+   Def>        i=i+1
+   Def>    end_loop
+   Def>    ; radial bins (from tunnel center 1299,1747) 0-5,5-10,10-20,20-40,40+
+   Def>    local rc = array.create(5)
+   Def>    local ra = array.create(5)
+   Def>    i = 1
+   Def>    loop while i <= 5
+   Def>        rc(i)=0
+   Def>        ra(i)=0
+   Def>        i=i+1
+   Def>    end_loop
+   Def>    loop foreach local z zone.list
+   Def>        if zone.group(z,'mat') = 'rock' then
+   Def>            local s1 = -zone.stress.prin.x(z)
+   Def>            local s3 = -zone.stress.prin.z(z)
+   Def>            local pore = zone.pp(z)
+   Def>            local pm = (s1+s3)/2.0 - pore
+   Def>            local q = (s1-s3)/2.0
+   Def>            local c = zone.prop(z,'cohesion')
+   Def>            local phi = zone.prop(z,'friction')
+   Def>            local strength = c + pm*math.tan(phi*math.degrad)
+   Def>            local tc = 0.0
+   Def>            if strength > 1.0 then
+   Def>                tc = q/strength
+   Def>            end_if
+   Def>            local p = zone.pos(z)
+   Def>            local zc = comp.z(p)
+   Def>            local ib = int((zc-zmin)/dz)+1
+   Def>            if ib < 1 then
+   Def>                ib = 1
+   Def>            end_if
+   Def>            if ib > nb then
+   Def>                ib = nb
+   Def>            end_if
+   Def>            cnt(ib) = cnt(ib)+1
+   Def>            tcs(ib) = tcs(ib)+tc
+   Def>            if tc >= 0.8 then
+   Def>                act(ib) = act(ib)+1
+   Def>            end_if
+   Def>            ; radial
+   Def>            local dxr = comp.x(p)-1299.0
+   Def>            local dzr = zc-1747.0
+   Def>            local rr = math.sqrt(dxr*dxr + dzr*dzr)
+   Def>            local rb = 5
+   Def>            if rr < 40.0 then
+   Def>                rb = 4
+   Def>            end_if
+   Def>            if rr < 20.0 then
+   Def>                rb = 3
+   Def>            end_if
+   Def>            if rr < 10.0 then
+   Def>                rb = 2
+   Def>            end_if
+   Def>            if rr < 5.0 then
+   Def>                rb = 1
+   Def>            end_if
+   Def>            rc(rb) = rc(rb)+1
+   Def>            if tc >= 0.8 then
+   Def>                ra(rb) = ra(rb)+1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('INV-DEPTH active(T>=0.8) by z band (tunnel z~1747):')
+   Def>    i = 1
+   Def>    loop while i <= nb
+   Def>        local zlo = zmin+float(i-1)*dz
+   Def>        local mt = 0.0
+   Def>        if cnt(i) > 0 then
+   Def>            mt = tcs(i)/float(cnt(i))
+   Def>        end_if
+   Def>        local pa = 0.0
+   Def>        if cnt(i) > 0 then
+   Def>            pa = 100.0*float(act(i))/float(cnt(i))
+   Def>        end_if
+   Def>        io.out('  z'+string(int(zlo))+'-'+string(int(zlo+dz))+': '+string(act(i))+'/'+string(cnt(i))+'='+string(pa)+'% active, meanT='+string(mt))
+   Def>        i = i+1
+   Def>    end_loop
+   Def>    io.out('INV-RADIAL active by distance from tunnel:')
+   Def>    local rlab = array.create(5)
+   Def>    rlab(1)='r0-5'
+   Def>    rlab(2)='r5-10'
+   Def>    rlab(3)='r10-20'
+   Def>    rlab(4)='r20-40'
+   Def>    rlab(5)='r40+'
+   Def>    i = 1
+   Def>    loop while i <= 5
+   Def>        local pr = 0.0
+   Def>        if rc(i) > 0 then
+   Def>            pr = 100.0*float(ra(i))/float(rc(i))
+   Def>        end_if
+   Def>        io.out('  '+rlab(i)+': '+string(ra(i))+'/'+string(rc(i))+'='+string(pr)+'% active')
+   Def>        i = i+1
+   Def>    end_loop
+   Def>    ; export y885 T_crit field
+   Def>    local fo = file.open('small_tcrit_y885.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x z tcrit'
+   Def>    fo = file.write(a,1)
+   Def>    loop foreach local z2 zone.list
+   Def>        if zone.group(z2,'mat') = 'rock' then
+   Def>            local p2 = zone.pos(z2)
+   Def>            if comp.y(p2) > 884.0 then
+   Def>            if comp.y(p2) < 886.0 then
+   Def>                local s1b = -zone.stress.prin.x(z2)
+   Def>                local s3b = -zone.stress.prin.z(z2)
+   Def>                local pmb = (s1b+s3b)/2.0 - zone.pp(z2)
+   Def>                local qb = (s1b-s3b)/2.0
+   Def>                local strb = zone.prop(z2,'cohesion') + pmb*math.tan(zone.prop(z2,'friction')*math.degrad)
+   Def>                local tcb = 0.0
+   Def>                if strb > 1.0 then
+   Def>                    tcb = qb/strb
+   Def>                end_if
+   Def>                a(1) = string(comp.x(p2))+' '+string(comp.z(p2))+' '+string(tcb)
+   Def>                fo = file.write(a,1)
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('INV-EXP exported small_tcrit_y885.txt')
+   Def>end
+flac3d>[_inv]
+INV-DEPTH active(T>=0.8) by z band (tunnel z~1747):
+  z1700-1710: 0/7672=0% active, meanT=0.177412
+  z1710-1720: 0/7794=0% active, meanT=0.177713
+  z1720-1730: 0/16240=0% active, meanT=0.211026
+  z1730-1740: 35/58326=0.0600075% active, meanT=0.347915
+  z1740-1750: 187077/607469=30.7961% active, meanT=0.614038
+  z1750-1760: 27114/341100=7.94899% active, meanT=0.580046
+  z1760-1770: 21/32266=0.065084% active, meanT=0.47233
+  z1770-1780: 0/12733=0% active, meanT=0.492959
+  z1780-1790: 0/7268=0% active, meanT=0.534267
+  z1790-1800: 0/7587=0% active, meanT=0.498683
+INV-RADIAL active by distance from tunnel:
+  r0-5: 122069/361563=33.7615% active
+  r5-10: 43644/283857=15.3753% active
+  r10-20: 39023/265567=14.6942% active
+  r20-40: 9384/143655=6.53232% active
+  r40+: 127/43813=0.289868% active
+INV-EXP exported small_tcrit_y885.txt
+0 (integer)
+flac3d>[io.out('INV-DONE')]
+INV-DONE
+0 (integer)
+flac3d>program quit

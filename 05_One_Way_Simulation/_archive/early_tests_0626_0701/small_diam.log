@@ -1,0 +1,53 @@
+**********************************************
+* Logging started at 週二 六月 30 13:28:05 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore 's4_s4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:54:20 2026
+Total Cycles: 29159  Super Cycles: 29159
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>; nearest-gp displacement at tunnel reference points (y~885 slice), cumulative s4
+flac3d>fish define ptdisp(px, pz, lbl)
+   Def>    local best = 1e20
+   Def>    global bdx = 0.0
+   Def>    global bdz = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        if comp.y(p) > 884.0 then
+   Def>        if comp.y(p) < 886.0 then
+   Def>            local dd = math.sqrt((comp.x(p)-px)*(comp.x(p)-px)+(comp.z(p)-pz)*(comp.z(p)-pz))
+   Def>            if dd < best then
+   Def>                best = dd
+   Def>                local d = gp.disp(g)
+   Def>                bdx = comp.x(d)
+   Def>                bdz = comp.z(d)
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('PT '+lbl+' disp(mm) dx='+string(bdx*1000.0)+' dz='+string(bdz*1000.0)+' (nearest '+string(best)+'m)')
+   Def>end
+flac3d>[ptdisp(1297.0, 1752.0, 'CROWN ')]
+PT CROWN  disp(mm) dx=-0.895818 dz=0.336586 (nearest 0.273887m)
+0 (integer)
+flac3d>[ptdisp(1297.0, 1743.0, 'INVERT')]
+PT INVERT disp(mm) dx=2.03659 dz=1.08517 (nearest 0.0527194m)
+0 (integer)
+flac3d>[ptdisp(1303.0, 1747.0, 'SPRING-R')]
+PT SPRING-R disp(mm) dx=0.0776384 dz=0.619695 (nearest 0.040415m)
+0 (integer)
+flac3d>[ptdisp(1291.0, 1747.0, 'SPRING-L')]
+PT SPRING-L disp(mm) dx=1.14584 dz=0.73685 (nearest 0.320232m)
+0 (integer)
+flac3d>[io.out('DIAM-DONE: vertical closure = -(crown_dz)+(invert_dz); horizontal = -(springR_dx)+(springL_dx)')]
+DIAM-DONE: vertical closure = -(crown_dz)+(invert_dz); horizontal = -(springR_dx)+(springL_dx)
+flac3d>program quit

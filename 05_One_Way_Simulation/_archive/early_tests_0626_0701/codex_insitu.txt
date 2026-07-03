@@ -1,0 +1,61 @@
+﻿INSITU-VERDICT: The current `K0=0.7` in-situ state is not acceptable under the engineer’s “no surface tension” criterion. FLAC3D did what the model allowed: after equilibrium cycling, the terrain stress field redistributed and tensile zones were capped at `ten_r = 0.1 MPa`. That is not a tension-free in-situ state.
+
+Use `model gravity`, not `zone gravity`, for FLAC3D 6.00.
+
+**Answers**
+
+1. The standard FLAC3D 6.00 workflow is: initialize approximate gravity stresses, solve to equilibrium, then verify. For irregular topography, `zone initialize-stresses` is only approximate; the manual explicitly says cycling is still needed for exact equilibrium. But if the solved equilibrium contains prohibited tension, the accepted state must be changed. Of your options: `(d)` is the best engineering answer if `K0=0.7` is a deep/far-field target; reduce or taper `K0` near free/convex terrain. `(c)` is valid only if the material is modeled as tensionless, i.e. `tension 0`, and the final plastic solve converges stably. `(a)` alone will not fix this. `(b)` is defensible only if you accept a gravity-generated stress state rather than prescribed `K0=0.7`. `(e)` conflicts with the stated no-tension requirement.
+
+2. A uniform global `K0=0.7` field is not generally statically admissible up to an irregular free surface. Deep `K0=0.7` may be physically defensible from tectonic or geological history, but convex ridges and shallow low-overburden zones often need stress relief. Do not force `0.7` everywhere just because it is the regional target. Either use gravity-natural stress if no measured high `K0` exists, or taper from about the gravity-compatible shallow value toward `0.7` at depth.
+
+3. The `428 mm` displacement is not automatically acceptable “initial settling.” It is acceptable only if the model reaches a stable force ratio, velocities decay, no prohibited tensile stress remains, and the plastic/yielded zone is an intended representation of pre-existing slope relaxation. In your diagnostic, the final state still has `+100 kPa` tensile stress, so it fails before the displacement question even becomes negotiable.
+
+4. A defensible command pattern is:
+
+```flac3d
+; boundaries
+zone face skin
+zone face apply velocity-x 0 range group 'East' or 'West'
+zone face apply velocity-y 0 range group 'North' or 'South'
+zone face apply velocity (0,0,0) range group 'Bottom'
+
+; properties: use real layer values, but no tensile capacity if no tensile stress is allowed
+zone cmodel assign mohr-coulomb
+zone property young <E> poisson 0.25 density <rho> ...
+              cohesion <c> friction <phi> dilation <psi> tension 0 range group '<layer>'
+
+model gravity 0 0 -9.81
+model history mechanical ratio-local
+
+; Option A: prescribed but admissible K0 trial
+zone initialize-stresses ratio <K0_trial>
+model solve ratio-local 1e-5
+
+; verify
+fish define check_tension
+    global max_smax = -1.0e30
+    global n_tension = 0
+    loop foreach local z zone.list
+        local smax = zone.stress.max(z)
+        if smax > max_smax then
+            max_smax = smax
+        endif
+        if smax > 0.0 then
+            n_tension = n_tension + 1
+        endif
+    end_loop
+    local msg = io.out('max least-compressive principal stress = ' + string(max_smax))
+    msg = io.out('zones with tension = ' + string(n_tension))
+end
+@check_tension
+
+; accept only if max_smax <= 0 and n_tension = 0
+zone initialize state 0
+zone gridpoint initialize displacement (0,0,0)
+zone gridpoint initialize velocity (0,0,0)
+model save 'insitu_tensionfree'
+```
+
+If `<K0_trial> = 0.7` fails, do not accept it. Re-run from the pre-initial-state save with lower shallow `K0`, or assign `zone initialize-stresses ratio ... range group ...` by depth/topographic-relief groups: shallow ridge zones lower, deeper zones closer to `0.7`.
+
+Manual basis: `HelpExcerpts/flac3dmodeling.pdf` states `zone initialize-stresses` gives approximate gravity stresses for irregular geometry and must be cycled to equilibrium; the shipped STL topography example [irregular.f3dat](<C:/Program Files/Itasca/Flac3d600/datafiles/UsersGuide/ProblemSolving/InitialConditions/irregular.f3dat:15>) uses `model gravity`, `zone initialize-stresses ratio`, then `model solve elastic`; the tunnel example [ReinforcedTunnelExcavation.f3dat](<C:/Program Files/Itasca/Flac3d600/datafiles/ExampleApplications/ReinforcedTunnelExcavation/ReinforcedTunnelExcavation.f3dat:24>) shows per-material stress ratios, solve, save, and displacement reset.

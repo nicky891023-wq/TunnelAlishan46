@@ -1,0 +1,83 @@
+; track_a_small_ratio_creep.f3dat -- TRACK A: re-solve the small model to a FULLY CONVERGED
+;   elastoplastic equilibrium (model solve ratio, NOT elastic), then run an ALL-ZONE creep
+;   (NO threshold -- Wade's stability criterion: a sound creep model must stay stable even
+;   with every zone creeping). Monitor max displacement to detect divergence.
+;   cwd = 05_One_Way_Simulation.
+program log-file 'track_a.log'
+program log on
+model restore '../04_InitialBalance/Small_Initial'
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain off
+model configure creep
+fish automatic-create on
+[io.out('TA0 restored Small_Initial (elastic-solved base); zones='+string(zone.num))]
+
+; --- assign burgers-mohr to ALL rock, creep OFF first (=> elastoplastic) ---
+zone cmodel assign burgers-mohr range group 'rock' slot 'mat'
+zone property bulk [E_S_1/(3*(1-2*nu))] shear-maxwell [E_S_1/(2*(1+nu))] shear-kelvin [E_S_1/(2*(1+nu))] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property bulk [E_S_2/(3*(1-2*nu))] shear-maxwell [E_S_2/(2*(1+nu))] shear-kelvin [E_S_2/(2*(1+nu))] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property bulk [E_S_3/(3*(1-2*nu))] shear-maxwell [E_S_3/(2*(1+nu))] shear-kelvin [E_S_3/(2*(1+nu))] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property bulk [E_S_4/(3*(1-2*nu))] shear-maxwell [E_S_4/(2*(1+nu))] shear-kelvin [E_S_4/(2*(1+nu))] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+zone property bulk [E_S_5/(3*(1-2*nu))] shear-maxwell [E_S_5/(2*(1+nu))] shear-kelvin [E_S_5/(2*(1+nu))] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+zone property bulk [E_S_6/(3*(1-2*nu))] shear-maxwell [E_S_6/(2*(1+nu))] shear-kelvin [E_S_6/(2*(1+nu))] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+model creep active off
+[io.out('TA1 burgers-mohr assigned (creep OFF => elastoplastic)')]
+
+fish define dmax_all
+    local dm = 0.0
+    loop foreach local gp gp.list
+        local d = gp.disp(gp)
+        local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+        if mm > dm then
+            dm = mm
+        end_if
+    end_loop
+    dmax_all = dm
+end
+fish define pcount
+    local nr = 0
+    local np = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            nr = nr + 1
+            if zone.state(z, true) > 0 then
+                np = np + 1
+            end_if
+        end_if
+    end_loop
+    io.out('   plastic rock='+string(nr)+' plastic='+string(np)+' ('+string(100.0*float(np)/float(nr))+'%)')
+end
+
+; --- STEP 1: FULLY converged elastoplastic re-solve (does the model reach stable eq?) ---
+zone gridpoint initialize displacement 0 0 0
+[io.out('TA2 elastoplastic re-solve to ratio-average 1e-5 (generous cap)...')]
+model solve ratio-average 1e-5 cycles 100000
+[io.out('TA2done elastoplastic re-eq finished. dmax='+string(dmax_all)+' m')]
+[pcount]
+model save 'small_ep'
+
+; --- STEP 2: prep all-zone creep (no threshold -- every rock zone creeps) ---
+call 'C:/Program Files/Itasca/Flac3d600/datafiles/Creep/SetKStrains.f3fis'
+[setKstrains]
+zone gridpoint initialize displacement 0 0 0
+zone gridpoint initialize velocity 0 0 0
+[io.out('TA3 SetKStrains + disp/vel zeroed; starting ALL-ZONE creep (NO threshold)')]
+
+; --- STEP 3: creep 30 days, monitor dmax (bounded => stable; 1e14 => diverge) ---
+model creep active on
+model creep timestep fix [crp_dt]
+fish define run_test(d0, d1, dd)
+    local d = d0 + dd
+    loop while d <= (d1 + 0.1)
+        command
+            model solve time-total [d*86400.0]
+        endcommand
+        io.out('   TAcreep day='+string(d)+' dmax='+string(dmax_all)+' m')
+        d = d + dd
+    endloop
+end
+[run_test(0.0, 30.0, 5.0)]
+model save 'small_creep_test'
+[io.out('TA-DONE all-zone creep test complete; final dmax='+string(dmax_all)+' m')]
+program log off
+program quit

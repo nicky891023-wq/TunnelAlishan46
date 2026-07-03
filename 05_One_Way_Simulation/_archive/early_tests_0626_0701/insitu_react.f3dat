@@ -1,0 +1,52 @@
+program log-file 'insitu_react.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'cb_control0'
+fish automatic-create on
+fish define react_region
+    local cx = 1297.0
+    local cz = 1747.5
+    global fblue = 0.0
+    global fcorner = 0.0
+    local nbl = 0
+    local ncr = 0
+    loop foreach local c contact.list
+        if contact.model(c) = 'linearpbond' then
+            if contact.prop(c,'pb_ten') >= 1.0e10 then
+                local p = contact.pos(c)
+                local yy = comp.y(p)
+                if yy >= 870.0 then
+                if yy <= 900.0 then
+                    local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+                    if ang < 0.0 then
+                        ang = 360.0 + ang
+                    end_if
+                    local fn = contact.force.normal(c)
+                    local af = fn
+                    if af < 0.0 then
+                        af = -af
+                    end_if
+                    local isc = 0
+                    if ang >= 250.0 then
+                        if ang <= 320.0 then
+                            isc = 1
+                        end_if
+                    end_if
+                    if isc = 1 then
+                        fcorner = fcorner + af
+                        ncr = ncr + 1
+                    else
+                        fblue = fblue + af
+                        nbl = nbl + 1
+                    end_if
+                end_if
+                end_if
+            end_if
+        end_if
+    end_loop
+    io.out('INSITU-REACT blue-line n='+string(nbl)+' abs_reaction='+string(fblue/1e6)+'MN | corner n='+string(ncr)+' abs='+string(fcorner/1e6)+'MN')
+end
+[react_region]
+[io.out('INSITU-REACT-DONE')]
+program quit

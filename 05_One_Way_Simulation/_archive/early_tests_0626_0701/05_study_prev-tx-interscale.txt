@@ -1,0 +1,191 @@
+Perfect! Now I have all the critical information. Let me compile the comprehensive answer.
+
+---
+
+## INTER-SCALE COUPLING SYNTHESIS: TX #46 TUNNEL (260529 Test)
+
+Based on the 260529 test directory, here is the inter-scale coupling mechanism Wade can apply to the Tunnel_TX 05 workflow:
+
+---
+
+### **LARGE → SMALL COUPLING (ApplyVel_IDW)**
+
+**Mechanism:**  
+The large model's displacement field is **transferred to the small model as a VELOCITY boundary condition**, applied to the small model's outer gridpoints over the 30-day creep stage.
+
+**Files:**
+- **Export**: C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/02_small_model/helpers/io_disp.f3dat (lines 3–63: `Export_Local_Disp`)
+- **Mapping**: C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/02_small_model/helpers/io_disp.f3dat (lines 452–594: `ApplyVel_IDW`)
+- **Invocation**: C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/02_small_model/helpers/crp_process_v3.f3dat (line 366: `[ApplyVel_IDW(t_period, 100)]`)
+
+**Process:**
+
+1. **Large model export** (after each of the 12 stages):
+   ```
+   Export_Local_Disp(file_name)
+   ```
+   Extracts gridpoints in the small model's footprint (±100 m around the small box) and writes cumulative displacement (`ux, uy, uz`) to a `.dat` file in format:
+   ```
+   gpid x y z ux uy uz
+   ```
+
+2. **Read into memory**:
+   ```
+   ReadFile_disp(file_name)
+   ```
+   Loads displacement data into 6 global arrays: `xdat, ydat, zdat, uxdat, uydat, uzdat`.
+
+3. **IDW interpolation + velocity conversion** (`ApplyVel_IDW`):
+   - For each small model boundary gridpoint:
+     - **IDW search**: finds all large model data points within `search_radius` (typically 100 m)
+     - **Weight formula**: `w = 1 / d²` (inverse distance squared)
+     - **Interpolated target displacement**: `target_u = Σ(u_i × w_i) / Σ(w_i)`
+     - **Fallback**: if no points in radius, uses nearest neighbor
+   
+   - **Velocity = (target − current) / creep_time**:
+     ```FISH
+     gp.vel.x(igp) = (target_ux - curr_ux) / creep_time
+     gp.vel.y(igp) = (target_uy - curr_uy) / creep_time
+     gp.vel.z(igp) = (target_uz - curr_uz) / creep_time
+     ```
+     (Lines 573–575 of io_disp.f3dat)
+
+   - **Fixity**:
+     - **Boundary gridpoints**: `gp.fix(igp) = vector(1,1,1)` → velocities FIXED → drive the model
+     - **Internal gridpoints**: `gp.fix(igp) = vector(0,0,0)` → FREE to react internally (tunnel, creep)
+   
+   This is the **"FullMapping" philosophy** (lines 343–445) adapted to IDW.
+
+**Displacement → Velocity Conversion:**
+- `creep_time` is the stage duration in **seconds**: `t_period * 24*60*60` (line 307, crp_process_v3.f3dat)
+- For 30-day stages: `creep_time = 30 × 86400 = 2,592,000 sec`
+- For 5-day intermediate stages: `creep_time = 5 × 86400 = 432,000 sec`
+- Velocity is thus the **incremental displacement** divided by the time span → naturally becomes the boundary rate over that stage
+
+**Zeroing/Initialization:**
+- **NO explicit zeroing** of displacement at stage hand-off
+- Each stage reads the cumulative displacement from the large model (starting from day0)
+- The small model gridpoints accumulate their own displacement independently
+- At each stage, the velocity is recomputed as `(target_cumulative - current_cumulative) / new_dt`
+- **Reference point for relative disp**: Calc_Relative_Disp(1300, 900, 1740) anchors to a fixed interior point; all boundary convergence is reported relative to that
+
+---
+
+### **SMALL → COUPLED (PFC-FLAC) HAND-OFF**
+
+**Critical lesson from 260529**: **Live coupling (wall-zone + creep simultaneous solve) fails—use decoupled post-processing instead.**
+
+**What Wade tried (FAILED):**
+- Wall-zone + zone+ball dual-solve during creep
+- 8 variants all suffered **tet inversion** or **ball-facet contact divergence**
+- **Root cause**: FLAC creep timestep (600 s) vs. PFC mechanics timestep (∼1e-7 s) differ by 9 orders of magnitude → cannot synchronize in the same solver loop
+
+**What worked (PROVEN):**
+- **Decoupled method**: run FLAC t03-n creep to completion (12 stages) → **post-process** the displacement field → **drive PFC in pure mechanics** (no creep)
+- Files: C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/03_PFC_FLAC_coupling/decoupled_driver/
+
+**Hand-off workflow:**
+
+1. **Dump cavity gridpoint displacements from each FLAC stage**:
+   - File: C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/03_PFC_FLAC_coupling/decoupled_driver/dump_all_stages.f3dat
+   - Extracts `gp.disp(gp)` for all cavity boundary gridpoints (y ∈ [849, 951], x ∈ [1276, 1304], z ∈ [1742, 1755]) at each of 12 stages
+   - Output: `cavdisp_day0.txt`, `cavdisp_dry1.txt`, ..., `cavdisp_dry2.txt` (format: `gid dispx dispy dispz`)
+
+2. **Remove rigid-body motion via robust Kabsch registration**:
+   - File: C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/03_PFC_FLAC_coupling/decoupled_driver/build_deformation_fields.py
+   - Uses interior cavity points (y ∈ [852, 948], excluding y-boundary) for SVD-based rotation + translation fit
+   - **Iterative outlier rejection** (k=3 × median residual, floor 2 cm) → identifies boundary-driven artifacts
+   - **Residual = observed disp − rigid transform**
+   - **Clipping**: residuals > 0.10 m clipped to preserve direction but magnitude capped
+   - Output: `cavdef_day0.txt`, `cavdef_dry1.txt`, ..., `cavdef_dry2.txt` (true **convergence** field, rigid-removed)
+
+3. **Drive PFC lining with residual field (pure mechanics)**:
+   - File: C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/03_PFC_FLAC_coupling/decoupled_driver/step_f_v15.f3dat
+   - For each stage:
+     ```FISH
+     [load_field('cavdef_<tag>.txt')]   // read residual disp map
+     [impose(3000)]                     // set vel = (target_residual - current) / 3000 cycles
+     model cycle 3000                   // drive with velocity boundary
+     [hold_gp]                          // zero velocities
+     ball free velocity spin            // let balls settle elastically
+     model solve ratio-average 1e-3 cycles 4000   // mechanical equilibrium (density-scaled pseudo-time)
+     ```
+   - **All gridpoints fixed** (`gp.fix = (1,1,1)`) during driving
+   - **PFC balls free** → respond to wall (FLAC mesh) deformation elastically
+   - **Output**: 12 saved states (pfc15_stage_00_init ... pfc15_stage_11_dry2) with bond-break counts
+
+**Why this works:**
+- Pure mechanics → FLAC zones + PFC balls both use **pseudo-time with density scaling** (`model mechanical timestep scale`)
+- **No creep in PFC** → no timestep mismatch
+- **No wall-zone two-way coupling** → avoids the tet-inversion trap
+- Convergence = 3–5 cm (median) → typical for 0.25 m thick lining → moderate cracking, matches field observations
+
+---
+
+### **KEY FINDINGS: WHAT WORKED / FAILED (README Line 101–154)**
+
+| Aspect | Status | Finding |
+|--------|--------|---------|
+| **Live FLAC+PFC creep coupling** | ❌ Failed | Tet inversion in cavity; timestep incompatibility (600s vs 1e-7s). Tried 8 variants—all failed. |
+| **Decoupled post-processing** | ✅ Success | Run FLAC creep 12 stages → extract residual (rigid-removed) → drive PFC mechanically. No tet inversion, stable. |
+| **Kabsch registration** | ✅ Success | Robust SVD with iterative outlier rejection (k=3 med). Identifies 1.87 m rigid motion; true convergence 2.7–5.3 cm. |
+| **CAP clipping** | ✅ Success | Boundary artifacts (~1.88 m) clipped at 0.10 m preserving direction. 459 outliers removed; mean convergence now realistic. |
+| **Bond count stability** | ✅ Success | 913,497 total bonds; no contact-detection sensitivity to gap (0.5m vs 0.15m—same bond count). |
+| **Crack evolution** | ✅ Success | Bond-break trend monotonic: day0→0, dry1→26k, wet→67k, dry2→83k. Springline dominant; downstream higher density. Matches field. |
+
+---
+
+### **CRITICAL Wade MARKED AS "NOT NECESSARILY CORRECT"**
+
+From **subnear/README.md (line 140–141)**:
+```
+中文 inline comment 會吃掉行尾：`[global x = 1]   ; 中文` 可能讓下一行 `[global y = 2]` 被當成連續，
+導致 y 沒宣告。把中文 comment 移到單獨一行避免。
+```
+**Implication**: Inline comments in FISH (especially Chinese) can corrupt the next line's parsing. Keep comments on separate lines.
+
+From **proposal v2 (line 167–176)** — Risk flags still marked:
+- **Risk**: Wall-zone slice boundary sharp edges (medium) → mitigation: check facet count
+- **Risk**: Ball generation (drained cavity) may scatter → mitigation: use interior wall + velocity fix until bond hardens
+- **Risk**: 1m slice plane-strain edge boundary → needs platen walls (not yet verified)
+- **Risk**: Creep timestep drop issue → mitigation: freeze viscosity first (viscosity=1e100), then enable
+
+---
+
+### **WORKFLOW FOR TUNNEL_TX 05 (RECOMMENDATIONS)**
+
+**Stage 1: LARGE → SMALL (30 days each, 2 water tables)**
+
+1. **Large model** computes 2 stages of creep (dry/wet water tables)
+2. **After each stage**, call `Export_Local_Disp("01_dry1")`, `Export_Local_Disp("06_wet")`
+3. **Small model** reads each export, applies `ApplyVel_IDW(30*86400, 100)` → boundary gridpoints driven
+4. **Monitor** convergence at y[860, 910]: crown (disp_z), sidewall (disp_x)
+5. **No zeroing**: cumulative displacement tracked across all 4 stages (0→30d→60d→90d→120d)
+
+**Stage 2: SMALL → COUPLED (IF PFC added)**
+
+- **Do NOT use live wall-zone coupling during creep**
+- Instead: `dump_all_stages.f3dat` → `build_deformation_fields.py` (Kabsch + CAP=0.10m) → `step_f_v15.f3dat` (decoupled pure-mechanics driving)
+- Run PFC separately after FLAC creep is done
+
+**Validation checks from 260529:**
+- Unbalanced force should stabilize (ratio-average < 1e-3) in 3000–4000 cycles during decoupled drive
+- Bond-break monotonicity: must increase or plateau, never decrease (creep irreversible)
+- Springline ≥ crown in crack density (Wade's field data supports this)
+
+---
+
+### **FILE PATHS (READ-ONLY SYNTHESIS)**
+
+| What | Path |
+|------|------|
+| **IDW velocity boundary core** | C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/02_small_model/helpers/io_disp.f3dat (lines 452–594) |
+| **Creep stage invocation** | C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/02_small_model/helpers/crp_process_v3.f3dat (line 366) |
+| **Rigid-body removal (Kabsch)** | C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/03_PFC_FLAC_coupling/decoupled_driver/build_deformation_fields.py |
+| **PFC decoupled driver** | C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/03_PFC_FLAC_coupling/decoupled_driver/step_f_v15.f3dat |
+| **Lessons learned summary** | C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/README.md (lines 101–154) |
+| **Risk register (proposal v2)** | C:/Users/Wade/Desktop/ClassPhD/test/TX/260529/docs/05_subnear_PFC_lining_proposal.md (lines 167–176) |
+
+---
+
+**In summary**: The 260529 test proves that **IDW velocity mapping + decoupled PFC** is the stable path. Live coupling fails. Use Kabsch to remove rigid motion from the FLAC field before driving PFC. Wade's validation metrics (crack pattern, bond-break trend, convergence magnitude) are all in the README and Python post-processors.

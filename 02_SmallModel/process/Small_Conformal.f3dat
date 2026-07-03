@@ -1,0 +1,93 @@
+; ============================================================================
+; Small_Conformal.f3dat
+; FLAC3D 6.00 -- Alishan #46 SMALL near-field model, Route C (CONFORMAL).
+;
+;   small_conformal.inp : ONE tet mesh, shared nodes everywhere.
+;     ELSET layer1..6 -> rock (6 geology layers conformal to S01..S05)
+;     ELSET lining     -> 0.40 m lining ring (centroid inside OUTER profile),
+;                         CONFORMAL with the rock (shares nodes) -- NO attach.
+;     inner 4.2 x 4.6 clearance was cut out -> open void.
+;
+; Route C replaces Route B (structured shell + zone attach): the attach made a
+; cavity-wall gridpoint zero-stiffness and halted `solve elastic`.  A single
+; conformal mesh shares nodes at the lining<->rock interface, so no attach and
+; no zero-stiffness.  Build stage ONLY: elastic placeholder (real materials +
+; K0/gravity/creep belong to the analysis stage).
+;
+; Box x[1250,1350] y[850,950] z[1700,1800].  Working dir = Tunnel_TX\02_SmallModel.
+;   flac3d600_console.exe Small_Conformal.f3dat   (argv; no stdin; ends program quit)
+; ============================================================================
+
+model new
+model largestrain off
+model title 'Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C'
+
+program log-file 'Small_Conformal.log'
+program log on
+
+; --- import the single conformal tet mesh (rock 6 layers + lining ring) -----
+zone import 'small_conformal.inp'
+zone group 'layer1' slot 'type' range group 'layer1'
+zone group 'layer2' slot 'type' range group 'layer2'
+zone group 'layer3' slot 'type' range group 'layer3'
+zone group 'layer4' slot 'type' range group 'layer4'
+zone group 'layer5' slot 'type' range group 'layer5'
+zone group 'layer6' slot 'type' range group 'layer6'
+zone group 'lining' slot 'type' range group 'lining'
+
+; --- bookkeeping slots ------------------------------------------------------
+zone group 'rock'    slot 'mat' range group 'lining' not
+zone group 'lining'  slot 'mat' range group 'lining'
+zone group 'm_small' slot 'model'
+zone gridpoint group 'gp_small'
+
+; --- build stage: elastic placeholder cmodel (params at analysis stage) -----
+zone cmodel assign elastic
+
+; --- NO zone attach: lining shares nodes with rock (conformal) --------------
+
+; --- skin + box boundary face groups ---------------------------------------
+zone face skin
+zone face group 'West1'   range position-x 1249 1251
+zone face group 'East1'   range position-x 1349 1351
+zone face group 'South1'  range position-y 849 851
+zone face group 'North1'  range position-y 949 951
+zone face group 'Bottom1' range position-z 1699 1701
+zone face group 'Top1'    range position-z 1799 1801
+
+model save '../output/Small_Model'
+
+; --- verify -----------------------------------------------------------------
+fish define small_check
+    local nz = 0
+    local lc = array.create(7)
+    loop local i (1,7)
+        lc(i) = 0
+    end_loop
+    loop foreach local z zone.list
+        nz = nz + 1
+        local g = zone.group(z,'type')
+        loop local j (1,6)
+            if g = 'layer'+string(j) then
+                lc(j) = lc(j) + 1
+            end_if
+        end_loop
+        if g = 'lining' then
+            lc(7) = lc(7) + 1
+        end_if
+    end_loop
+    local ung = nz - lc(1)-lc(2)-lc(3)-lc(4)-lc(5)-lc(6)-lc(7)
+    io.out('=== SMALL_CONFORMAL_VERIFY ===')
+    io.out('zones_total = '+string(nz))
+    loop local kk (1,6)
+        io.out('  layer'+string(kk)+' = '+string(lc(kk)))
+    end_loop
+    io.out('  lining = '+string(lc(7)))
+    io.out('  ungrouped(type) = '+string(ung))
+    io.out('  attach_points = '+string(attach.num))
+    io.out('SMALL_DONE')
+end
+[small_check]
+
+program log off
+program quit

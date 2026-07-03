@@ -1,0 +1,66 @@
+; couple_export_bnd.f3dat -- Run A of new coupled approach. Restore Couple_Initial, export the
+;   OUTER boundary gridpoints of the coupled domain x[1277,1317] y[860,910] z[1728,1768] (the
+;   rock shell to be driven by the small model's far-field disp) -> couple_bnd.txt (id x y z).
+;   Also recon: dt, wz_outter in-situ force, gp/ball counts. Python then IDW-maps small disp.
+;   Driving the OUTER ROCK boundary (NOT the lining balls) -> lining force-shares via wz_outter
+;   (avoids prior displacement-control over-cracking, lesson #69). define funcs AFTER restore (#78).
+program log-file 'couple_export_bnd.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../04_InitialBalance/Couple_Initial'
+fish automatic-create on
+[io.out('CA0 restored; zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num)+' dt='+string(mech.timestep))]
+
+fish define wzf_report
+    loop foreach local w wall.list
+        if wall.name(w) = 'wz_outter' then
+            local fc = wall.force.contact(w)
+            io.out('CA-wz wz_outter |F|='+string(math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6)+' MN  (Fx='+string(comp.x(fc)/1e6)+' Fy='+string(comp.y(fc)/1e6)+' Fz='+string(comp.z(fc)/1e6)+')')
+        end_if
+    end_loop
+end
+[wzf_report]
+
+fish define export_bnd
+    local fo = file.open('couple_bnd.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'id x y z'
+    fo = file.write(a,1)
+    local cnt = 0
+    loop foreach local gp gp.list
+        local p = gp.pos(gp)
+        local px = comp.x(p)
+        local py = comp.y(p)
+        local pz = comp.z(p)
+        local onb = 0
+        if px < 1277.5 then
+            onb = 1
+        end_if
+        if px > 1316.5 then
+            onb = 1
+        end_if
+        if py < 860.5 then
+            onb = 1
+        end_if
+        if py > 909.5 then
+            onb = 1
+        end_if
+        if pz < 1728.5 then
+            onb = 1
+        end_if
+        if pz > 1767.5 then
+            onb = 1
+        end_if
+        if onb = 1 then
+            a(1) = string(gp.id(gp))+' '+string(px)+' '+string(py)+' '+string(pz)
+            fo = file.write(a,1)
+            cnt = cnt + 1
+        end_if
+    end_loop
+    fo = file.close
+    io.out('CA-EB boundary gps exported cnt='+string(cnt)+' of '+string(gp.num))
+end
+[export_bnd]
+[io.out('CA-DONE')]
+program quit

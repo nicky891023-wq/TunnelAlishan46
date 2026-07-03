@@ -1,0 +1,135 @@
+**********************************************
+* Logging started at 週二 六月 30 14:29:44 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore 'small_ep'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 13:49:33 2026
+Total Cycles: 11107  Super Cycles: 11107
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define find_conv_gps
+   Def>    global g_crown = null
+   Def>    global g_invert = null
+   Def>    global g_sprR = null
+   Def>    global g_sprL = null
+   Def>    local bc = 1e20
+   Def>    local bi = 1e20
+   Def>    local br = 1e20
+   Def>    local bl = 1e20
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local yy = comp.y(p)
+   Def>        if yy > 884.0 then
+   Def>        if yy < 886.0 then
+   Def>            local dcr = (comp.x(p)-1297.0)*(comp.x(p)-1297.0)+(comp.z(p)-1752.0)*(comp.z(p)-1752.0)
+   Def>            if dcr < bc then
+   Def>                bc = dcr
+   Def>                g_crown = g
+   Def>            end_if
+   Def>            local din = (comp.x(p)-1297.0)*(comp.x(p)-1297.0)+(comp.z(p)-1743.0)*(comp.z(p)-1743.0)
+   Def>            if din < bi then
+   Def>                bi = din
+   Def>                g_invert = g
+   Def>            end_if
+   Def>            local dsr = (comp.x(p)-1303.0)*(comp.x(p)-1303.0)+(comp.z(p)-1747.0)*(comp.z(p)-1747.0)
+   Def>            if dsr < br then
+   Def>                br = dsr
+   Def>                g_sprR = g
+   Def>            end_if
+   Def>            local dsl = (comp.x(p)-1291.0)*(comp.x(p)-1291.0)+(comp.z(p)-1747.0)*(comp.z(p)-1747.0)
+   Def>            if dsl < bl then
+   Def>                bl = dsl
+   Def>                g_sprL = g
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('CONV-GPS dist cr='+string(math.sqrt(bc))+' in='+string(math.sqrt(bi))+' sr='+string(math.sqrt(br))+' sl='+string(math.sqrt(bl)))
+   Def>end
+flac3d>fish define vclose
+   Def>    vclose = (comp.z(gp.disp(g_crown)) - comp.z(gp.disp(g_invert)))*1000.0
+   Def>end
+flac3d>fish define hclose
+   Def>    hclose = (comp.x(gp.disp(g_sprR)) - comp.x(gp.disp(g_sprL)))*1000.0
+   Def>end
+flac3d>fish define report_conv(tag)
+   Def>    io.out('CONV '+tag+' vert='+string(vclose)+' horiz='+string(hclose))
+   Def>end
+flac3d>fish define band_conv(tag)
+   Def>    local scr = 0.0
+   Def>    local ncr = 0
+   Def>    local sin = 0.0
+   Def>    local nin = 0
+   Def>    local ssr = 0.0
+   Def>    local nsr = 0
+   Def>    local ssl = 0.0
+   Def>    local nsl = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local yy = comp.y(p)
+   Def>        if yy >= 860.0 then
+   Def>        if yy <= 910.0 then
+   Def>            local rx = comp.x(p)-1297.0
+   Def>            local rz = comp.z(p)-1747.5
+   Def>            local rr = math.sqrt(rx*rx+rz*rz)
+   Def>            if rr >= 4.5 then
+   Def>            if rr <= 5.5 then
+   Def>                local ang = math.atan2(rz,rx)/math.degrad
+   Def>                if ang < 0.0 then
+   Def>                    ang = 360.0+ang
+   Def>                end_if
+   Def>                local d = gp.disp(g)
+   Def>                if ang >= 75.0 then
+   Def>                if ang <= 105.0 then
+   Def>                    scr = scr + comp.z(d)
+   Def>                    ncr = ncr + 1
+   Def>                end_if
+   Def>                end_if
+   Def>                if ang >= 255.0 then
+   Def>                if ang <= 285.0 then
+   Def>                    sin = sin + comp.z(d)
+   Def>                    nin = nin + 1
+   Def>                end_if
+   Def>                end_if
+   Def>                if ang >= 345.0 then
+   Def>                    ssr = ssr + comp.x(d)
+   Def>                    nsr = nsr + 1
+   Def>                end_if
+   Def>                if ang <= 15.0 then
+   Def>                    ssr = ssr + comp.x(d)
+   Def>                    nsr = nsr + 1
+   Def>                end_if
+   Def>                if ang >= 165.0 then
+   Def>                if ang <= 195.0 then
+   Def>                    ssl = ssl + comp.x(d)
+   Def>                    nsl = nsl + 1
+   Def>                end_if
+   Def>                end_if
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('BAND-CONV '+tag+' n(cr/in/sr/sl)='+string(ncr)+'/'+string(nin)+'/'+string(nsr)+'/'+string(nsl))
+   Def>end
+flac3d>[find_conv_gps]
+CONV-GPS dist cr=0.273887 in=0.0527194 sr=0.040415 sl=0.320232
+0 (integer)
+flac3d>[report_conv('DIAG')]
+CONV DIAG vert=6.52124e-07 horiz=-3.68146e-07
+0 (integer)
+flac3d>[band_conv('DIAG')]
+BAND-CONV DIAG n(cr/in/sr/sl)=614/511/2178/383
+0 (integer)
+flac3d>[io.out('DIAG2-DONE')]
+DIAG2-DONE
+0 (integer)
+flac3d>program quit

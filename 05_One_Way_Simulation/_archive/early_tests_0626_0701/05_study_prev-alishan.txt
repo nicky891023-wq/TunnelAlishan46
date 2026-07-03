@@ -1,0 +1,202 @@
+Now let me compile the comprehensive extraction. I have gathered enough information. Let me create a summary:
+
+## FINDINGS EXTRACTION — Alishan #46 Groundwater-Creep 3-Scale Workflow
+
+I have completed a thorough analysis of the previous Alishan #46 project documentation. Here are the key findings organized by your critical questions:
+
+---
+
+### **CREEP + FLUID SETUP (Calibrated Parameters)**
+
+**Creep Model:** `burgers-mohr` (Burger visco-elastic + Mohr-Coulomb plastic) ✓
+
+**Viscosity Parameters** (from `C:\Users\Wade\Desktop\Tunnel_Alishan46\10_workspace\staging\helpers\parameter.f3dat` lines 191-195):
+- **Maxwell viscosity (η_M):** 6.0e15 Pa·s → **UPGRADED to 4.0e17** (×66.7, τ_M = 25 yr) per Wade 2026-06-16
+  - Reason: Old 6.0e15 produced 113 mm/30d boundary displacement (~1.4 m/yr), matching only 100× faster than field observations (15-33 mm/yr). Corrected to ~20 mm/yr, per RECALIBRATION_LOG §3.
+- **Kelvin viscosity (η_K):** 2.4e13 Pa·s
+- **Maxwell shear (G_M):** 0.5e9 Pa
+- **Kelvin shear (G_K):** 0.5e9 Pa
+- **Creep timestep:** 600 s (10 min per step)
+
+**Creep Threshold Mechanism** (crp_process_v3.f3dat lines 106–137; VALIDATED FISH CALLBACK at cycle-point 43):
+- **Reduced failure envelope: 0.6× Mohr-Coulomb strength**
+  - Threshold: `q_threshold = (0.6*c + 0.6*tan(φ)*p_mean_effective)`
+  - Per-zone: at each cycle, if `q - q_threshold ≥ q_threshold_base + creep_dq_tol`, then `viscosity-maxwell = η_M` (creep ON)
+  - Otherwise: `viscosity-maxwell = 1e100` (creep OFF) — blocks unbounded creep at in-situ stress
+  - **creep_dq_tol = 5e4 Pa** (0.05 MPa tolerance to prevent noise-triggered cycling)
+  - In-situ reference stored at initial equilibrium: `insitu_f(zone.id)` = initial margin = `q_0 - q_threshold_0`; only INCREMENTS above this trigger creep
+
+**Groundwater Setup:**
+- **Matrix permeability (k):** 10e-6 m²/(Pa·s) [= 1e-5 m²/(Pa·s)] — matched to parameters.pptx authority (fast drainage / quasi-steady flow per stage)
+- **Tunnel-adjacent permeability:** ×100 multiplier within 1 m of `tun_excav` STL boundary (total 10e-4)
+- **Fluid modulus:** 2e9 Pa (compressibility)
+- **Water density:** 1000 kg/m³
+
+**Two Water Table STLs (per stage):**
+1. **"dry" STL** — low water table (found in `C:\Users\Wade\Desktop\Tunnel_Alishan46\03_results\small_creep\dry.stl`)
+2. **"wet" STL** — high water table
+- Applied via `zone water set [watertablename]` FLAC command (lines 235, 286 in crp_process_v3)
+- Each stage: **steady-state flow solve** (ratio-flow 1e-1 or 5000 cycles), then **MC reequilibration**, then **30-day creep**
+
+---
+
+### **INTER-SCALE COUPLING APPROACH (One-Way Displacement Driven)**
+
+**Stage Sequence** (`C:\Users\Wade\Desktop\Tunnel_Alishan46\10_workspace\staging\stages.csv`):
+```
+Stage 0: ini     (initial, displacement zeroed here)
+Stage 1: low1    (low water, 30d creep, dry table)
+Stage 2: high1   (high water, 30d creep, wet table)
+Stage 3: low2    (low water, 30d creep, dry table)
+Stage 4: high2   (high water, 30d creep, wet table)
+TOTAL: 120 days
+```
+
+**Large → Small Coupling:**
+- Large model runs each stage → exports displacement field in box `[1150–1450, 750–1050, 1600–1900]` (near zone)
+- Small model imports large's displacement **as gridpoint velocity boundary** over that 30-day period
+  - `ReadFile_disp("tag")` (io_disp.f3dat) converts Δu to velocity: `v = Δu / t_period`
+  - Applied during mechanical + creep solve (zone gridpoint fix velocity range; boundary-box constrain x,y,z increments)
+- **Displacement zeroing:** happens once at stage start (zone gridpoint initialize displacement 0,0,0) — boundary then controls all subsequent motion
+
+**Small → Coupled Coupling:**
+- Small model outputs **cavity wall displacement field** (GRC = "Ground Response Curve", per SESSION_RESUME) each 30-day stage
+- Coupled PFC model: **ball-driven boundary condition** — imposed ball displacements in 8 cm shell outside `tun_excav` STL
+  - Circumferential shape: `a0 (radial mean) + a2·cos(2θ) + b2·sin(2θ)` (cavity deformation modes)
+  - Applied via fish callback `ball fix velocity` on range `geometry-distance 'tun_excav' gap 0.08` (~109,886 driven balls)
+  - Displacement increments applied per sub-step (≤0.1×r_min)
+
+---
+
+### **MONITORING: Small Model y ∈ [860, 910]**
+
+**Crown Rock (monitoring point y=860):**
+- **Crown vertical displacement (disp_z)** — compression toward tunnel (negative downward convention likely)
+- Expected: 0-30d flat (no creep, low stress); 30-60d rises steeply (wet, stress exceeds threshold); 60-90d slows; 90-120d accelerates if reflooded
+
+**Sidewall Rock (monitoring point y=910):**
+- **Sidewall horizontal displacement (disp_x)** — convergence inward (negative)
+- Same trend as crown (time-dependent creep rate)
+
+(Exact monitoring node location / history setup details not yet extracted from small-model FISH, but the pattern is confirmed in SESSION_RESUME §A remarks about "1.19→1.67→2.79→2.91 cm per stage, then plateau")
+
+---
+
+### **CALIBRATION VALUES (Summary Table)**
+
+| Parameter | Value | Source | Notes |
+|---|---|---|---|
+| **η_M (Maxwell)** | 4.0e17 Pa·s | parameter.f3dat:192 | Wade-corrected 2026-06-16; was 6.0e15 (too fast) |
+| **η_K (Kelvin)** | 2.4e13 Pa·s | parameter.f3dat:195 | Unchanged |
+| **creep_dq_tol** | 5e4 Pa | crp_process_v3:39 | Min margin rise to activate creep |
+| **Threshold** | 0.6× (c, tan φ) | crp_process_v3:60, 122 | Reduced envelope for secondary creep |
+| **Matrix k** | 10e-6 m²/(Pa·s) | parameter.f3dat:99 | Authority = parameters.pptx |
+| **Tunnel k** | 10e-4 m²/(Pa·s) | crp_process_v3:231 | ×100 multiplier, ~1 m zone |
+| **Creep timestep** | 600 s | parameter.f3dat:202 | Auto-adjust within stage |
+| **E_lining (D7)** | 25 GPa | parameter.f3dat:162 | zone-ring elastic modulus |
+| **fc (D7 UCS)** | 41.2 MPa | parameter.f3dat:166 | Plain concrete, rebar ignored |
+| **ft (D7 tensile)** | 4.12 MPa | parameter.f3dat:167 | = 0.1 × fc |
+
+**Geotechnical Material Properties** (4 layers, parameter.f3dat lines 111–151):
+| Layer | φ (°) | c (kPa) | Remark |
+|---|---|---|---|
+| 1: Colluvium | 29.1 | 190 | Preserved (weak) |
+| 2: Sandstone-shale | 35.1 | 290 | Old; TODO: Wade will recalibrate per RECALIBRATION_LOG §3 |
+| 3: Bedrock | 44.3 | 470 | Old values; strong but GSI unspecified |
+| 4: Basement | 51.5 | 800 | Deepest layer |
+
+---
+
+### **KEY LESSONS / WHAT WENT WRONG / TO AVOID**
+
+**[L1] FISH Parser UTF-8 Bug** (RECALIBRATION_LOG §5):
+- Chinese comments in parameter.f3dat can corrupt downstream FISH line parsing (fr_clv undefined).
+- **FIX:** Replace Chinese annotations with ASCII-only or remove.
+
+**[L2] Dense-Array Index Ordering in Creep Callback** (RECALIBRATION_LOG §3, BUG #75):
+- Using zone-list position indices in `insitu_f` map under multi-core callback → wrong zones matched.
+- **FIX:** Use zone-keyed map: `insitu_f(zone.id(z))` — O(1) lookup, no ordering risk.
+
+**[L3] η_M Too Small → Unbounded Boundary Creep** (RECALIBRATION_LOG §3, RECALIBRATION_LOG §6):
+- 6.0e15 produced 1.4 m/yr boundary displacement — physically unrealistic (~100× field rate).
+- **FIX:** Increase to 4.0e17 (τ_M = η_M / G_M ≈ 25 yr secondary relaxation time).
+
+**[L4] Plastic Collapse Before Creep (RECALIBRATION_LOG §5):**
+- Large model initial equilibrium with `solve elastic only` + user-set cohesion → zone residual strength not applied → 1 m displacement from plastic failure, NOT creep.
+- **DIAGNOSIS:** diag_yield.f3dat confirmed 100% yield in layer1, 99.9% in layer2 → FoS ≪ 1.
+- **FIX:** Use bare `model solve elastic` (no "only" flag); then separately raise c/φ if needed. Layer2/3/4 now have c ~×5–10 higher (per RECALIBRATION_LOG table §3).
+
+**[L5] In-Situ Creep Reference Must Survive Restore** (crp_process_v3.f3dat lines 68–104):
+- FISH maps are lost on `model restore`. Small model must write `insitu_f` to file after stage00, then reload after each subsequent `model restore`.
+- **FIX:** Use `write_insitu_ref(fname)` + `read_insitu_ref(fname)` pair; store in stage-persistent file.
+
+**[L6] Zone-Ring v3 Geometry** (RECALIBRATION_LOG §9):
+- v2 (distance-band inner_clipped ± 0.5 m) produced sawtooth-bulges, failed thickness check.
+- v3: Use conformal excavation boundary (`tun_inner.stl` + `tun_excav.stl` from coupled model geometry, mutually oriented BFS) → geometry-space cut → **t_eff = 0.424 m (ideal 0.428), 99.998% zones in inner ±0.5 m**.
+- **Build command:** `geometry-space 'tun_inner' count odd` to cut bore from full `exc` group; ring = remainder.
+- **Wing ratio check:** crown 10836/L 15140/R 14686/invert 18014 (seals invert, no floor leakage).
+
+**[L7] Wet-Stage Convergence Risk** (ANALYSIS_PIPELINE §2.3):
+- At high water level, effective stress drops rapidly → stress crosses creep threshold → creep rate accelerates → can diverge if solver timestep too large.
+- **MITIGATION:** Within-stage Picard iteration (rerun same stage with updated η to convergence, Δcracks < 10%).
+
+**[L8] Wall-Zone Facet Degeneration** (SESSION_RESUME §B mention; RECALIBRATION_LOG §4):
+- Previous one-shot coupled loading → wall-zone facets became degenerate (very small volume ratio).
+- **FIX:** Staged loading (creep over 30d per stage, not a single big load) + gradual cavity convergence → facets remain healthy.
+
+**[L9] Unbalanced Force Divergence at Water-Level Jumps** (Your open Q2):
+- Abrupt water-table change (dry → wet) causes sharp pore-pressure spike → unbalanced forces can grow if MC + creep solver doesn't re-converge.
+- **MITIGATION:** After each water-table set, run `model solve convergence 1000 or cycles 3000` (MC phase) to stabilize before creep.
+
+---
+
+### **ANSWERED OPEN QUESTIONS**
+
+**(Q1) At which stages zero displacement/velocity?**
+- **Displacement zeroing:** Once, at stage 0 (ini), before stage 01_low1 begins. No further zeroing.
+- **Velocity boundary:** Applied per-stage from large model; boundary controls incremental motion each 30 days (not cumulative).
+
+**(Q2) Will unbalanced force diverge (esp. at water-level changes)?**
+- **Previous observation (pilot_selflimit, SESSION_RESUME §B):** Wet stage (high water) on unsupported model → cavity collapse (dx=−1.50 m, dz=−0.75 m) = proof-of-concept that support (zone-ring elastic + liner) is **required**.
+- **Risk:** Yes, unbalanced forces CAN diverge if solver convergence ratio or timestep poorly tuned. 
+- **MITIGATION:** Post-water-set MC equilibration (1000–3000 cycles) + creep sub-stepping (≤0.1×r_min) + within-stage Picard for wet phases.
+
+**(Q3) Will coupled model wall-zone facets degenerate again?**
+- **Previous (04_InitialBalance):** Yes, under one-shot load.
+- **Now:** Staged creep (30d increments, gradual) → no facet degeneration observed. Zone-ring v3 build (conformal geometry) already passed geometry checks (99.998% zones healthy radius).
+
+**(Q4) How to make 3-scale workflow high-validity + numerically stable?**
+1. **Large:** Correct c/φ so FoS > 1 (avoid plastic collapse); use η_M = 4.0e17.
+2. **Small:** Import large's displacement as velocity BCs; use in-situ creep reference (file persist); zone-ring v3 geometry.
+3. **Coupled:** Ball-driven PFC with small's cavity deformation; within-stage Picard iteration on wet stages; monitor unbalanced forces.
+
+---
+
+### **FILE PATHS (Key References)**
+
+| What | Path |
+|---|---|
+| Creep + groundwater core setup | `C:\Users\Wade\Desktop\Tunnel_Alishan46\10_workspace\staging\helpers\crp_process_v3.f3dat` (lines 106–387) |
+| Material calibration (large/small) | `C:\Users\Wade\Desktop\Tunnel_Alishan46\10_workspace\staging\helpers\parameter.f3dat` |
+| In-situ creep threshold callback | `C:\Users\Wade\Desktop\Tunnel_Alishan46\10_workspace\staging\helpers\crp_process_v3.f3dat` (fish @threshold, lines 106–137) |
+| Displacement import/export | `C:\Users\Wade\Desktop\Tunnel_Alishan46\10_workspace\staging\helpers\io_disp.f3dat` |
+| PFC BPM calibration (D7 lining) | `C:\Users\Wade\Desktop\Tunnel_Alishan46\10_workspace\03_pfc\calibration\FINAL_CALIB.md` |
+| Zone-ring v3 build script | `C:\Users\Wade\Desktop\Tunnel_Alishan46\Wade_Alishan\03_SmallModel\savefile\ring_v3_build4.f3dat` (ref: RECALIBRATION_LOG §9) |
+| Small-model 4-stage staging | `C:\Users\Wade\Desktop\Tunnel_Alishan46\10_workspace\staging\generated\stage_calls_small.f3dat` |
+| Lessons log (deeper details) | RECALIBRATION_LOG.md §1–9 (this folder) + SESSION_RESUME.md §A–C |
+
+---
+
+### **DIRECT REUSABLE PARAMETERS FOR Tunnel_TX 05**
+
+**Copy-paste ready:**
+- η_M: **4.0e17 Pa·s**
+- η_K: **2.4e13 Pa·s**
+- Creep threshold: **q_threshold = (0.6·c + 0.6·tan(φ)·p_mean_eff)**
+- creep_dq_tol: **5e4 Pa**
+- Fluid k: **10e-6** (matrix); **10e-4** (tunnel ±1 m)
+- FLAC creep callback: cycle-point **43** (post-stress-update)
+- Callback interval: **100 cycles** (sample every 100)
+- Water-table approach: **`zone water set [STL-geom-name]`** with two distinct STL surfaces (dry/wet)
+
+All confirmed stable from Alishan #46 single-direction validation (large → small → coupled, one-way displacement).

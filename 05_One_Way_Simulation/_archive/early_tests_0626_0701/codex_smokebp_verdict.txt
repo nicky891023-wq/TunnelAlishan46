@@ -1,0 +1,7 @@
+﻿SMOKE-BP-VERDICT: APPROVED WITH CONDITIONS
+
+Q1: Direct **C**. Use Option A/C production, accept end cracking as a boundary artifact, and deliver **mid-tunnel y870-900 only**. Label/exclude end bands explicitly. Keep D only as a fallback if stages 2-4 become unstable or prohibitively slow from end-band cascade.
+
+Q2: `pb_ten >= 1e10` coupling-contact extraction is acceptable for mid reaction. Report both signed normal-force resultant and absolute sum over the 47,806 mid contacts. I also want **mid-band tunnel-wall convergence / lining-ball radial displacement** as a second proof that the mid lining is actually driven, not just contact-loaded numerically.
+
+Q3: Yes, proceed to cumulative stages 2-4 with the mid-only deliverable: per-stage mid crack count/pattern, mid reaction, and convergence. End bands are excluded from engineering interpretation.

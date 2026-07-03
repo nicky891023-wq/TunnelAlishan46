@@ -1,0 +1,131 @@
+; ============================================================================
+; large_init.f3dat -- Alishan #46 LARGE model INITIAL (260529 METHOD, faithful).
+;   Ports 260529/01_large_model/t03-f.f3dat initial: fluid steady-state (W-110)
+;   -> fluid-off MC + K0 -> model solve elastic (Wade: 大模初始才用 solve elastic).
+;   Boundary face groups via `zone face skin` (Tunnel_TX mesh has none) for the
+;   pore-pressure BC. 4-layer MC uses Tunnel_TX per-layer params (parameter.f3dat).
+;   Exports near-field stress for the small-model IDW. cwd = 04_InitialBalance.
+; ============================================================================
+program log-file 'large_init.log'
+program log on
+model restore '../01_LargeModel/output/Large_Model'
+call 'parameter.f3dat'
+model configure fluid
+model configure creep
+model largestrain off
+
+; --- boundary face groups (skin: Top/Bottom/East/West/North/South) ---
+zone face skin
+[io.out('LI-0 restored + skinned; zones='+string(zone.num)+' gps='+string(gp.num))]
+
+; --- 4-layer Mohr-Coulomb (Tunnel_TX per-layer E, nu, c/phi/tension) ---
+zone cmodel assign mohr-coulomb
+zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+zone initialize density [den_L_1] range group 'layer1' slot 'type'
+zone initialize density [den_L_2] range group 'layer2' slot 'type'
+zone initialize density [den_L_3] range group 'layer3' slot 'type'
+zone initialize density [den_L_4] range group 'layer4' slot 'type'
+
+; --- gravity + K0 initial stress + boundary velocity fix (position-range, proven) ---
+model gravity 0 0 [-grav]
+zone initialize-stresses ratio [K0]
+zone gridpoint fix velocity-x range position-x -1 1
+zone gridpoint fix velocity-x range position-x 1999 2001
+zone gridpoint fix velocity-y range position-y -101 -99
+zone gridpoint fix velocity-y range position-y 1999 2001
+zone gridpoint fix velocity   range position-z 799 801
+[io.out('LI-1 MC 4-layer + gravity + K0 + BC set')]
+
+; --- FLUID setup (260529 t03-f L41-52) : isotropic, W-110 dry water table ---
+geometry import '../05_One_Way_Simulation/input/W-110.stl'
+zone fluid cmodel assign isotropic
+zone fluid property permeability [pmb] porosity [poro]
+zone gridpoint initialize fluid-modulus 2e9
+zone initialize fluid-density [rho_w]
+zone water density [rho_w]
+zone gridpoint initialize pore-pressure 0
+zone water set 'W-110'
+zone gridpoint initialize saturation 1
+zone gridpoint initialize saturation 0 range geometry-space 'W-110' count 0 direction (0,0,1)
+zone gridpoint initialize pore-pressure 0 range group 'Top'
+zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+zone face apply discharge 0 range group 'North' or 'South' or 'East' or 'West'
+[io.out('LI-2 fluid + W-110 water table set')]
+
+; --- VERIFY water table applied: pore-pressure range must be nonzero ---
+fish define _verify_bc
+    local ppmin = 1e30
+    local ppmax = -1e30
+    loop foreach local z zone.list
+        local p = zone.pp(z)
+        if p < ppmin then
+            ppmin = p
+        end_if
+        if p > ppmax then
+            ppmax = p
+        end_if
+    end_loop
+    io.out('LI-2b pore-pressure range ['+string(ppmin)+','+string(ppmax)+'] (nonzero max => W-110 applied)')
+end
+[_verify_bc]
+
+; --- FLUID steady-state solve (mech/creep off) (260529 t03-f L77-80) ---
+model mechanical active off
+model creep active off
+model fluid active on
+model solve ratio-flow 1e-1 or cycles 20000
+model save 'output/Large_Initial_fld'
+[io.out('LI-3 fluid steady-state solved (W-110)')]
+
+; --- MECHANICAL elastic balance (fluid off, K0 re-init) (260529 t03-f L83-88) ---
+model fluid active off
+model mechanical active on
+model creep active off
+zone gridpoint initialize fluid-modulus 0
+zone initialize-stresses ratio [K0]
+model solve elastic
+[io.out('LI-4 mechanical elastic balance solved')]
+
+; --- datum: zero velocity + displacement (260529 t03-f L91,97) ---
+zone gridpoint initialize velocity 0 0 0
+zone gridpoint initialize displacement 0 0 0
+model save 'Large_Initial'
+[io.out('LI-5 saved Large_Initial (260529-method: fluid W-110 -> solve elastic)')]
+
+; --- export near-field zone stresses for the small model (IDW source) ---
+fish define export_large_stress
+    local fn = 'output/large_stress_for_small.dat'
+    local st = file.open(fn,1,1)
+    local fl = array.create(1)
+    fl(1) = 'zid x y z sxx syy szz sxy sxz syz'
+    st = file.write(fl,1)
+    local nout = 0
+    loop foreach local iz zone.list
+        local x = zone.pos.x(iz)
+        if x > 1150.0 then
+        if x < 1450.0 then
+        local y = zone.pos.y(iz)
+        if y > 750.0 then
+        if y < 1050.0 then
+        local z = zone.pos.z(iz)
+        if z > 1600.0 then
+        if z < 1900.0 then
+            fl(1) = string(zone.id(iz))+' '+string(x)+' '+string(y)+' '+string(z)+' '+string(zone.stress.xx(iz))+' '+string(zone.stress.yy(iz))+' '+string(zone.stress.zz(iz))+' '+string(zone.stress.xy(iz))+' '+string(zone.stress.xz(iz))+' '+string(zone.stress.yz(iz))
+            st = file.write(fl,1)
+            nout = nout + 1
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('LI-6 exported '+string(nout)+' near-field zone stresses to '+fn)
+end
+[export_large_stress]
+program log off
+program quit

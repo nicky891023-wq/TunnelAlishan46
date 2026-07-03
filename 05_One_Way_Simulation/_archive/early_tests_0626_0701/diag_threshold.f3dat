@@ -1,0 +1,90 @@
+; ============================================================================
+; diag_threshold.f3dat -- DIAGNOSTIC: why does the low-water (dry) state already
+;   have ~214247 CreepActive zones at threhold=0.8?  Compute each rock zone's
+;   "criticality" T_crit = q / (c + p'*tan(phi))  [zone is CreepActive at threshold
+;   T iff T <= T_crit].  Sweep the low-water count over T = 0.8..1.2, and break the
+;   0.8-set down by near-bore(rad<10m) / dry(pp<1Pa) / saturated.  No re-eq, no creep
+;   -- just the in-situ stress (Small_Initial) + the low-water pore pressure.
+;   cwd = 05_One_Way_Simulation.
+; ============================================================================
+program log-file 'diag_threshold.log'
+program log on
+model restore '../04_InitialBalance/Small_Initial'
+call '../04_InitialBalance/parameter.f3dat'
+fish automatic-create on
+zone water density [rho_w]
+zone water plane origin (1297, 885, 1724) normal (0,0,1)
+[io.out('DIAG0 restored + low water z1724 applied: zones='+string(zone.num))]
+
+fish define diag
+    local n08 = 0
+    local n09 = 0
+    local n10 = 0
+    local n11 = 0
+    local n12 = 0
+    local nnear = 0
+    local ndry = 0
+    local nsat = 0
+    local tcmax = 0.0
+    local nrock = 0
+    local ppmax = 0.0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            nrock = nrock + 1
+            local sig1 = -zone.stress.prin.x(z)
+            local sig3 = -zone.stress.prin.z(z)
+            local pore =  zone.pp(z)
+            if pore > ppmax then
+                ppmax = pore
+            end_if
+            local pmean = (sig1 + sig3)/2.0 - pore
+            local q = (sig1 - sig3)/2.0
+            local c = zone.prop(z, 'cohesion')
+            local phi = zone.prop(z, 'friction')
+            local denom = c + pmean*math.tan(phi*math.degrad)
+            local tcrit = 1.0e10
+            if denom > 0.0 then
+                tcrit = q/denom
+            end_if
+            if tcrit >= 0.8 then
+                n08 = n08 + 1
+                local p = zone.pos(z)
+                local dx = comp.x(p) - 1297.0
+                local dz = comp.z(p) - 1747.0
+                if math.sqrt(dx*dx + dz*dz) < 10.0 then
+                    nnear = nnear + 1
+                end_if
+                if pore < 1.0 then
+                    ndry = ndry + 1
+                else
+                    nsat = nsat + 1
+                end_if
+            end_if
+            if tcrit >= 0.9 then
+                n09 = n09 + 1
+            end_if
+            if tcrit >= 1.0 then
+                n10 = n10 + 1
+            end_if
+            if tcrit >= 1.1 then
+                n11 = n11 + 1
+            end_if
+            if tcrit >= 1.2 then
+                n12 = n12 + 1
+            end_if
+            if tcrit < 1.0e9 then
+                if tcrit > tcmax then
+                    tcmax = tcrit
+                end_if
+            end_if
+        end_if
+    endloop
+    io.out('DIAG nrock='+string(nrock)+' max_pp='+string(ppmax))
+    io.out('SWEEP low-water CreepActive count by threshold: T0.8='+string(n08)+' T0.9='+string(n09)+' T1.0='+string(n10)+' T1.1='+string(n11)+' T1.2='+string(n12))
+    io.out('T0.8-set breakdown: near-bore(rad<10m)='+string(nnear)+' dry(pp<1Pa)='+string(ndry)+' saturated(pp>=1)='+string(nsat))
+    io.out('max T_crit (most-critical rock zone) = '+string(tcmax))
+end
+[diag]
+[io.out('DIAG-DONE')]
+program log off
+program quit

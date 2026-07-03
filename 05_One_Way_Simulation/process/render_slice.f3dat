@@ -1,0 +1,51 @@
+; render_slice.f3dat -- export a y=884-886 slice (stress/disp/plastic/velocity) of a
+;   saved state for visual QA of the initial force balance. Edit the restore line +
+;   output name per model. cwd = 05_One_Way_Simulation.
+program log-file 'render_slice.log'
+program log on
+model restore '../04_InitialBalance/Small_Initial'
+fish define exp_slice
+    local st = file.open('slice_small_initial.txt',1,1)
+    local b = array.create(1)
+    b(1) = 'x z szz sxx syy prinz state dispmag velmag'
+    file.write(b,1)
+    local n = 0
+    loop foreach local z zone.list
+        if zone.model(z) # 'null' then
+            local p = zone.pos(z)
+            local yc = comp.y(p)
+            if yc > 884.0 then
+            if yc < 886.0 then
+                ; zone-centroid disp/vel via the zone's gridpoints (avg)
+                local dsum = 0.0
+                local vsum = 0.0
+                local ng = 0
+                loop local i (1,4)
+                    local g = zone.gp(z,i)
+                    if g # null then
+                        local dd = gp.disp(g)
+                        dsum = dsum + math.sqrt(comp.x(dd)^2+comp.y(dd)^2+comp.z(dd)^2)
+                        local vv = gp.vel(g)
+                        vsum = vsum + math.sqrt(comp.x(vv)^2+comp.y(vv)^2+comp.z(vv)^2)
+                        ng = ng + 1
+                    end_if
+                end_loop
+                local dm = 0.0
+                local vm = 0.0
+                if ng > 0 then
+                    dm = dsum/float(ng)
+                    vm = vsum/float(ng)
+                end_if
+                b(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.prin.z(z))+' '+string(zone.state(z,1))+' '+string(dm*1000.0)+' '+string(vm)
+                file.write(b,1)
+                n = n + 1
+            end_if
+            end_if
+        end_if
+    end_loop
+    local cl = file.close
+    io.out('RS exported '+string(n)+' zones (y884-886) -> slice_small_initial.txt')
+end
+[exp_slice]
+[io.out('RS-DONE')]
+program quit

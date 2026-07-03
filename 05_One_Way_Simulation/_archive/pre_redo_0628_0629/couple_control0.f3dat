@@ -1,0 +1,131 @@
+; couple_control0.f3dat -- Phase 2 Control-0 (Codex P2 mandatory gate BEFORE damage SMOKE).
+;   ZERO-increment drive: fix outer-rock boundary at current position, cycle/calm/solve, check the
+;   in-situ residual (6.1e-3) does NOT spuriously crack the bonded lining. PASS only if new cracks=0,
+;   drift small, ratio not worse. funcs define AFTER restore (#78). maxbvel sampled BEFORE calm.
+program log-file 'couple_control0.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../04_InitialBalance/Couple_Initial'
+fish automatic-create on
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain on
+model mechanical timestep scale
+call 'fracture_track.fis'
+[track_init]
+ball attribute damp 0.8
+[io.out('C0-0 dt='+string(mech.timestep)+' zones='+string(zone.num)+' balls='+string(ball.num)+' track_baseline_cracks='+string(crack_num))]
+
+fish define wall_forces
+    loop foreach local w wall.list
+        local fc = wall.force.contact(w)
+        local m = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+        if wall.name(w) = 'wz_outter' then
+            global wzN = m
+        end_if
+        if wall.name(w) = 'w_inner' then
+            global wiN = m
+        end_if
+    end_loop
+end
+fish define maxbvel
+    local mv = 0.0
+    loop foreach local b ball.list
+        local v = ball.vel(b)
+        local mm = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+        if mm > mv then
+            mv = mv*0.0 + mm
+        end_if
+    end_loop
+    global mbv = mv
+end
+[wall_forces]
+[io.out('C0-insitu wz_outter='+string(wzN)+'MN w_inner='+string(wiN)+'MN')]
+
+; --- load residual targets, tag + fix driven, HARD ABORT if count off ---
+fish define load_targets
+    local lines = array.create(40000)
+    local st = file.open('couple_bnd_disp.txt',0,1)
+    local nn = file.read(lines, 40000)
+    st = file.close
+    global ndriven = 0
+    global nmiss = 0
+    local i = 2
+    loop while i <= nn
+        local gid = int(string.token(lines(i),1))
+        local g = gp.find(gid)
+        if g = null then
+            nmiss = nmiss + 1
+        else
+            gp.extra(g,1) = vector(string.token(lines(i),2),string.token(lines(i),3),string.token(lines(i),4))
+            gp.extra(g,2) = vector(string.token(lines(i),5),string.token(lines(i),6),string.token(lines(i),7))
+            gp.extra(g,3) = vector(string.token(lines(i),8),string.token(lines(i),9),string.token(lines(i),10))
+            gp.extra(g,4) = vector(string.token(lines(i),11),string.token(lines(i),12),string.token(lines(i),13))
+            gp.group(g,'drive') = 'driven'
+            ndriven = ndriven + 1
+        end_if
+        i = i + 1
+    end_loop
+    io.out('C0-LT driven='+string(ndriven)+' miss='+string(nmiss)+' (require 28304/0)')
+end
+[load_targets]
+fish define check_count
+    if ndriven # 28304 then
+        io.out('C0-ABORT ndriven='+string(ndriven)+' != 28304')
+        global okc = 0
+    else
+        if nmiss # 0 then
+            io.out('C0-ABORT nmiss='+string(nmiss)+' != 0')
+            global okc = 0
+        else
+            global okc = 1
+        end_if
+    end_if
+end
+[check_count]
+zone gridpoint fix velocity range group 'driven' slot 'drive'
+; datum reset so gp.disp tracks applied displacement from clean zero
+zone gridpoint initialize displacement 0 0 0
+zone gridpoint initialize velocity 0 0 0
+ball attribute displacement multiply 0.0
+[global base_cracks = crack_num]
+
+; --- ZERO-increment cycle (driven vel stays 0) + maxbvel BEFORE calm, 30 substeps of 10 ---
+fish define ctrl0_run(nsub, ncyc)
+    local j = 1
+    loop while j <= nsub
+        ; driven vel already 0 (fixed); just cycle, sample maxbvel BEFORE calm
+        command
+            model cycle [ncyc]
+        endcommand
+        maxbvel
+        io.out('   C0-sub j='+string(j)+'/'+string(nsub)+' cracks='+string(crack_num)+' (d='+string(crack_num-base_cracks)+') maxbvel_precalm='+string(mbv))
+        command
+            model calm
+        endcommand
+        j = j + 1
+    end_loop
+end
+[ctrl0_run(30, 10)]
+model solve ratio-average 1e-4 cycles 6000
+[wall_forces]
+[maxbvel]
+fish define dmax_driven_drift
+    local dm = 0.0
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            local d = gp.disp(g)
+            local m = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+            if m > dm then
+                dm = dm*0.0 + m
+            end_if
+        end_if
+    end_loop
+    global drift_max = dm
+end
+[dmax_driven_drift]
+[io.out('C0-RESULT new_cracks='+string(crack_num-base_cracks)+' wz_outter='+string(wzN)+'MN w_inner='+string(wiN)+'MN maxbvel='+string(mbv)+' driven_drift_max='+string(drift_max*1000.0)+'mm')]
+[io.out('C0-PASS-CRITERIA: new_cracks==0? drift<0.05mm? wz/wi drift<2%? ratio<=6.1e-3?')]
+model save 'cb_control0'
+[io.out('CONTROL0-DONE')]
+program quit

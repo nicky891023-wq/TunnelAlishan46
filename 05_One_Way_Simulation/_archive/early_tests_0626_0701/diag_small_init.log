@@ -1,0 +1,120 @@
+**********************************************
+* Logging started at 週六 六月 27 11:20:40 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../04_InitialBalance/Small_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週二 六月 23 10:12:10 2026
+Total Cycles: 11106  Super Cycles: 11106
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define _diag
+   Def>    ; (1)(2) unbalanced force + velocity over ALL gridpoints
+   Def>    local funbmax = 0.0
+   Def>    local fxs = 0.0
+   Def>    local fys = 0.0
+   Def>    local fzs = 0.0
+   Def>    local velmax = 0.0
+   Def>    local fxmx = 0.0
+   Def>    local fzmx = 0.0
+   Def>    loop foreach local gp gp.list
+   Def>        local fu = gp.force.unbal(gp)
+   Def>        local fx = comp.x(fu)
+   Def>        local fy = comp.y(fu)
+   Def>        local fz = comp.z(fu)
+   Def>        local fm = math.sqrt(fx*fx+fy*fy+fz*fz)
+   Def>        fxs = fxs + math.abs(fx)
+   Def>        fys = fys + math.abs(fy)
+   Def>        fzs = fzs + math.abs(fz)
+   Def>        if fm > funbmax then
+   Def>            funbmax = fm
+   Def>            local pp = gp.pos(gp)
+   Def>            fxmx = comp.x(pp)
+   Def>            fzmx = comp.z(pp)
+   Def>        end_if
+   Def>        local v = gp.vel(gp)
+   Def>        local vm = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+   Def>        if vm > velmax then
+   Def>            velmax = vm
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('DIAG-F unbal_force MAX='+string(funbmax)+' N at (x='+string(fxmx)+',z='+string(fzmx)+') | sum|fx|='+string(fxs)+' sum|fy|='+string(fys)+' sum|fz|='+string(fzs))
+   Def>    io.out('DIAG-V velocity MAX='+string(velmax)+' m/s (equilibrium should be ~0)')
+   Def>    ; (3)(4)(5) plastic state + lining grouping (probe slot mat AND type)
+   Def>    local nrock = 0
+   Def>    local nplastic = 0
+   Def>    local nlin_mat = 0
+   Def>    local nlin_type = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.group(z,'mat') = 'rock' then
+   Def>            nrock = nrock + 1
+   Def>            if zone.state(z, true) > 0 then
+   Def>                nplastic = nplastic + 1
+   Def>            end_if
+   Def>        end_if
+   Def>        if zone.group(z,'mat') = 'lining' then
+   Def>            nlin_mat = nlin_mat + 1
+   Def>        end_if
+   Def>        if zone.group(z,'type') = 'lining' then
+   Def>            nlin_type = nlin_type + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('DIAG-P rock zones='+string(nrock)+' plastic(state>0)='+string(nplastic)+' ('+string(100.0*float(nplastic)/float(nrock))+'%) | lining: mat-slot='+string(nlin_mat)+' type-slot='+string(nlin_type))
+   Def>    ; --- export y~885 slice for plotting ---
+   Def>    local fg = file.open('diag_gp_y885.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x z funb fx fz vel'
+   Def>    fg = file.write(a,1)
+   Def>    loop foreach local g2 gp.list
+   Def>        local p = gp.pos(g2)
+   Def>        if comp.y(p) > 884.0 then
+   Def>        if comp.y(p) < 886.0 then
+   Def>            local fu2 = gp.force.unbal(g2)
+   Def>            local v2 = gp.vel(g2)
+   Def>            local fbm = math.sqrt(comp.x(fu2)*comp.x(fu2)+comp.y(fu2)*comp.y(fu2)+comp.z(fu2)*comp.z(fu2))
+   Def>            local vbm = math.sqrt(comp.x(v2)*comp.x(v2)+comp.y(v2)*comp.y(v2)+comp.z(v2)*comp.z(v2))
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(fbm)+' '+string(comp.x(fu2))+' '+string(comp.z(fu2))+' '+string(vbm)
+   Def>            fg = file.write(a,1)
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fg = file.close
+   Def>    local fz2 = file.open('diag_zone_y885.txt',1,1)
+   Def>    a(1) = 'x z sig1 sig3 state islin'
+   Def>    fz2 = file.write(a,1)
+   Def>    loop foreach local z2 zone.list
+   Def>        local p2 = zone.pos(z2)
+   Def>        if comp.y(p2) > 884.0 then
+   Def>        if comp.y(p2) < 886.0 then
+   Def>            local g = 0
+   Def>            if zone.group(z2,'mat') = 'lining' then
+   Def>                g = 1
+   Def>            end_if
+   Def>            if zone.group(z2,'type') = 'lining' then
+   Def>                g = 1
+   Def>            end_if
+   Def>            a(1) = string(comp.x(p2))+' '+string(comp.z(p2))+' '+string(-zone.stress.prin.x(z2))+' '+string(-zone.stress.prin.z(z2))+' '+string(zone.state(z2, true))+' '+string(g)
+   Def>            fz2 = file.write(a,1)
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fz2 = file.close
+   Def>    io.out('DIAG-EXP exported y885 gp + zone slices')
+   Def>end
+flac3d>[_diag]
+DIAG-F unbal_force MAX=6.58458e+07 N at (x=1346.28,z=1700) | sum|fx|=2.82962e+10 sum|fy|=2.6647e+10 sum|fz|=6.90042e+10
+DIAG-V velocity MAX=5.47733e-09 m/s (equilibrium should be ~0)
+DIAG-P rock zones=1098455 plastic(state>0)=128459 (11.6945%) | lining: mat-slot=335011 type-slot=335011
+DIAG-EXP exported y885 gp + zone slices
+0 (integer)
+flac3d>[io.out('DIAG-DONE')]
+DIAG-DONE
+0 (integer)
+flac3d>program quit

@@ -1,0 +1,57 @@
+**********************************************
+* Logging started at 週六 六月 27 08:44:37 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore 'Couple_Initial_v5'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 08:35:04 2026
+Total Cycles: 21005  Super Cycles: 21005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish define _wzf
+   Def>    loop foreach local w wall.list
+   Def>        if wall.name(w) = 'wz_outter' then
+   Def>            local fc = wall.force.contact(w)
+   Def>            io.out('WZF wz_outter NET force=('+string(comp.x(fc))+', '+string(comp.y(fc))+', '+string(comp.z(fc))+') N |F|='+string(math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc)))+' N')
+   Def>        end_if
+   Def>    end_loop
+   Def>    local fmax = 0.0
+   Def>    local fsum = 0.0
+   Def>    local nc = 0
+   Def>    local nact = 0
+   Def>    loop foreach local c contact.list
+   Def>        if contact.group(c) = 'bf_couple' then
+   Def>            nc = nc + 1
+   Def>            local fn = contact.force.normal(c)
+   Def>            local af = fn
+   Def>            if af < 0.0 then
+   Def>                af = -af
+   Def>            end_if
+   Def>            fsum = fsum + af
+   Def>            if af > 0.1 then
+   Def>                nact = nact + 1
+   Def>            end_if
+   Def>            if af > fmax then
+   Def>                fmax = af
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('WZF bf_couple contacts='+string(nc)+' active(|fn|>0.1N)='+string(nact)+' normal-force max='+string(fmax)+' mean='+string(fsum/nc)+' N')
+   Def>end
+flac3d>[_wzf]
+WZF wz_outter NET force=(-223941, 411921, -1.82245e+06) N |F|=1.8818e+06 N
+*** Fish: Trying to divide by zero.
+    From line 37 of source C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/couple_solve/verify_wzforce_v5.f3dat.
+    While processing line 39 of file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/couple_solve/verify_wzforce_v5.f3dat.

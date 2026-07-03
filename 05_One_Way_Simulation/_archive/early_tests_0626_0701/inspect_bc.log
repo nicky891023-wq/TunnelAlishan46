@@ -1,0 +1,114 @@
+**********************************************
+* Logging started at 週二 六月 30 13:59:03 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore 'cb_control0'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週一 六月 29 12:50:33 2026
+Total Cycles: 25677  Super Cycles: 25677
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define inspect
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    io.out('=== WALLS ===')
+   Def>    loop foreach local w wall.list
+   Def>        io.out('  wall name='+wall.name(w))
+   Def>    end_loop
+   Def>    io.out('=== BALLS fixed (ball.fix dof1/2/3) ===')
+   Def>    local nfx = 0
+   Def>    local nfy = 0
+   Def>    local nfz = 0
+   Def>    local nbot = 0
+   Def>    local zmin_fix = 1e20
+   Def>    local zmax_fix = -1e20
+   Def>    loop foreach local b ball.list
+   Def>        local anyfix = 0
+   Def>        if ball.fix(b,1) then
+   Def>            nfx = nfx + 1
+   Def>            anyfix = 1
+   Def>        end_if
+   Def>        if ball.fix(b,2) then
+   Def>            nfy = nfy + 1
+   Def>        end_if
+   Def>        if ball.fix(b,3) then
+   Def>            nfz = nfz + 1
+   Def>            anyfix = 1
+   Def>        end_if
+   Def>        if anyfix = 1 then
+   Def>            local p = ball.pos(b)
+   Def>            local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+   Def>            if ang < 0.0 then
+   Def>                ang = 360.0 + ang
+   Def>            end_if
+   Def>            if ang >= 200.0 then
+   Def>            if ang <= 340.0 then
+   Def>                nbot = nbot + 1
+   Def>            end_if
+   Def>            end_if
+   Def>            if comp.z(p) < zmin_fix then
+   Def>                zmin_fix = comp.z(p)
+   Def>            end_if
+   Def>            if comp.z(p) > zmax_fix then
+   Def>                zmax_fix = comp.z(p)
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('  fixed balls: xdof='+string(nfx)+' ydof='+string(nfy)+' zdof='+string(nfz)+' | any-fix in ang200-340(bottom)='+string(nbot)+' | fixed-ball z-range['+string(zmin_fix)+','+string(zmax_fix)+']')
+   Def>    io.out('=== GP fixed (gp.fix.x/y/z) ===')
+   Def>    local gx = 0
+   Def>    local gy = 0
+   Def>    local gz = 0
+   Def>    loop foreach local g gp.list
+   Def>        if gp.fix.x(g) then
+   Def>            gx = gx + 1
+   Def>        end_if
+   Def>        if gp.fix.y(g) then
+   Def>            gy = gy + 1
+   Def>        end_if
+   Def>        if gp.fix.z(g) then
+   Def>            gz = gz + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('  fixed-vel gps: x='+string(gx)+' y='+string(gy)+' z='+string(gz))
+   Def>    io.out('=== driven group ===')
+   Def>    local nd = 0
+   Def>    loop foreach local g2 gp.list
+   Def>        if gp.group(g2,'drive') = 'driven' then
+   Def>            nd = nd + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('  driven group gps='+string(nd))
+   Def>    io.out('  COUNTS balls='+string(ball.num)+' zones='+string(zone.num)+' walls='+string(wall.num))
+   Def>end
+flac3d>[inspect]
+=== WALLS ===
+  wall name=wz_outter
+  wall name=w_inner
+  wall name=w_860
+  wall name=w_910
+=== BALLS fixed (ball.fix dof1/2/3) ===
+  fixed balls: xdof=0 ydof=0 zdof=0 | any-fix in ang200-340(bottom)=0 | fixed-ball z-range[1e+20,-1e+20]
+=== GP fixed (gp.fix.x/y/z) ===
+  fixed-vel gps: x=441728 y=441728 z=441728
+=== driven group ===
+  driven group gps=28304
+  COUNTS balls=456302 zones=424908 walls=4
+0 (integer)
+flac3d>[io.out('INSPECT-DONE')]
+INSPECT-DONE
+0 (integer)
+flac3d>program quit

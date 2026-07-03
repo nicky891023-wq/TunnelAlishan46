@@ -1,0 +1,148 @@
+; ============================================================================
+; small_init.f3dat -- Alishan #46 SMALL model INITIAL (260529 METHOD + Wade rules).
+;   Wade: (1) null lining zone FIRST (bare bore), (2) two-stage in-situ relax->support
+;   with ELASTIC dkt-csth shell (stress-cap is a CREEP-phase E-reduction callback per
+;   WadeCreepSupport.f3dat, applied in 05, NOT here -- install stress is low).
+;   Flow (260529 crp_process_n_wp initial): MapStress large in-situ -> fluid steady
+;   state (W-110) -> bare-rock MC solve ratio 1e-5 -> install shell -> solve ratio 1e-5.
+;   solve ratio (bare 'ratio', not local/average) per Wade. cwd = 04_InitialBalance.
+; ============================================================================
+program log-file 'small_init.log'
+program log on
+model restore '../02_SmallModel/output/Small_Model'
+call 'parameter.f3dat'
+call 'idw_map.f3dat'
+model configure fluid
+model configure creep
+model largestrain off
+
+; --- boundary face groups (skin) for fluid pore-pressure BC ---
+zone face skin
+[io.out('SI-0 restored + skinned; zones='+string(zone.num)+' gps='+string(gp.num))]
+
+; --- 6-layer rock Mohr-Coulomb (Tunnel_TX per-layer params) ---
+zone cmodel assign mohr-coulomb range group 'rock' slot 'mat'
+zone property young [E_S_1] poisson [nu] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property young [E_S_2] poisson [nu] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property young [E_S_3] poisson [nu] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property young [E_S_4] poisson [nu] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+zone property young [E_S_5] poisson [nu] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+zone property young [E_S_6] poisson [nu] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+zone initialize density [den_S_1] range group 'layer1' slot 'type'
+zone initialize density [den_S_2] range group 'layer2' slot 'type'
+zone initialize density [den_S_3] range group 'layer3' slot 'type'
+zone initialize density [den_S_4] range group 'layer4' slot 'type'
+zone initialize density [den_S_5] range group 'layer5' slot 'type'
+zone initialize density [den_S_6] range group 'layer6' slot 'type'
+
+; --- Wade: NULL the lining zone FIRST (bare bore for two-stage relax->support) ---
+zone cmodel assign null range group 'lining' slot 'type'
+[io.out('SI-1 lining nulled (bare bore)')]
+
+; --- map large in-situ stress (NEW 260529-method large init) onto rock ---
+[ReadFile_ss('output/large_stress_coarse.dat')]
+[MapStress_IDW(40.0)]
+[io.out('SI-2 large in-situ stress IDW-mapped onto rock')]
+
+; --- gravity + box-face velocity fix (position-range, proven) ---
+model gravity 0 0 [-grav]
+zone gridpoint fix velocity range position-x 1249 1251
+zone gridpoint fix velocity range position-x 1349 1351
+zone gridpoint fix velocity range position-y 849 851
+zone gridpoint fix velocity range position-y 949 951
+zone gridpoint fix velocity range position-z 1699 1701
+zone gridpoint fix velocity range position-z 1799 1801
+
+; --- FLUID setup: isotropic, W-110, higher perm near bore, bore drainage pp=0 ---
+geometry import '../05_One_Way_Simulation/input/W-110.stl'
+geometry import '../02_SmallModel/input/tunnel_inner.stl'
+zone fluid cmodel assign isotropic range group 'rock' slot 'mat'
+zone fluid property permeability [pmb] porosity [poro]
+zone fluid property permeability [pmb*10.0] range geometry-distance 'tunnel_inner' gap 1.0
+zone gridpoint initialize fluid-modulus 2e9
+zone initialize fluid-density [rho_w]
+zone water density [rho_w]
+zone gridpoint initialize pore-pressure 0
+zone water set 'W-110'
+zone gridpoint initialize saturation 1
+zone gridpoint initialize saturation 0 range geometry-space 'W-110' count 0 direction (0,0,1)
+zone gridpoint initialize pore-pressure 0 range geometry-distance 'tunnel_inner' gap 1.0
+zone gridpoint fix pore-pressure range group 'East' or 'West' or 'North' or 'South' or 'Top' or 'Bottom'
+fish define _ppr(tag)
+    local a=1e30
+    local b=-1e30
+    loop foreach local z zone.list
+        if zone.model(z) # 'null' then
+            local p = zone.pp(z)
+            if p<a then
+                a=p
+            end_if
+            if p>b then
+                b=p
+            end_if
+        end_if
+    end_loop
+    io.out('SI-ppr '+tag+' pore-pressure ['+string(a)+','+string(b)+']')
+end
+[_ppr('after-set')]
+[io.out('SI-3 fluid + W-110 + bore drainage set')]
+
+; --- FLUID steady-state solve (mech/creep off) ---
+model mechanical active off
+model creep active off
+model fluid active on
+model solve ratio-flow 1e-4 or cycles 20000
+[_ppr('after-fluid-solve')]
+model save 'output/Small_fld'
+[io.out('SI-4 fluid steady-state solved (saved Small_fld)')]
+
+; === STAGE A: bare-rock relaxation (fluid off, MC, solve ratio 1e-4) ===
+; Wade: 裸岩鬆弛收斂只要 1e-4 就可上 shell (don't chase 1e-5 -> plastic flow stalls it).
+model fluid active off
+model mechanical active on
+model creep active off
+zone gridpoint initialize fluid-modulus 0
+model solve ratio 1e-4 or cycles 50000
+[io.out('SI-5 bare-rock relaxed (MC solve ratio 1e-4)')]
+
+; === STAGE B: install ELASTIC dkt-csth shell on bore wall + solve ratio 1e-5 ===
+; position band 1250.5..1349.5 etc = interior only (box planes at 1250/1350/... excluded)
+structure shell create by-face element-type=dkt-csth range group 'rock' slot 'mat' position-x 1250.5 1349.5 position-y 850.05 949.95 position-z 1700.5 1799.5
+structure shell property isotropic ([shot_E], [shot_v]) thickness [shot_t] density [shot_den]
+[io.out('SI-6 shell created; shells='+string(struct.num))]
+model solve ratio 1e-5 or cycles 40000
+[io.out('SI-7 shell-support solved (MC solve ratio 1e-5)')]
+
+; --- report shell stress at install (must be well below yield fc=41.2MPa) ---
+fish define _shell_report
+    command
+        structure shell recover surface (0,1,0)
+        structure shell recover stress depth-factor 0
+    endcommand
+    local mc = 0.0
+    local mt = 0.0
+    loop foreach local s struct.list
+        if struct.type(s) = 'shell' then
+            loop local k (0,3)
+                local smn = struct.shell.stress.prin.x(s,k)
+                local smx = struct.shell.stress.prin.z(s,k)
+                if -smn > mc then
+                    mc = -smn
+                end_if
+                if smx > mt then
+                    mt = smx
+                end_if
+            end_loop
+        end_if
+    end_loop
+    io.out('SI-shell install max_comp='+string(mc/1e6)+'MPa max_tension='+string(mt/1e6)+'MPa (cap fc=41.2/ft=4.12)')
+end
+[_shell_report]
+
+; --- datum (260529: zero displacement at day0) + save ---
+zone gridpoint initialize velocity 0 0 0
+zone gridpoint initialize displacement 0 0 0
+model save 'Small_Initial'
+[io.out('SI-8 saved Small_Initial (260529-method + null-lining + 2-stage elastic shell)')]
+program log off
+program quit

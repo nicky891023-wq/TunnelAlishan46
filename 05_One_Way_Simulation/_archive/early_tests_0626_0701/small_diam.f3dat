@@ -1,0 +1,31 @@
+program log-file 'small_diam.log'
+program log on
+model restore 's4_s4'
+fish automatic-create on
+; nearest-gp displacement at tunnel reference points (y~885 slice), cumulative s4
+fish define ptdisp(px, pz, lbl)
+    local best = 1e20
+    global bdx = 0.0
+    global bdz = 0.0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        if comp.y(p) > 884.0 then
+        if comp.y(p) < 886.0 then
+            local dd = math.sqrt((comp.x(p)-px)*(comp.x(p)-px)+(comp.z(p)-pz)*(comp.z(p)-pz))
+            if dd < best then
+                best = dd
+                local d = gp.disp(g)
+                bdx = comp.x(d)
+                bdz = comp.z(d)
+            end_if
+        end_if
+        end_if
+    end_loop
+    io.out('PT '+lbl+' disp(mm) dx='+string(bdx*1000.0)+' dz='+string(bdz*1000.0)+' (nearest '+string(best)+'m)')
+end
+[ptdisp(1297.0, 1752.0, 'CROWN ')]
+[ptdisp(1297.0, 1743.0, 'INVERT')]
+[ptdisp(1303.0, 1747.0, 'SPRING-R')]
+[ptdisp(1291.0, 1747.0, 'SPRING-L')]
+[io.out('DIAM-DONE: vertical closure = -(crown_dz)+(invert_dz); horizontal = -(springR_dx)+(springL_dx)')]
+program quit

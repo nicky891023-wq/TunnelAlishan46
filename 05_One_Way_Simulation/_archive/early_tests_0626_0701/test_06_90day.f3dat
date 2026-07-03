@@ -1,0 +1,88 @@
+; test_06_90day.f3dat -- can threshold/time increase the TUNNEL convergence? (Wade). From
+;   small_ep, HIGH water, threshold 0.6 (lower than 0.8 -> more active), creep 90 days (vs
+;   standalone's 30/stage). Measure tunnel-wall convergence (max |disp| within r<5m of center)
+;   + crown_dz + side_dx vs time -> does it keep growing (time helps) or converge (fixed-bdry
+;   relaxation limit)? Compare to 0.8 standalone (tunnel ~2.8mm). cwd = 05.
+program log-file 'test_06_90day.log'
+program log on
+model restore 'small_ep'
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain off
+fish automatic-create on
+zone water density [rho_w]
+[io.out('T6-0 restored small_ep + water density')]
+
+fish define dwall      ; max |disp| within r<5m of tunnel center (1299,*,1747) = tunnel-wall convergence
+    local dm = 0.0
+    loop foreach local gp gp.list
+        local p = gp.pos(gp)
+        local dx = comp.x(p)-1299.0
+        local dz = comp.z(p)-1747.0
+        local rr = math.sqrt(dx*dx+dz*dz)
+        if rr < 5.0 then
+            local d = gp.disp(gp)
+            local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+            if mm > dm then
+                dm = mm
+            end_if
+        end_if
+    end_loop
+    dwall = dm
+end
+[global threhold = 0.6]
+fish define do_threshold
+    local na = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pmean = (s1 + s3)/2.0 - pore
+            local q = (s1 - s3)/2.0
+            local c = zone.prop(z,'cohesion')
+            local phi = zone.prop(z,'friction')
+            local q_th = threhold*c + pmean*threhold*math.tan(phi*math.degrad)
+            if q >= q_th then
+                zone.prop(z,'viscosity-kelvin')  = eta_k
+                zone.prop(z,'viscosity-maxwell') = eta_m
+                zone.group(z,'creep') = 'CreepActive'
+                na = na + 1
+            else
+                zone.prop(z,'viscosity-kelvin')  = 1e100
+                zone.prop(z,'viscosity-maxwell') = 1e100
+                zone.group(z,'creep') = 'CreepOff'
+            end_if
+        end_if
+    end_loop
+    global n_active = na
+end
+model history creep time-total
+zone history name 'crown_dz' displacement-z position (1297, 885, 1752)
+zone history name 'side_dx'  displacement-x position (1303, 885, 1747)
+
+zone water plane origin (1297, 885, 1807) normal (0,0,1)
+model calm
+model solve ratio-average 1e-5 cycles 40000
+[setKstrains]
+[do_threshold]
+[setKstrains]
+zone gridpoint initialize displacement 0 0 0
+zone gridpoint initialize velocity 0 0 0
+[io.out('T6-EQ HIGH-water threshold 0.6 active='+string(n_active)+' (0.8 had ~493k)')]
+model creep active on
+model creep timestep fix [crp_dt]
+fish define run_long(d0, d1, dd)
+    local d = d0 + dd
+    loop while d <= (d1 + 0.1)
+        command
+            model solve time-total [d*86400.0]
+        endcommand
+        io.out('   T6creep day='+string(d)+' wall_conv='+string(dwall)+' m  (active='+string(n_active)+')')
+        d = d + dd
+    endloop
+end
+[run_long(0.0, 90.0, 10.0)]
+model save 't6_90day'
+[io.out('T6-DONE 0.6 90-day: wall_conv='+string(dwall)+' (converged or growing?)')]
+program log off
+program quit

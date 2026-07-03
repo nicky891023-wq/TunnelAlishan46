@@ -1,0 +1,46 @@
+**********************************************
+* Logging started at 週日 六月 28 13:37:15 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>fish automatic-create on
+flac3d>model restore 's4_s1'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 21:16:44 2026
+Total Cycles: 15428  Super Cycles: 15428
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish define diag
+   Def>    io.out('DIAG-start gpnum='+string(gp.num))
+   Def>    local cnt = 0
+   Def>    loop foreach local gp gp.list
+   Def>        local p = gp.pos(gp)
+   Def>        if comp.x(p)>=1272.0 then
+   Def>        if comp.x(p)<=1322.0 then
+   Def>        if comp.y(p)>=855.0 then
+   Def>        if comp.y(p)<=915.0 then
+   Def>        if comp.z(p)>=1723.0 then
+   Def>        if comp.z(p)<=1773.0 then
+   Def>            cnt = cnt + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('DIAG-loop-done cnt='+string(cnt))
+   Def>end
+flac3d>[diag]
+DIAG-start gpnum=269452
+DIAG-loop-done cnt=140694
+0 (integer)
+flac3d>[io.out('DIAG-DONE')]
+DIAG-DONE
+0 (integer)
+flac3d>program quit

@@ -1,0 +1,89 @@
+program log-file 'investigate_geom.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'cb_full_s4'
+fish automatic-create on
+; --- lining ball ang/z distribution (arch shape; cx,cz=1297,1747.5; ang 0=+x right,90=+z crown,180=-x left,270=-z bottom) ---
+fish define lining_geom
+    local cx = 1297.0
+    local cz = 1747.5
+    local sect = array.create(12)
+    local kk = 1
+    loop while kk <= 12
+        sect(kk) = 0
+        kk = kk + 1
+    end_loop
+    local zmin = 1e20
+    local zmax = -1e20
+    local nb = 0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        ; only mid-band balls y870-900
+        if comp.y(p) >= 870.0 then
+        if comp.y(p) <= 900.0 then
+            nb = nb + 1
+            local zz = comp.z(p)
+            if zz < zmin then
+                zmin = zz
+            end_if
+            if zz > zmax then
+                zmax = zz
+            end_if
+            local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+            if ang < 0.0 then
+                ang = 360.0 + ang
+            end_if
+            local s = int(ang/30.0) + 1
+            if s > 12 then
+                s = 12
+            end_if
+            sect(s) = sect(s) + 1
+        end_if
+        end_if
+    end_loop
+    io.out('GEOM mid lining balls='+string(nb)+' z['+string(zmin)+','+string(zmax)+']')
+    io.out('GEOM ang-sectors(30deg 0=+x/Rspring,90=crown,180=Lspring,270=bottom): '+string(sect(1))+' '+string(sect(2))+' '+string(sect(3))+' '+string(sect(4))+' '+string(sect(5))+' '+string(sect(6))+' '+string(sect(7))+' '+string(sect(8))+' '+string(sect(9))+' '+string(sect(10))+' '+string(sect(11))+' '+string(sect(12)))
+end
+[lining_geom]
+; --- upper-arch (ang 0-180) vs bottom mid reaction (pb_ten>=1e10 coupling) ---
+fish define arch_force
+    local cx = 1297.0
+    local cz = 1747.5
+    global fup = 0.0
+    global fbot = 0.0
+    local nu = 0
+    local nb2 = 0
+    loop foreach local c contact.list
+        if contact.model(c) = 'linearpbond' then
+            if contact.prop(c,'pb_ten') >= 1.0e10 then
+                local p = contact.pos(c)
+                local yy = comp.y(p)
+                if yy >= 870.0 then
+                if yy <= 900.0 then
+                    local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+                    if ang < 0.0 then
+                        ang = 360.0 + ang
+                    end_if
+                    local fn = contact.force.normal(c)
+                    local af = fn
+                    if af < 0.0 then
+                        af = -af
+                    end_if
+                    if ang <= 180.0 then
+                        fup = fup + af
+                        nu = nu + 1
+                    else
+                        fbot = fbot + af
+                        nb2 = nb2 + 1
+                    end_if
+                end_if
+                end_if
+            end_if
+        end_if
+    end_loop
+    io.out('ARCH-FORCE upper(ang0-180)='+string(fup/1e6)+'MN n='+string(nu)+' | bottom(ang180-360)='+string(fbot/1e6)+'MN n='+string(nb2))
+end
+[arch_force]
+[io.out('GEOM-DONE')]
+program quit

@@ -1,0 +1,85 @@
+program log-file 'rock_reach.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'cb_full_s4'
+fish automatic-create on
+fish define rock_reach
+    local cx = 1297.0
+    local cz = 1747.5
+    global n1 = 0
+    global n2 = 0
+    global n3 = 0
+    global n0 = 0
+    local s1 = 0.0
+    local s2 = 0.0
+    local s3 = 0.0
+    local s0 = 0.0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local yy = comp.y(p)
+        if yy >= 870.0 then
+        if yy <= 900.0 then
+            local rx = comp.x(p)-cx
+            local rz = comp.z(p)-cz
+            local rr = math.sqrt(rx*rx+rz*rz)
+            local ang = math.atan2(rz,rx)/math.degrad
+            if ang < 0.0 then
+                ang = 360.0+ang
+            end_if
+            local isc = 0
+            if ang >= 250.0 then
+                if ang <= 320.0 then
+                    isc = 1
+                end_if
+            end_if
+            if isc = 0 then
+                local d = gp.disp(g)
+                local ri = -(comp.x(d)*rx/rr + comp.z(d)*rz/rr)
+                if rr >= 2.0 then
+                if rr < 5.0 then
+                    s0 = s0+ri
+                    n0 = n0+1
+                end_if
+                end_if
+                if rr >= 5.0 then
+                if rr < 10.0 then
+                    s1 = s1+ri
+                    n1 = n1+1
+                end_if
+                end_if
+                if rr >= 10.0 then
+                if rr < 15.0 then
+                    s2 = s2+ri
+                    n2 = n2+1
+                end_if
+                end_if
+                if rr >= 15.0 then
+                    s3 = s3+ri
+                    n3 = n3+1
+                end_if
+            end_if
+        end_if
+        end_if
+    end_loop
+    local m0 = 0.0
+    local m1 = 0.0
+    local m2 = 0.0
+    local m3 = 0.0
+    if n0 > 0 then
+        m0 = s0/float(n0)
+    end_if
+    if n1 > 0 then
+        m1 = s1/float(n1)
+    end_if
+    if n2 > 0 then
+        m2 = s2/float(n2)
+    end_if
+    if n3 > 0 then
+        m3 = s3/float(n3)
+    end_if
+    io.out('ROCK-REACH blueline mid-y radial-inward mean(mm): r2-5='+string(m0*1000.0)+'(n'+string(n0)+') r5-10='+string(m1*1000.0)+'(n'+string(n1)+') r10-15='+string(m2*1000.0)+'(n'+string(n2)+') r15+='+string(m3*1000.0)+'(n'+string(n3)+')')
+end
+[rock_reach]
+[io.out('ROCK-REACH-DONE')]
+program quit

@@ -1,0 +1,87 @@
+; gate1_funcs.fis -- Phase 1: small-model lining reaction (virtual interface traction over lining
+;   OUTER faces) + tunnel-wall convergence at reference points (Gate-0 C6: not global dmax).
+;   CALL after EACH restore (restore clears FISH state). pfx/stg params, no return-value assignment.
+;   tunnel axis along y at (cx,cz)=(1297,1747.5). lining = group 'lining' slot 'type' (elastic).
+fish define lining_react(stg, pfx)
+    local cx = 1297.0
+    local cz = 1747.5
+    local fnx = 0.0
+    local fny = 0.0
+    local fnz = 0.0
+    local frad = 0.0      ; net radial-directed force magnitude (inward+) integrated
+    local aout = 0.0
+    local nlin = 0
+    loop foreach local z zone.list
+        if zone.group(z,'type') = 'lining' then
+            nlin = nlin + 1
+            ; outer face = max radial-centroid face of this lining zone (tet=4 faces)
+            local imax = 1
+            local rmax = -1.0
+            local i = 1
+            loop while i <= 4
+                local fp = zone.face.pos(z,i)
+                local rr = math.sqrt((comp.x(fp)-cx)*(comp.x(fp)-cx)+(comp.z(fp)-cz)*(comp.z(fp)-cz))
+                if rr > rmax then
+                    rmax = rr
+                    imax = i
+                end_if
+                i = i + 1
+            end_loop
+            local nn = zone.face.normal(z,imax)
+            local ar = zone.face.area(z,imax)
+            local fp2 = zone.face.pos(z,imax)
+            local nx = comp.x(nn)
+            local ny = comp.y(nn)
+            local nz = comp.z(nn)
+            ; traction t = sigma.n (sigma compression-negative), force = t*area
+            local sxx = zone.stress.xx(z)
+            local syy = zone.stress.yy(z)
+            local szz = zone.stress.zz(z)
+            local sxy = zone.stress.xy(z)
+            local sxz = zone.stress.xz(z)
+            local syz = zone.stress.yz(z)
+            local tx = (sxx*nx+sxy*ny+sxz*nz)*ar
+            local ty = (sxy*nx+syy*ny+syz*nz)*ar
+            local tz = (sxz*nx+syz*ny+szz*nz)*ar
+            fnx = fnx + tx
+            fny = fny + ty
+            fnz = fnz + tz
+            ; radial unit (outward) at this face
+            local rx = comp.x(fp2)-cx
+            local rz = comp.z(fp2)-cz
+            local rm = math.sqrt(rx*rx+rz*rz)
+            if rm > 0.01 then
+                ; radial force component (project t onto outward radial; negative=compression inward)
+                frad = frad + (tx*rx/rm + tz*rz/rm)
+            end_if
+            aout = aout + ar
+        end_if
+    end_loop
+    local fmag = math.sqrt(fnx*fnx+fny*fny+fnz*fnz)
+    io.out('LREACT '+pfx+'_s'+string(stg)+' lining_zones='+string(nlin)+' outerA='+string(aout)+'m2 net|F|='+string(fmag/1e6)+'MN (Fx='+string(fnx/1e6)+' Fy='+string(fny/1e6)+' Fz='+string(fnz/1e6)+') net_radial='+string(frad/1e6)+'MN')
+end
+; convergence: radial inward disp at tunnel-wall reference points (nearest gp within 0.6m box)
+fish define conv_at(stg, pfx, px, pz, lbl)
+    local cx = 1297.0
+    local cz = 1747.5
+    local best = 1e20
+    local bdr = 0.0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        if comp.y(p) > 884.0 then
+        if comp.y(p) < 886.0 then
+            local dd = math.sqrt((comp.x(p)-px)*(comp.x(p)-px)+(comp.z(p)-pz)*(comp.z(p)-pz))
+            if dd < best then
+                best = dd
+                local d = gp.disp(g)
+                ; radial inward = -(disp . outward radial unit)
+                local rx = px-cx
+                local rz = pz-cz
+                local rm = math.sqrt(rx*rx+rz*rz)
+                bdr = -(comp.x(d)*rx/rm + comp.z(d)*rz/rm)
+            end_if
+        end_if
+        end_if
+    end_loop
+    io.out('CONV '+pfx+'_s'+string(stg)+' '+lbl+' radial_inward='+string(bdr*1000.0)+'mm (nearest_gp_dist='+string(best)+'m)')
+end

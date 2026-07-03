@@ -1,0 +1,152 @@
+; small_insitu_2stage.f3dat -- Wade 2-stage small in-situ (excavation-relax THEN support):
+;   STAGE A: bare rock (lining nulled, NO shell), IDW large stress, solve ratio-local 1e-4
+;            -> the opening relaxes/yields fully -> LARGER plastic zone (Wade: 塑性區不夠大).
+;   STAGE B: install the dkt-csth shell on the relaxed cavity wall, solve ratio-local 1e-5
+;            -> shell wished-in-place onto the relaxed state (post-excavation support).
+;   Datum kept (day-0 non-zero). Large model UNCHANGED. cwd = 05.
+program log-file 'small_insitu_2stage.log'
+program log on
+model restore '../02_SmallModel/Small_Model'
+call '../04_InitialBalance/parameter.f3dat'
+call '../04_InitialBalance/idw_map.f3dat'
+model largestrain off
+fish automatic-create on
+
+; --- rock 6-layer MC. tension = Mohr-Coulomb APEX c/tan(phi) per layer (physical max
+;     the MC material can carry; replaces the low uniform 0.1MPa -> far fewer tension-
+;     failure zones, leaving the real shear/squeezing plastic). SMALL ONLY (large ten_r
+;     in parameter.f3dat unchanged). Wade: 拉力強度設大避免太多拉力塑性區. ---
+zone cmodel assign mohr-coulomb range group 'rock' slot 'mat'
+zone property young [E_S_1] poisson [nu] cohesion [co_S_1] friction [fr_S_1] tension [co_S_1/math.tan(fr_S_1*math.degrad)] range group 'layer1' slot 'type'
+zone property young [E_S_2] poisson [nu] cohesion [co_S_2] friction [fr_S_2] tension [co_S_2/math.tan(fr_S_2*math.degrad)] range group 'layer2' slot 'type'
+zone property young [E_S_3] poisson [nu] cohesion [co_S_3] friction [fr_S_3] tension [co_S_3/math.tan(fr_S_3*math.degrad)] range group 'layer3' slot 'type'
+zone property young [E_S_4] poisson [nu] cohesion [co_S_4] friction [fr_S_4] tension [co_S_4/math.tan(fr_S_4*math.degrad)] range group 'layer4' slot 'type'
+zone property young [E_S_5] poisson [nu] cohesion [co_S_5] friction [fr_S_5] tension [co_S_5/math.tan(fr_S_5*math.degrad)] range group 'layer5' slot 'type'
+zone property young [E_S_6] poisson [nu] cohesion [co_S_6] friction [fr_S_6] tension [co_S_6/math.tan(fr_S_6*math.degrad)] range group 'layer6' slot 'type'
+zone initialize density [den_S_1] range group 'layer1' slot 'type'
+zone initialize density [den_S_2] range group 'layer2' slot 'type'
+zone initialize density [den_S_3] range group 'layer3' slot 'type'
+zone initialize density [den_S_4] range group 'layer4' slot 'type'
+zone initialize density [den_S_5] range group 'layer5' slot 'type'
+zone initialize density [den_S_6] range group 'layer6' slot 'type'
+; --- null the lining (bare rock; shell installed later) ---
+zone cmodel assign null range group 'lining' slot 'type'
+[io.out('SI2-1 rock MC + lining nulled (bare rock)')]
+
+; --- IDW-map the large in-situ stress onto the rock ---
+[ReadFile_ss('../04_InitialBalance/large_stress_coarse.dat')]
+[MapStress_IDW(40.0)]
+[io.out('SI2-2 large stress IDW-mapped')]
+
+; --- BC + gravity ---
+zone gridpoint fix velocity range position-x 1249 1251
+zone gridpoint fix velocity range position-x 1349 1351
+zone gridpoint fix velocity range position-y 849 851
+zone gridpoint fix velocity range position-y 949 951
+zone gridpoint fix velocity range position-z 1699 1701
+zone gridpoint fix velocity range position-z 1799 1801
+model gravity 0 0 [-grav]
+
+fish define qa_rock(tag)
+    local maxprin = -1e30
+    local nten = 0
+    local nplas = 0
+    local nplas_tun = 0
+    loop foreach local z zone.list
+        if zone.model(z) # 'null' then
+            local pz = zone.stress.prin.z(z)
+            if pz > maxprin then
+                maxprin = pz
+            end_if
+            if pz > 1000.0 then
+                nten = nten + 1
+            end_if
+            if zone.state(z,1) # 0 then
+                nplas = nplas + 1
+                local rx = zone.pos.x(z)-1297.0
+                local rz = zone.pos.z(z)-1747.5
+                if math.sqrt(rx*rx+rz*rz) < 15.0 then
+                    nplas_tun = nplas_tun + 1
+                end_if
+            end_if
+        end_if
+    end_loop
+    local mv = 0.0
+    local mdsp = 0.0
+    loop foreach local g gp.list
+        local v = gp.vel(g)
+        local m = math.sqrt(comp.x(v)^2+comp.y(v)^2+comp.z(v)^2)
+        if m > mv then
+            mv = m
+        end_if
+        local d = gp.disp(g)
+        local md = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if md > mdsp then
+            mdsp = md
+        end_if
+    end_loop
+    io.out('SI2-QA-ROCK '+tag+' max_principal='+string(maxprin)+'Pa tension='+string(nten)+' plastic='+string(nplas)+' plastic_near_tunnel(r<15)='+string(nplas_tun)+' max_vel='+string(mv)+' max_disp='+string(mdsp*1000.0)+'mm')
+end
+fish define qa_shell(tag)
+    command
+        structure shell recover surface (0,1,0)
+        structure shell recover stress depth-factor 0
+    endcommand
+    local maxc = 0.0
+    local maxt = 0.0
+    loop foreach local s struct.list
+        loop local k (0,3)
+            local smin = struct.shell.stress.prin.x(s,k)
+            local smax = struct.shell.stress.prin.z(s,k)
+            if -smin > maxc then
+                maxc = -smin
+            end_if
+            if smax > maxt then
+                maxt = smax
+            end_if
+        end_loop
+    end_loop
+    io.out('SI2-QA-SHELL '+tag+' max_comp='+string(maxc/1e6)+'MPa max_tension='+string(maxt/1e6)+'MPa (cap 41.2/4.12) shells='+string(struct.num))
+end
+
+[qa_rock('after-IDW')]
+; === STAGE A: bare rock relax to 1e-4 (excavation relaxation -> plastic zone) ===
+model solve ratio-local 1e-4 cycles 50000
+[qa_rock('after-bare-relax-1e-4')]
+
+; === STAGE B: install shell on the relaxed cavity wall, solve ratio 1e-5 ===
+; position-y 850.05..949.95 covers the tunnel ENDS (Wade: 兩洞口各缺一小段) while the
+; 6 box planes (centroids exactly at y=850/950, x=1250/1350, z=1700/1800) fall outside
+; the +-0.05/1m interior bands and get NO shell.
+structure shell create by-face element-type=dkt-csth range group 'rock' slot 'mat' position-x 1250.5 1349.5 position-y 850.05 949.95 position-z 1700.5 1799.5
+structure shell property isotropic ([shot_E], [shot_v]) thickness [shot_t] density [shot_den]
+; --- shell coverage QA: count (should stay ~68-72k = cavity wall; a jump means box planes leaked in) + y-extent ---
+fish define shell_extent
+    local ns = 0
+    local ymn = 1e30
+    local ymx = -1e30
+    loop foreach local s struct.list
+        if struct.type(s) = 'shell' then
+            ns = ns + 1
+            local sy = struct.pos.y(s)
+            if sy < ymn then
+                ymn = sy
+            end_if
+            if sy > ymx then
+                ymx = sy
+            end_if
+        end_if
+    end_loop
+    io.out('SI2-3 shell installed; shells='+string(ns)+' y-extent=['+string(ymn)+','+string(ymx)+'] (tunnel ends covered if ~850.1/949.9; box-plane leak if count>>68k)')
+end
+[shell_extent]
+[qa_shell('after-shell-create')]
+model solve ratio-local 1e-5 cycles 40000
+[qa_rock('after-shell-solve-1e-5')]
+[qa_shell('after-shell-solve-1e-5')]
+
+; --- datum: keep deformation (day-0 non-zero, Wade rule), zero velocity only ---
+zone gridpoint initialize velocity 0 0 0
+model save '../04_InitialBalance/Small_Initial'
+[io.out('SI2-DONE saved Small_Initial (2-stage: bare-relax 1e-4 -> shell 1e-5)')]
+program quit

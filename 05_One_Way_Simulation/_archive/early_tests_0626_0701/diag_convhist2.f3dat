@@ -1,0 +1,114 @@
+program log-file 'diag_convhist2.log'
+program log on
+model restore 'small_ep'
+fish automatic-create on
+fish define find_conv_gps
+    global g_crown = null
+    global g_invert = null
+    global g_sprR = null
+    global g_sprL = null
+    local bc = 1e20
+    local bi = 1e20
+    local br = 1e20
+    local bl = 1e20
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local yy = comp.y(p)
+        if yy > 884.0 then
+        if yy < 886.0 then
+            local dcr = (comp.x(p)-1297.0)*(comp.x(p)-1297.0)+(comp.z(p)-1752.0)*(comp.z(p)-1752.0)
+            if dcr < bc then
+                bc = dcr
+                g_crown = g
+            end_if
+            local din = (comp.x(p)-1297.0)*(comp.x(p)-1297.0)+(comp.z(p)-1743.0)*(comp.z(p)-1743.0)
+            if din < bi then
+                bi = din
+                g_invert = g
+            end_if
+            local dsr = (comp.x(p)-1303.0)*(comp.x(p)-1303.0)+(comp.z(p)-1747.0)*(comp.z(p)-1747.0)
+            if dsr < br then
+                br = dsr
+                g_sprR = g
+            end_if
+            local dsl = (comp.x(p)-1291.0)*(comp.x(p)-1291.0)+(comp.z(p)-1747.0)*(comp.z(p)-1747.0)
+            if dsl < bl then
+                bl = dsl
+                g_sprL = g
+            end_if
+        end_if
+        end_if
+    end_loop
+    io.out('CONV-GPS dist cr='+string(math.sqrt(bc))+' in='+string(math.sqrt(bi))+' sr='+string(math.sqrt(br))+' sl='+string(math.sqrt(bl)))
+end
+fish define vclose
+    vclose = (comp.z(gp.disp(g_crown)) - comp.z(gp.disp(g_invert)))*1000.0
+end
+fish define hclose
+    hclose = (comp.x(gp.disp(g_sprR)) - comp.x(gp.disp(g_sprL)))*1000.0
+end
+fish define report_conv(tag)
+    io.out('CONV '+tag+' vert='+string(vclose)+' horiz='+string(hclose))
+end
+fish define band_conv(tag)
+    local scr = 0.0
+    local ncr = 0
+    local sin = 0.0
+    local nin = 0
+    local ssr = 0.0
+    local nsr = 0
+    local ssl = 0.0
+    local nsl = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local yy = comp.y(p)
+        if yy >= 860.0 then
+        if yy <= 910.0 then
+            local rx = comp.x(p)-1297.0
+            local rz = comp.z(p)-1747.5
+            local rr = math.sqrt(rx*rx+rz*rz)
+            if rr >= 4.5 then
+            if rr <= 5.5 then
+                local ang = math.atan2(rz,rx)/math.degrad
+                if ang < 0.0 then
+                    ang = 360.0+ang
+                end_if
+                local d = gp.disp(g)
+                if ang >= 75.0 then
+                if ang <= 105.0 then
+                    scr = scr + comp.z(d)
+                    ncr = ncr + 1
+                end_if
+                end_if
+                if ang >= 255.0 then
+                if ang <= 285.0 then
+                    sin = sin + comp.z(d)
+                    nin = nin + 1
+                end_if
+                end_if
+                if ang >= 345.0 then
+                    ssr = ssr + comp.x(d)
+                    nsr = nsr + 1
+                end_if
+                if ang <= 15.0 then
+                    ssr = ssr + comp.x(d)
+                    nsr = nsr + 1
+                end_if
+                if ang >= 165.0 then
+                if ang <= 195.0 then
+                    ssl = ssl + comp.x(d)
+                    nsl = nsl + 1
+                end_if
+                end_if
+            end_if
+            end_if
+        end_if
+        end_if
+    end_loop
+    io.out('BAND-CONV '+tag+' n(cr/in/sr/sl)='+string(ncr)+'/'+string(nin)+'/'+string(nsr)+'/'+string(nsl))
+end
+[find_conv_gps]
+[report_conv('DIAG')]
+[band_conv('DIAG')]
+[io.out('DIAG2-DONE')]
+program quit

@@ -1,0 +1,11 @@
+﻿CONTROL0-VERDICT: APPROVED WITH CONDITIONS
+
+Q1: Accept `cb_control0` as the SMOKE base. I do not require a full second 3 hr Control-0 now. The save reached `ratio-average 9.7096e-05`, `maxbvel=8.98e-7`, and `driven_drift=0`, so the 21 cracks can be treated as one-time pre-drive settling.
+
+Condition: add a short pre-drive zero-increment guard inside SMOKE after `track_init` and before applying stage velocity. If it creates any new crack, stop and run the second Control-0. Also make the current SMOKE `dt_ok` and `ndriven/miss` checks hard aborts; right now they mostly print/set flags.
+
+Q2: Accept the 2.3% / 5.9% force relaxation as in-situ settling to the true coupled equilibrium. Use the settled baseline:
+`wz_outter = 1.83809 MN`, `w_inner = 1.29693 MN`.
+Do not mix these with drive-induced deltas; report them as the post-settlement datum.
+
+Q3: Approve reducing the final solve only as an adaptive SMOKE/runtime control, preferably `3000` cycles rather than `2500`. If the solve hits the cycle cap with continuing cracks, non-calm `maxbvel`, target error above the prior tolerance, or force drift still evolving, extend. Do not treat capped nonstationary output as final stage evidence. Control-0 needed 4372 cycles to reach `1e-4`, so a fixed 2500-cycle production solve is not yet justified.

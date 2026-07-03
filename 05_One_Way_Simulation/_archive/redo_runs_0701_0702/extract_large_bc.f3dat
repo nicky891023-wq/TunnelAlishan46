@@ -1,0 +1,21 @@
+; extract_large_bc.f3dat -- export LARGE-model per-stage CUMULATIVE gp displacement
+;   within the SMALL-model box region (+5m margin) -> lg_bc_sN.txt (x y z dx dy dz).
+;   model restore CLEARS FISH state, so re-call the helper (define) after each restore.
+;   cwd = 05. Run AFTER the large 4-stage (lg_s1-4).
+program log-file 'extract_large_bc.log'
+program log on
+fish automatic-create on
+model restore 'lg_s1'
+call 'export_box_helper.f3dat'
+[export_box_disp('lg_bc_s1.txt')]
+model restore 'lg_s2'
+call 'export_box_helper.f3dat'
+[export_box_disp('lg_bc_s2.txt')]
+model restore 'lg_s3'
+call 'export_box_helper.f3dat'
+[export_box_disp('lg_bc_s3.txt')]
+model restore 'lg_s4'
+call 'export_box_helper.f3dat'
+[export_box_disp('lg_bc_s4.txt')]
+[io.out('LBC-DONE all 4 stages exported')]
+program quit

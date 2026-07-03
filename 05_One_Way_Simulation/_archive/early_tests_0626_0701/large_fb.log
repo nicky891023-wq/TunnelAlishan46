@@ -1,0 +1,290 @@
+**********************************************
+* Logging started at 週二 六月 30 21:05:21 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../01_LargeModel/Large_Model'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週一 六月 22 13:58:42 2026
+Total Cycles: 0  Super Cycles: 0
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>call '../04_InitialBalance/parameter.f3dat'
+flac3d>; ============================================================================
+flac3d>; parameter.f3dat -- Alishan #46 UNIFIED material parameters (Wade-ruled, 2026-06-22)
+flac3d>; Large(4-layer) / Small(6-layer) rock + lining(D7) + coupled PFC(D7 calib).
+flac3d>;
+flac3d>; Unification rulings (Wade):
+flac3d>;   * nu = 0.25 single value (static MC + creep bulk same source).
+flac3d>;   * E is PER-LAYER (not uniform): lithology-based within Hoek-Diederichs
+flac3d>;     rock-mass range (sandstone 3-8, sandshale 1-3 GPa; colluvium/weathered soft).
+flac3d>;     -> GSI/E have NO field data: per-layer E are documented-range central
+flac3d>;        judgements, GSI-basis TODO (D3). c/phi are GSI-reduced placeholders.
+flac3d>;   * Burgers creep: shear-maxwell = shear-kelvin = the layer ELASTIC G,
+flac3d>;     bulk = the layer elastic K  (instantaneous static==creep, no spurious soften).
+flac3d>;   * viscosity-maxwell eta_m = 6.0e15 Pa.s ; viscosity-kelvin eta_k = 2.4e13 Pa.s.
+flac3d>;   * creep threshold ratio = 0.6 :  q_th = 0.6*(c*cos(phi)+p'*sin(phi)).
+flac3d>;   * creep timestep = 600 s (fixed).
+flac3d>;   * layer4 sandshale(WET): c = 100 kPa, phi = 30 deg (Wade).
+flac3d>; Units: SI (Pa, kg/m3, deg, m, Pa.s).  Sign: compression negative.
+flac3d>; ============================================================================
+flac3d>
+flac3d>; ---------- global / environment ----------
+flac3d>[global nu     = 0.25]            ; single Poisson, all rock layers
+flac3d>[global K0     = 0.7]             ; lateral stress ratio (placeholder, no field basis)
+flac3d>[global grav   = 9.81]            ; m/s2
+flac3d>[global poro   = 0.1]             ; porosity n
+flac3d>[global satr   = 0.1]             ; saturation S
+flac3d>[global rho_w  = 1000.0]          ; water density kg/m3
+flac3d>[global pmb    = 1.0e-5]          ; FLAC mobility coeff m2/(Pa.s); near-tunnel x100
+flac3d>[global ten_r  = 1.0e5]           ; rock tension cutoff 100 kPa (all layers)
+flac3d>
+flac3d>; ---------- elastic helpers (nu=0.25 -> G=E/2.5, K=E/1.5) ----------
+flac3d>fish define _gk(ee)
+   Def>    _gk = ee / (2.0*(1.0+nu))     ; shear  G
+   Def>end
+flac3d>fish define _bk(ee)
+   Def>    _bk = ee / (3.0*(1.0-2.0*nu)) ; bulk   K
+   Def>end
+flac3d>
+flac3d>; ====================== LARGE model : 4 layers ======================
+flac3d>; layer1 colluvium / layer2 ssh / layer3 bedrock / layer4 basement
+flac3d>[global E_L_1 = 0.5e9 ]
+flac3d>[global co_L_1 = 1.9e5]
+flac3d>[global fr_L_1 = 29.1]
+flac3d>[global den_L_1 = 2150.0]
+flac3d>[global E_L_2 = 2.0e9 ]
+flac3d>[global co_L_2 = 2.9e5]
+flac3d>[global fr_L_2 = 35.1]
+flac3d>[global den_L_2 = 2630.0]
+flac3d>[global E_L_3 = 5.0e9 ]
+flac3d>[global co_L_3 = 4.7e5]
+flac3d>[global fr_L_3 = 44.3]
+flac3d>[global den_L_3 = 2600.0]
+flac3d>[global E_L_4 = 7.0e9 ]
+flac3d>[global co_L_4 = 8.0e5]
+flac3d>[global fr_L_4 = 51.5]
+flac3d>[global den_L_4 = 2600.0]
+flac3d>
+flac3d>; ====================== SMALL model : 6 layers ======================
+flac3d>; l1 weathered-ss / l2 ss+sandshale / l3 ss+shale / l4 sandshale(WET) / l5 sandshale / l6 basement
+flac3d>[global E_S_1 = 1.0e9 ]
+flac3d>[global co_S_1 = 1.9e5 ]
+flac3d>[global fr_S_1 = 29.1]
+flac3d>[global den_S_1 = 2600.0]
+flac3d>[global E_S_2 = 2.0e9 ]
+flac3d>[global co_S_2 = 2.9e5 ]
+flac3d>[global fr_S_2 = 35.1]
+flac3d>[global den_S_2 = 2630.0]
+flac3d>[global E_S_3 = 3.5e9 ]
+flac3d>[global co_S_3 = 4.7e5 ]
+flac3d>[global fr_S_3 = 44.3]
+flac3d>[global den_S_3 = 2630.0]
+flac3d>[global E_S_4 = 1.5e9 ]
+flac3d>[global co_S_4 = 1.0e5 ]   ; WET, Wade c100/phi30
+flac3d>[global fr_S_4 = 30.0]
+flac3d>[global den_S_4 = 2630.0]
+flac3d>[global E_S_5 = 3.0e9 ]
+flac3d>[global co_S_5 = 8.0e5 ]
+flac3d>[global fr_S_5 = 51.5]
+flac3d>[global den_S_5 = 2630.0]
+flac3d>[global E_S_6 = 7.0e9 ]
+flac3d>[global co_S_6 = 20.6e5]
+flac3d>[global fr_S_6 = 56.3]
+flac3d>[global den_S_6 = 2600.0]
+flac3d>
+flac3d>; ---------- creep (Burgers-Mohr) : per-layer G_m=G_k=G(E,nu), bulk=K(E,nu) ----------
+flac3d>[global eta_m = 6.0e15]           ; viscosity-maxwell (Wade)
+flac3d>[global eta_k = 2.4e13]           ; viscosity-kelvin (proven)
+flac3d>[global crp_threshold = 0.6]      ; q_th = 0.6*(c*cosphi + p'*sinphi)
+flac3d>[global crp_dt = 600.0]           ; creep timestep (s) (Wade)
+flac3d>
+flac3d>; ---------- lining (R.C. continuum, D7 DECIDED) ----------
+flac3d>[global shot_E   = 25e9]
+flac3d>[global shot_v   = 0.2]
+flac3d>[global shot_t   = 0.40]
+flac3d>[global shot_den = 2400.0]
+flac3d>[global shot_fc  = 41.2e6]
+flac3d>[global shot_ft  = 4.12e6]
+flac3d>
+flac3d>; ---------- coupled PFC lining BPM micro (D7 FINAL_CALIB) ----------
+flac3d>[global pfc_emod    = 9.65e9]     ; linear deformability
+flac3d>[global pfc_kratio  = 1.0]
+flac3d>[global pfc_pb_emod = 5.88e9]     ; parallel-bond deformability
+flac3d>[global pfc_pb_krat = 0.6]
+flac3d>[global pfc_pb_ten  = 2.10e6]     ; Pa
+flac3d>[global pfc_pb_coh  = 2.30e7]     ; Pa
+flac3d>[global pfc_pb_fa   = 25.0]       ; deg
+flac3d>[global pfc_bondgap = 0.03]       ; m  (= cmat proximity)
+flac3d>[global pfc_ball_den  = 2400.0]
+flac3d>[global pfc_ball_damp = 0.7]
+flac3d>[global pfc_fric      = 0.5]
+flac3d>[global pfc_bf_strong = 1.0e20]   ; ball-facet pb (unbreakable coupling, NOT material)
+flac3d>
+flac3d>[io.out('=== parameter.f3dat loaded : nu='+string(nu)+' K0='+string(K0)+' eta_m='+string(eta_m)+' crp_dt='+string(crp_dt)+' ===')]
+=== parameter.f3dat loaded : nu=0.25 K0=0.7 eta_m=6e+15 crp_dt=600 ===
+flac3d>model largestrain off
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone initialize density [den_L_1] range group 'layer1' slot 'type'
+--- density modified in 27379 zones.
+flac3d>zone initialize density [den_L_2] range group 'layer2' slot 'type'
+--- density modified in 59649 zones.
+flac3d>zone initialize density [den_L_3] range group 'layer3' slot 'type'
+--- density modified in 83804 zones.
+flac3d>zone initialize density [den_L_4] range group 'layer4' slot 'type'
+--- density modified in 341156 zones.
+flac3d>model gravity 0 0 [-grav]
+--- Gravity has been set to: ( 0.0e+00 0.0e+00 -9.8e+00).
+flac3d>zone initialize-stresses ratio [K0]
+--- Stresses initialized in 511988 zones.
+flac3d>zone gridpoint fix velocity-x range position-x -1 1
+--- Fix velocity-x               specified in 1811 gridpoints.
+flac3d>zone gridpoint fix velocity-x range position-x 1999 2001
+--- Fix velocity-x               specified in 1286 gridpoints.
+flac3d>zone gridpoint fix velocity-y range position-y -101 -99
+--- Fix velocity-y      specified in 1789 gridpoints.
+flac3d>zone gridpoint fix velocity-y range position-y 1999 2001
+--- Fix velocity-y      specified in 852 gridpoints.
+flac3d>zone gridpoint fix velocity   range position-z 799 801
+--- Fix velocity         specified in 2026 gridpoints.
+flac3d>[io.out('LFB-0 materials+gravity+K0+BC set; zones='+string(zone.num))]
+LFB-0 materials+gravity+K0+BC set; zones=511988
+flac3d>
+flac3d>; --- QA functions DEFINED EARLY (parse-time catches FISH errors before the long solve) ---
+flac3d>fish define qa_tension(tag)
+   Def>    local maxprin = -1e30
+   Def>    local nten = 0
+   Def>    loop foreach local z zone.list
+   Def>        local pz = zone.stress.prin.z(z)   ; max principal (least compressive / most tensile)
+   Def>        if pz > maxprin then
+   Def>            maxprin = pz
+   Def>        end_if
+   Def>        if pz > 1000.0 then
+   Def>            nten = nten + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('LFB-TENSION '+tag+' max_principal='+string(maxprin)+'Pa  tension_zones(prin>1kPa)='+string(nten)+'/'+string(zone.num))
+   Def>end
+flac3d>fish define qa_full(tag)
+   Def>    local nplas = 0
+   Def>    local mv = 0.0
+   Def>    local mdsp = 0.0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.state(z,1) # 0 then
+   Def>            nplas = nplas + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    loop foreach local g gp.list
+   Def>        local v = gp.vel(g)
+   Def>        local m = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+   Def>        if m > mv then
+   Def>            mv = m
+   Def>        end_if
+   Def>        local d = gp.disp(g)
+   Def>        local md = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+   Def>        if md > mdsp then
+   Def>            mdsp = md
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('LFB-FULL '+tag+' plastic_zones='+string(nplas)+'/'+string(zone.num)+' max_gp_vel='+string(mv)+' max_gp_disp='+string(mdsp*1000.0)+'mm')
+   Def>end
+flac3d>[qa_tension('after-init')]
+LFB-TENSION after-init max_principal=-23484.5Pa  tension_zones(prin>1kPa)=0/511988
+0 (integer)
+flac3d>
+flac3d>; --- (a) elastic settle THEN MC solve to relax surface tension ---
+flac3d>model solve elastic ratio-local 1e-3
+    Cycle      Total Ratio-loca       Clock
+--------- ---------- ---------- ----------- 
+     4839       4839 9.8843e-04 00:00:02:01                      1.0000e-03             
+--- Limit ratio-local of 1.0000e-03 met in process(es): mech Zone Main (9.8843e-04),mech Struct Main (0.0000e+00).
+--- Cycling ended at: 2026-06-30 21:07:32
+    Cycle      Total Ratio-loca       Clock
+--------- ---------- ---------- ----------- 
+     2643       7482 9.4929e-04 00:00:01:07                      1.0000e-03             
+--- Limit ratio-local of 1.0000e-03 met in process(es): mech Zone Main (9.4929e-04),mech Struct Main (0.0000e+00).
+--- Cycling ended at: 2026-06-30 21:08:40
+flac3d>[qa_tension('after-elastic')]
+LFB-TENSION after-elastic max_principal=100003Pa  tension_zones(prin>1kPa)=79866/511988
+0 (integer)
+flac3d>[io.out('LFB-1 elastic settle done')]
+LFB-1 elastic settle done
+0 (integer)
+flac3d>model solve ratio-local 1e-3 cycles 40000
+    Cycle      Total Ratio-loca       Clock
+--------- ---------- ---------- ----------- 
+        1       7483 9.7625e-04 00:00:00:00     40000            1.0000e-03             
+--- Limit ratio-local of 1.0000e-03 met in process(es): mech Zone Main (9.7625e-04),mech Struct Main (0.0000e+00).
+--- Cycling ended at: 2026-06-30 21:08:40
+flac3d>[qa_tension('after-MC-relax')]
+LFB-TENSION after-MC-relax max_principal=100004Pa  tension_zones(prin>1kPa)=79866/511988
+0 (integer)
+flac3d>[qa_full('after-MC-relax')]
+LFB-FULL after-MC-relax plastic_zones=101598/511988 max_gp_vel=4.8456e-07 max_gp_disp=428.13mm
+0 (integer)
+flac3d>[io.out('LFB-2 MC tension-relax solve done')]
+LFB-2 MC tension-relax solve done
+0 (integer)
+flac3d>
+flac3d>model save '../04_InitialBalance/Large_Init_v2'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/Large_Init_v2.f3sav.
+flac3d>[io.out('LFB-SAVED Large_Init_v2')]
+LFB-SAVED Large_Init_v2
+0 (integer)
+flac3d>; slice export y880-890 (through terrain to surface) for plotting
+flac3d>fish define exp_slice
+   Def>    local st = file.open('qa_largev2_slice.txt',1,1)
+   Def>    local b = array.create(1)
+   Def>    b(1) = 'x z szz sxx prinz state'
+   Def>    file.write(b,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        local yc = zone.pos.y(z)
+   Def>        if yc > 880.0 then
+   Def>        if yc < 890.0 then
+   Def>            local p = zone.pos(z)
+   Def>            b(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.stress.prin.z(z))+' '+string(zone.state(z,1))
+   Def>            file.write(b,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local cl = file.close
+   Def>    io.out('LFB-SLICE exported '+string(n)+' zones (y880-890) -> qa_largev2_slice.txt')
+   Def>end
+flac3d>[exp_slice]
+LFB-SLICE exported 4072 zones (y880-890) -> qa_largev2_slice.txt
+0 (integer)
+flac3d>[io.out('LFB-DONE')]
+LFB-DONE
+0 (integer)
+flac3d>program quit

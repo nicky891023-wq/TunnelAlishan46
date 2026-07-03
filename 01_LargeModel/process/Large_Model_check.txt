@@ -1,0 +1,8 @@
+zones 511988
+layer1 27379
+layer2 59649
+layer3 83804
+layer4 341156
+ungrouped 0
+vol_min 20.3247
+vol_sum 4.0894e+09

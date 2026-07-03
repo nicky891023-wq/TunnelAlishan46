@@ -1,0 +1,115 @@
+; ============================================================================
+; Small_Model.f3dat
+; FLAC3D 6.00 -- Alishan #46 SMALL near-field model (Route B).
+;
+;   rock.inp    : tet rock, 6 geology layers (layer1..6 conformal to S01..S05),
+;                 excavation horseshoe (OUTER wall 5.0W x 5.4H) carved as a hole.
+;   lining.inp  : structured swept shell, the 0.40 m lining (group 'lining',
+;                 NR=3 radial cells), filling the outer ring of that hole; the
+;                 inner 4.2 x 4.6 clearance stays OPEN.
+;
+; The lining OUTER wall coincides with the rock excavation wall -> joined by
+; `zone attach by-face` (lining is the structured side; the cavity wall is the
+; common surface).  Build stage ONLY: elastic placeholder cmodel, no property
+; values (real materials + K0/gravity/water/creep belong to the analysis stage).
+;
+; Box x[1250,1350] y[850,950] z[1700,1800].  Working dir = Tunnel_TX\02_Small.
+;   flac3d600_console.exe Small_Model.f3dat   (argv; no stdin; ends program quit)
+; ============================================================================
+
+model new
+model largestrain off
+model title 'Alishan #46 SMALL near-field -- rock(tet 6-layer) + lining(structured shell), Route B'
+
+program log-file 'Small_Model.log'
+program log on
+
+; --- import the rock tet (6 geology layers) --------------------------------
+zone import 'rock.inp'
+zone group 'layer1' slot 'type' range group 'layer1'
+zone group 'layer2' slot 'type' range group 'layer2'
+zone group 'layer3' slot 'type' range group 'layer3'
+zone group 'layer4' slot 'type' range group 'layer4'
+zone group 'layer5' slot 'type' range group 'layer5'
+zone group 'layer6' slot 'type' range group 'layer6'
+
+; --- import the structured lining shell (adds to the model) ----------------
+zone import 'lining.inp'
+zone group 'lining' slot 'type' range group 'lining'
+
+; --- bookkeeping slots ------------------------------------------------------
+zone group 'rock'    slot 'mat' range group 'lining' not
+zone group 'lining'  slot 'mat' range group 'lining'
+zone group 'm_small' slot 'model'
+zone gridpoint group 'gp_small'
+
+; --- build stage: elastic placeholder cmodel (params from site, NOT faked) --
+zone cmodel assign elastic
+
+; --- join the lining OUTER wall to the rock excavation wall -----------------
+;   by-face attaches coplanar-touching faces; the lining outer & rock cavity
+;   wall are the same horseshoe surface (both swept along centerline_model.csv
+;   with the up=z section frame).  tolerance-absolute 0.15 bridges the small
+;   build gap (< the 0.40 m lining thickness, so no cross-attach to the inner
+;   wall); tolerance-angle 25 covers the faceted curved crown.  snap on (default)
+;   pulls the slave gridpoints onto the common surface.  Range = tunnel envelope
+;   (excludes the 6 box exterior faces).
+zone attach by-face tolerance-absolute 0.15 tolerance-angle 25 ...
+     range position-x 1268 1306 position-z 1739 1757
+
+; --- skin + box boundary face groups ---------------------------------------
+zone face skin
+zone face group 'West1'   range position-x 1249 1251
+zone face group 'East1'   range position-x 1349 1351
+zone face group 'South1'  range position-y 849 851
+zone face group 'North1'  range position-y 949 951
+zone face group 'Bottom1' range position-z 1699 1701
+zone face group 'Top1'    range position-z 1799 1801
+
+model save 'Small_Model'
+
+; --- verify -----------------------------------------------------------------
+fish define small_check
+    local nz = 0
+    local lc = array.create(7)     ; 1..6 layers, 7 = lining
+    loop local i (1,7)
+        lc(i) = 0
+    end_loop
+    loop foreach local z zone.list
+        nz = nz + 1
+        local g = zone.group(z,'type')
+        loop local j (1,6)
+            if g = 'layer'+string(j) then
+                lc(j) = lc(j) + 1
+            end_if
+        end_loop
+        if g = 'lining' then
+            lc(7) = lc(7) + 1
+        end_if
+    end_loop
+    local ung = nz - lc(1)-lc(2)-lc(3)-lc(4)-lc(5)-lc(6)-lc(7)
+    local na = attach.num
+    local fl = array.create(1)
+    local st = file.open('Small_Model_check.txt',1,1)
+    fl(1) = 'zones '+string(nz);                       st = file.write(fl,1)
+    loop local k (1,6)
+        fl(1) = 'layer'+string(k)+' '+string(lc(k));   st = file.write(fl,1)
+    end_loop
+    fl(1) = 'lining '+string(lc(7));                   st = file.write(fl,1)
+    fl(1) = 'ungrouped '+string(ung);                  st = file.write(fl,1)
+    fl(1) = 'attach_points '+string(na);               st = file.write(fl,1)
+    st = file.close
+    io.out('=== SMALL_VERIFY ===')
+    io.out('zones_total = '+string(nz))
+    loop local kk (1,6)
+        io.out('  layer'+string(kk)+' = '+string(lc(kk)))
+    end_loop
+    io.out('  lining = '+string(lc(7)))
+    io.out('  ungrouped(type) = '+string(ung))
+    io.out('  attach_points = '+string(na))
+    io.out('SMALL_DONE')
+end
+[small_check]
+
+program log off
+program quit

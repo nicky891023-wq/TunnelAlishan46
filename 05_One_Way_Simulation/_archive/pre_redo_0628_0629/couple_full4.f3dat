@@ -1,0 +1,266 @@
+; couple_full4.f3dat -- Phase 2 FINAL production (Codex SMOKE-BP-VERDICT: APPROVED WITH CONDITIONS).
+;   Option C: drive cumulative stages 1-4 from settled cb_control0; deliver MID-TUNNEL y870-900 only;
+;   end bands (y<870 or >900) counted but EXCLUDED from interpretation (boundary artifact).
+;   Per stage: ramp(30x10, mid breaker) -> adaptive solve -> QA(mid cracks/sectors + mid reaction
+;   pb_ten>=1e10 + mid convergence) -> save cb_full_s{stg}. B' (y-cap radial uy=0) kept (harmless).
+program log-file 'couple_full4.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'cb_control0'
+fish automatic-create on
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain on
+model mechanical timestep scale
+call 'fracture_track.fis'
+[track_init]
+ball attribute damp 0.8
+call 'couple_qa_funcs.fis'
+model cycle 1
+[global dt_now = mech.timestep]
+[io.out('FULL-0 dt_now='+string(dt_now)+' base_cracks='+string(crack_num))]
+fish define hard_dt
+    if dt_now < 0.5 then
+        io.out('FULL-HARD-ABORT dt_now='+string(dt_now))
+        command
+            program quit
+        endcommand
+    end_if
+end
+[hard_dt]
+
+fish define wall_forces
+    loop foreach local w wall.list
+        local fc = wall.force.contact(w)
+        local m = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+        if wall.name(w) = 'wz_outter' then
+            global wzN = m
+        end_if
+        if wall.name(w) = 'w_inner' then
+            global wiN = m
+        end_if
+    end_loop
+end
+fish define maxbvel
+    local mv = 0.0
+    loop foreach local b ball.list
+        local v = ball.vel(b)
+        local mm = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+        if mm > mv then
+            mv = mv*0.0 + mm
+        end_if
+    end_loop
+    global mbv = mv
+end
+fish define mid_count(y0, y1)
+    local cx = 1297.0
+    local cz = 1747.5
+    global n_mid = 0       ; BLUE-LINE deliverable: y in band AND ang NOT in 250-320 (sidewalls+crown)
+    global n_corner = 0    ; fixed-corner band: y in band AND ang 250-320 = artifact (Codex)
+    global n_end = 0       ; y-end band = artifact
+    local ii = 0
+    loop while ii < 2
+        local nm = 'crack_tension'
+        if ii = 1 then
+            nm = 'crack_shear'
+        end_if
+        local d = dfn.find(nm)
+        if d # null then
+            loop foreach local fr dfn.fracturelist(d)
+                local p = fracture.pos(fr)
+                local yy = comp.y(p)
+                if yy >= y0 then
+                    if yy <= y1 then
+                        local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+                        if ang < 0.0 then
+                            ang = 360.0 + ang
+                        end_if
+                        local isc = 0
+                        if ang >= 250.0 then
+                            if ang <= 320.0 then
+                                isc = 1
+                            end_if
+                        end_if
+                        if isc = 1 then
+                            n_corner = n_corner + 1
+                        else
+                            n_mid = n_mid + 1
+                        end_if
+                    else
+                        n_end = n_end + 1
+                    end_if
+                else
+                    n_end = n_end + 1
+                end_if
+            end_loop
+        end_if
+        ii = ii + 1
+    end_loop
+end
+
+fish define load_targets
+    local lines = array.create(30000)
+    local st = file.open('couple_bnd_disp.txt',0,1)
+    local nn = file.read(lines, 30000)
+    st = file.close
+    global ndriven = 0
+    global nmiss = 0
+    local i = 2
+    loop while i <= nn
+        local gid = int(string.token(lines(i),1))
+        local g = gp.find(gid)
+        if g = null then
+            nmiss = nmiss + 1
+        else
+            gp.extra(g,1) = vector(string.token(lines(i),2),string.token(lines(i),3),string.token(lines(i),4))
+            gp.extra(g,2) = vector(string.token(lines(i),5),string.token(lines(i),6),string.token(lines(i),7))
+            gp.extra(g,3) = vector(string.token(lines(i),8),string.token(lines(i),9),string.token(lines(i),10))
+            gp.extra(g,4) = vector(string.token(lines(i),11),string.token(lines(i),12),string.token(lines(i),13))
+            gp.group(g,'drive') = 'driven'
+            local py2 = comp.y(gp.pos(g))
+            if py2 < 860.6 then
+                gp.group(g,'cap') = 'ycap'
+            end_if
+            if py2 > 909.4 then
+                gp.group(g,'cap') = 'ycap'
+            end_if
+            ndriven = ndriven + 1
+        end_if
+        i = i + 1
+    end_loop
+    io.out('FULL-LT driven='+string(ndriven)+' miss='+string(nmiss))
+end
+; --- Codex CRITICAL fix: clear STALE drive tags+extras from cb_control0 (created with 28304; we
+;     now drive the filtered 23530). Without this, the 4774 excluded near-tunnel y-cap gps keep their
+;     old 'driven' tag + gp.extra from cb_control0 and stay driven -> BC fix never applied. ---
+zone gridpoint free velocity
+fish define clear_drive
+    loop foreach local g gp.list
+        gp.group(g,'drive') = 'none'
+        gp.group(g,'cap') = 'none'
+        gp.extra(g,1) = vector(0,0,0)
+        gp.extra(g,2) = vector(0,0,0)
+        gp.extra(g,3) = vector(0,0,0)
+        gp.extra(g,4) = vector(0,0,0)
+    end_loop
+end
+[clear_drive]
+[load_targets]
+; count the ACTUAL 'driven' group (not file lines) -> hard abort if != 23530
+fish define count_actual
+    global nact = 0
+    loop foreach local g2 gp.list
+        if gp.group(g2,'drive') = 'driven' then
+            nact = nact + 1
+        end_if
+    end_loop
+end
+[count_actual]
+fish define hard_count
+    if nact # 23530 then
+        io.out('FULL-HARD-ABORT actual driven group='+string(nact)+' != 23530 (stale tags?)')
+        command
+            program quit
+        endcommand
+    end_if
+    io.out('FULL-COUNT-OK actual_driven='+string(nact)+' (file_loaded='+string(ndriven)+')')
+end
+[hard_count]
+zone gridpoint fix velocity range group 'driven' slot 'drive'
+zone gridpoint initialize displacement 0 0 0
+zone gridpoint initialize velocity 0 0 0
+ball attribute displacement multiply 0.0
+[global guard_base = crack_num]
+model cycle 200
+[maxbvel]
+fish define guard_check
+    if (crack_num - guard_base) > 0 then
+        io.out('FULL-GUARD-FAIL '+string(crack_num-guard_base))
+        command
+            program quit
+        endcommand
+    else
+        io.out('FULL-GUARD-PASS (maxbvel='+string(mbv)+')')
+    end_if
+end
+[guard_check]
+model calm
+[global base_cracks = crack_num]
+
+; --- per-stage ramp (cumulative target gp.extra(.,stg)), mid breaker y870-900 ---
+fish define ramp_stage(stg, nsub, ncyc)
+    global abort_flag = 0
+    mid_count(870.0, 900.0)
+    global prev_mid = n_mid
+    local j = 1
+    loop while j <= nsub
+        local subs_left = float(nsub-j+1)
+        loop foreach local g gp.list
+            if gp.group(g,'drive') = 'driven' then
+                local rem = gp.extra(g,stg) - gp.disp(g)
+                if gp.group(g,'cap') = 'ycap' then
+                    rem = vector(comp.x(rem), 0.0, comp.z(rem))
+                end_if
+                gp.vel(g) = rem/(subs_left*float(ncyc)*dt_now)
+            end_if
+        end_loop
+        command
+            model cycle [ncyc]
+        endcommand
+        mid_count(870.0, 900.0)
+        local dmid = n_mid - prev_mid
+        if dmid > 50 then
+            io.out('FULL-MID-BREAK s'+string(stg)+' dmid='+string(dmid)+'>50 at j='+string(j))
+            abort_flag = 1
+            exit
+        end_if
+        prev_mid = n_mid
+        j = j + 1
+    end_loop
+    io.out('   FULL-ramp s'+string(stg)+' done BLUELINE='+string(n_mid)+' corner(excl)='+string(n_corner)+' yend(excl)='+string(n_end)+' total='+string(crack_num-base_cracks)+' abort='+string(abort_flag))
+end
+
+fish define do_stage(stg)
+    ramp_stage(stg, 30, 10)
+    command
+        zone gridpoint fix velocity 0 0 0 range group 'driven' slot 'drive'
+    endcommand
+    if abort_flag = 0 then
+        command
+            model solve ratio-average 1e-4 cycles 3000
+        endcommand
+    end_if
+    maxbvel
+    wall_forces
+    mid_count(870.0, 900.0)
+    local pfx = 'full_s'+string(stg)
+    dump_cracks(pfx)
+    crack_sectors(pfx)
+    mid_wall_force(pfx, 870.0, 900.0)
+    mid_convergence(pfx, 870.0, 900.0)
+    io.out('FULL-RESULT-s'+string(stg)+' abort='+string(abort_flag)+' BLUELINE_cracks='+string(n_mid)+' fixedcorner_cracks(excl)='+string(n_corner)+' yend_cracks(excl)='+string(n_end)+' wz_total='+string(wzN)+'MN w_inner='+string(wiN)+'MN maxbvel='+string(mbv))
+    local sname = 'cb_full_s'+string(stg)
+    if abort_flag = 1 then
+        sname = 'cb_full_s'+string(stg)+'_BREAK'
+    end_if
+    command
+        model save [sname]
+    endcommand
+    io.out('FULL-SAVED s'+string(stg)+' -> '+sname)
+end
+
+fish define run_all
+    do_stage(1)
+    if abort_flag = 0 then
+        do_stage(2)
+    end_if
+    if abort_flag = 0 then
+        do_stage(3)
+    end_if
+    if abort_flag = 0 then
+        do_stage(4)
+    end_if
+end
+[run_all]
+[io.out('FULL4-DONE final_abort='+string(abort_flag))]
+program quit

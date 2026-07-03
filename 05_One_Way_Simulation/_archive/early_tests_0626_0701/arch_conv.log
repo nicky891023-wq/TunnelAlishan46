@@ -1,0 +1,81 @@
+**********************************************
+* Logging started at 週一 六月 29 22:58:32 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore 'cb_full_s4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週一 六月 29 18:38:42 2026
+Total Cycles: 27755  Super Cycles: 27755
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define arch_conv
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    global cu_up = 0.0
+   Def>    global cu_bot = 0.0
+   Def>    global mx_up = 0.0
+   Def>    global mx_bot = 0.0
+   Def>    local nu = 0
+   Def>    local nb = 0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local yy = comp.y(p)
+   Def>        if yy >= 870.0 then
+   Def>        if yy <= 900.0 then
+   Def>            local rx = comp.x(p)-cx
+   Def>            local rz = comp.z(p)-cz
+   Def>            local rr = math.sqrt(rx*rx+rz*rz)
+   Def>            if rr > 0.5 then
+   Def>                local ang = math.atan2(rz, rx)/math.degrad
+   Def>                if ang < 0.0 then
+   Def>                    ang = 360.0 + ang
+   Def>                end_if
+   Def>                local d = ball.disp(b)
+   Def>                local ri = -(comp.x(d)*rx/rr + comp.z(d)*rz/rr)
+   Def>                if ang <= 180.0 then
+   Def>                    cu_up = cu_up + ri
+   Def>                    nu = nu + 1
+   Def>                    if ri > mx_up then
+   Def>                        mx_up = ri
+   Def>                    end_if
+   Def>                else
+   Def>                    cu_bot = cu_bot + ri
+   Def>                    nb = nb + 1
+   Def>                    if ri > mx_bot then
+   Def>                        mx_bot = ri
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local mu = 0.0
+   Def>    local mb = 0.0
+   Def>    if nu > 0 then
+   Def>        mu = cu_up/float(nu)
+   Def>    end_if
+   Def>    if nb > 0 then
+   Def>        mb = cu_bot/float(nb)
+   Def>    end_if
+   Def>    io.out('ARCH-CONV upper(ang0-180,sidewall-crown) n='+string(nu)+' radial_inward mean='+string(mu*1000.0)+'mm max='+string(mx_up*1000.0)+'mm | bottom n='+string(nb)+' mean='+string(mb*1000.0)+'mm max='+string(mx_bot*1000.0)+'mm')
+   Def>end
+flac3d>[arch_conv]
+ARCH-CONV upper(ang0-180,sidewall-crown) n=159556 radial_inward mean=6.91815e-07mm max=0.147114mm | bottom n=111315 mean=1.54101e-06mm max=0.0851115mm
+0 (integer)
+flac3d>[io.out('ARCH-CONV-DONE')]
+ARCH-CONV-DONE
+0 (integer)
+flac3d>program quit

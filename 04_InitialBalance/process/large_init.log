@@ -1,0 +1,339 @@
+**********************************************
+* Logging started at 週四 七月 2 12:40:28 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../01_LargeModel/Large_Model'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週一 六月 22 13:58:42 2026
+Total Cycles: 0  Super Cycles: 0
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>call 'parameter.f3dat'
+flac3d>; ============================================================================
+flac3d>; parameter.f3dat -- Alishan #46 UNIFIED material parameters (Wade-ruled, 2026-06-22)
+flac3d>; Large(4-layer) / Small(6-layer) rock + lining(D7) + coupled PFC(D7 calib).
+flac3d>;
+flac3d>; Unification rulings (Wade):
+flac3d>;   * nu = 0.25 single value (static MC + creep bulk same source).
+flac3d>;   * E is PER-LAYER (not uniform): lithology-based within Hoek-Diederichs
+flac3d>;     rock-mass range (sandstone 3-8, sandshale 1-3 GPa; colluvium/weathered soft).
+flac3d>;     -> GSI/E have NO field data: per-layer E are documented-range central
+flac3d>;        judgements, GSI-basis TODO (D3). c/phi are GSI-reduced placeholders.
+flac3d>;   * Burgers creep: shear-maxwell = shear-kelvin = the layer ELASTIC G,
+flac3d>;     bulk = the layer elastic K  (instantaneous static==creep, no spurious soften).
+flac3d>;   * viscosity-maxwell eta_m = 6.0e15 Pa.s ; viscosity-kelvin eta_k = 2.4e13 Pa.s.
+flac3d>;   * creep threshold ratio = 0.6 :  q_th = 0.6*(c*cos(phi)+p'*sin(phi)).
+flac3d>;   * creep timestep = 600 s (fixed).
+flac3d>;   * layer4 sandshale(WET): c = 100 kPa, phi = 30 deg (Wade).
+flac3d>; Units: SI (Pa, kg/m3, deg, m, Pa.s).  Sign: compression negative.
+flac3d>; ============================================================================
+flac3d>
+flac3d>; ---------- global / environment ----------
+flac3d>[global nu     = 0.25]            ; single Poisson, all rock layers
+flac3d>[global K0     = 0.7]             ; lateral stress ratio (placeholder, no field basis)
+flac3d>[global grav   = 9.81]            ; m/s2
+flac3d>[global poro   = 0.1]             ; porosity n
+flac3d>[global satr   = 0.1]             ; saturation S
+flac3d>[global rho_w  = 1000.0]          ; water density kg/m3
+flac3d>[global pmb    = 1.0e-5]          ; FLAC mobility coeff m2/(Pa.s); near-tunnel x100
+flac3d>[global ten_r  = 1.0e5]           ; rock tension cutoff 100 kPa (all layers)
+flac3d>
+flac3d>; ---------- elastic helpers (nu=0.25 -> G=E/2.5, K=E/1.5) ----------
+flac3d>fish define _gk(ee)
+   Def>    _gk = ee / (2.0*(1.0+nu))     ; shear  G
+   Def>end
+flac3d>fish define _bk(ee)
+   Def>    _bk = ee / (3.0*(1.0-2.0*nu)) ; bulk   K
+   Def>end
+flac3d>
+flac3d>; ====================== LARGE model : 4 layers ======================
+flac3d>; layer1 colluvium / layer2 ssh / layer3 bedrock / layer4 basement
+flac3d>[global E_L_1 = 0.5e9 ]
+flac3d>[global co_L_1 = 1.9e5]
+flac3d>[global fr_L_1 = 29.1]
+flac3d>[global den_L_1 = 2150.0]
+flac3d>[global E_L_2 = 2.0e9 ]
+flac3d>[global co_L_2 = 2.9e5]
+flac3d>[global fr_L_2 = 35.1]
+flac3d>[global den_L_2 = 2630.0]
+flac3d>[global E_L_3 = 5.0e9 ]
+flac3d>[global co_L_3 = 4.7e5]
+flac3d>[global fr_L_3 = 44.3]
+flac3d>[global den_L_3 = 2600.0]
+flac3d>[global E_L_4 = 7.0e9 ]
+flac3d>[global co_L_4 = 8.0e5]
+flac3d>[global fr_L_4 = 51.5]
+flac3d>[global den_L_4 = 2600.0]
+flac3d>
+flac3d>; ====================== SMALL model : 6 layers ======================
+flac3d>; l1 weathered-ss / l2 ss+sandshale / l3 ss+shale / l4 sandshale(WET) / l5 sandshale / l6 basement
+flac3d>[global E_S_1 = 1.0e9 ]
+flac3d>[global co_S_1 = 1.9e5 ]
+flac3d>[global fr_S_1 = 29.1]
+flac3d>[global den_S_1 = 2600.0]
+flac3d>[global E_S_2 = 2.0e9 ]
+flac3d>[global co_S_2 = 2.9e5 ]
+flac3d>[global fr_S_2 = 35.1]
+flac3d>[global den_S_2 = 2630.0]
+flac3d>[global E_S_3 = 3.5e9 ]
+flac3d>[global co_S_3 = 4.7e5 ]
+flac3d>[global fr_S_3 = 44.3]
+flac3d>[global den_S_3 = 2630.0]
+flac3d>[global E_S_4 = 1.5e9 ]
+flac3d>[global co_S_4 = 1.0e5 ]   ; WET, Wade c100/phi30
+flac3d>[global fr_S_4 = 30.0]
+flac3d>[global den_S_4 = 2630.0]
+flac3d>[global E_S_5 = 3.0e9 ]
+flac3d>[global co_S_5 = 8.0e5 ]
+flac3d>[global fr_S_5 = 51.5]
+flac3d>[global den_S_5 = 2630.0]
+flac3d>[global E_S_6 = 7.0e9 ]
+flac3d>[global co_S_6 = 20.6e5]
+flac3d>[global fr_S_6 = 56.3]
+flac3d>[global den_S_6 = 2600.0]
+flac3d>
+flac3d>; ---------- creep (Burgers-Mohr) : per-layer G_m=G_k=G(E,nu), bulk=K(E,nu) ----------
+flac3d>[global eta_m = 6.0e15]           ; viscosity-maxwell (Wade)
+flac3d>[global eta_k = 2.4e13]           ; viscosity-kelvin (proven)
+flac3d>[global crp_threshold = 0.6]      ; q_th = 0.6*(c*cosphi + p'*sinphi)
+flac3d>[global crp_dt = 600.0]           ; creep timestep (s) (Wade)
+flac3d>
+flac3d>; ---------- lining (R.C. continuum, D7 DECIDED) ----------
+flac3d>[global shot_E   = 25e9]
+flac3d>[global shot_v   = 0.2]
+flac3d>[global shot_t   = 0.40]
+flac3d>[global shot_den = 2400.0]
+flac3d>[global shot_fc  = 41.2e6]
+flac3d>[global shot_ft  = 4.12e6]
+flac3d>
+flac3d>; ---------- coupled PFC lining BPM micro (D7 FINAL_CALIB) ----------
+flac3d>[global pfc_emod    = 9.65e9]     ; linear deformability
+flac3d>[global pfc_kratio  = 1.0]
+flac3d>[global pfc_pb_emod = 5.88e9]     ; parallel-bond deformability
+flac3d>[global pfc_pb_krat = 0.6]
+flac3d>[global pfc_pb_ten  = 2.10e6]     ; Pa
+flac3d>[global pfc_pb_coh  = 2.30e7]     ; Pa
+flac3d>[global pfc_pb_fa   = 25.0]       ; deg
+flac3d>[global pfc_bondgap = 0.03]       ; m  (= cmat proximity)
+flac3d>[global pfc_ball_den  = 2400.0]
+flac3d>[global pfc_ball_damp = 0.7]
+flac3d>[global pfc_fric      = 0.5]
+flac3d>[global pfc_bf_strong = 1.0e20]   ; ball-facet pb (unbreakable coupling, NOT material)
+flac3d>
+flac3d>[io.out('=== parameter.f3dat loaded : nu='+string(nu)+' K0='+string(K0)+' eta_m='+string(eta_m)+' crp_dt='+string(crp_dt)+' ===')]
+=== parameter.f3dat loaded : nu=0.25 K0=0.7 eta_m=6e+15 crp_dt=600 ===
+flac3d>model configure fluid
+--- Process fluid configured
+flac3d>model configure creep
+--- Process creep configured
+flac3d>model largestrain off
+flac3d>
+flac3d>; --- boundary face groups (skin: Top/Bottom/East/West/North/South) ---
+flac3d>zone face skin
+--- 34518 surface faces assigned names in slot Skin.
+flac3d>[io.out('LI-0 restored + skinned; zones='+string(zone.num)+' gps='+string(gp.num))]
+LI-0 restored + skinned; zones=511988 gps=95392
+flac3d>
+flac3d>; --- 4-layer Mohr-Coulomb (Tunnel_TX per-layer E, nu, c/phi/tension) ---
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone initialize density [den_L_1] range group 'layer1' slot 'type'
+--- density modified in 27379 zones.
+flac3d>zone initialize density [den_L_2] range group 'layer2' slot 'type'
+--- density modified in 59649 zones.
+flac3d>zone initialize density [den_L_3] range group 'layer3' slot 'type'
+--- density modified in 83804 zones.
+flac3d>zone initialize density [den_L_4] range group 'layer4' slot 'type'
+--- density modified in 341156 zones.
+flac3d>
+flac3d>; --- gravity + K0 initial stress + boundary velocity fix (position-range, proven) ---
+flac3d>model gravity 0 0 [-grav]
+--- Gravity has been set to: ( 0.0e+00 0.0e+00 -9.8e+00).
+flac3d>zone initialize-stresses ratio [K0]
+--- Stresses initialized in 511988 zones.
+flac3d>zone gridpoint fix velocity-x range position-x -1 1
+--- Fix velocity-x               specified in 1811 gridpoints.
+flac3d>zone gridpoint fix velocity-x range position-x 1999 2001
+--- Fix velocity-x               specified in 1286 gridpoints.
+flac3d>zone gridpoint fix velocity-y range position-y -101 -99
+--- Fix velocity-y      specified in 1789 gridpoints.
+flac3d>zone gridpoint fix velocity-y range position-y 1999 2001
+--- Fix velocity-y      specified in 852 gridpoints.
+flac3d>zone gridpoint fix velocity   range position-z 799 801
+--- Fix velocity         specified in 2026 gridpoints.
+flac3d>[io.out('LI-1 MC 4-layer + gravity + K0 + BC set')]
+LI-1 MC 4-layer + gravity + K0 + BC set
+0 (integer)
+flac3d>
+flac3d>; --- FLUID setup (260529 t03-f L41-52) : isotropic, W-110 dry water table ---
+flac3d>geometry import '../00_geometry_water/W-110.stl'
+--- 4549 nodes, 13434 edges, and 8886 polygons added to geometry set W-110.
+flac3d>zone fluid cmodel assign isotropic
+--- Fluid model changed to isotropic in 511988 zones.
+flac3d>zone fluid property permeability [pmb] porosity [poro]
+--- Property permeability set in 511988 zones using the Isotropic model.
+--- Property porosity set in 511988 zones using the Isotropic model.
+flac3d>zone gridpoint initialize fluid-modulus 2e9
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone initialize fluid-density [rho_w]
+--- fluid-density modified in 511988 zones.
+flac3d>zone water density [rho_w]
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 95392 gridpoints.
+flac3d>zone water set 'W-110'
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space 'W-110' count 0 direction (0,0,1)
+--- saturation modified in 64940 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range group 'Top'
+--- pore-pressure modified in 11740 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 17261 gridpoints.
+flac3d>zone face apply discharge 0 range group 'North' or 'South' or 'East' or 'West'
+--- Apply conditions added to 7410 faces.
+flac3d>[io.out('LI-2 fluid + W-110 water table set')]
+LI-2 fluid + W-110 water table set
+0 (integer)
+flac3d>
+flac3d>; --- VERIFY water table applied: pore-pressure range must be nonzero ---
+flac3d>fish define _verify_bc
+   Def>    local ppmin = 1e30
+   Def>    local ppmax = -1e30
+   Def>    loop foreach local z zone.list
+   Def>        local p = zone.pp(z)
+   Def>        if p < ppmin then
+   Def>            ppmin = p
+   Def>        end_if
+   Def>        if p > ppmax then
+   Def>            ppmax = p
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('LI-2b pore-pressure range ['+string(ppmin)+','+string(ppmax)+'] (nonzero max => W-110 applied)')
+   Def>end
+flac3d>[_verify_bc]
+LI-2b pore-pressure range [0,1.23522e+07] (nonzero max => W-110 applied)
+0 (integer)
+flac3d>
+flac3d>; --- FLUID steady-state solve (mech/creep off) (260529 t03-f L77-80) ---
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-1 or cycles 20000
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+     2508       2508 8.48809E-06 9.9935e-02 00:00:01:17     20000                        1.0000e-01             
+--- Limit ratio-flow of 1.0000e-01 met in process(es): fluid FluidModule (9.9935e-02).
+--- Cycling ended at: 2026-07-02 12:42:10
+flac3d>model save 'Large_Initial_fld'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/Large_Initial_fld.f3sav.
+flac3d>[io.out('LI-3 fluid steady-state solved (W-110)')]
+LI-3 fluid steady-state solved (W-110)
+0 (integer)
+flac3d>
+flac3d>; --- MECHANICAL elastic balance (fluid off, K0 re-init) (260529 t03-f L83-88) ---
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone initialize-stresses ratio [K0]
+--- Stresses initialized in 511988 zones.
+flac3d>model solve elastic
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+     2837       5345 9.9946e-06 00:00:04:10                      1.0000e-05             
+--- Limit ratio-average of 1.0000e-05 met in process(es): mech Zone Main (9.9946e-06),mech Struct Main (9.9946e-06).
+--- Cycling ended at: 2026-07-02 12:46:28
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+     1613       6958 9.9955e-06 00:00:02:24                      1.0000e-05             
+--- Limit ratio-average of 1.0000e-05 met in process(es): mech Zone Main (9.9955e-06),mech Struct Main (9.9955e-06).
+--- Cycling ended at: 2026-07-02 12:48:52
+flac3d>[io.out('LI-4 mechanical elastic balance solved')]
+LI-4 mechanical elastic balance solved
+0 (integer)
+flac3d>
+flac3d>; --- datum: zero velocity + displacement (260529 t03-f L91,97) ---
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize displacement 0 0 0
+--- displacement modified in 95392 gridpoints.
+flac3d>model save 'Large_Initial'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/Large_Initial.f3sav.
+flac3d>[io.out('LI-5 saved Large_Initial (260529-method: fluid W-110 -> solve elastic)')]
+LI-5 saved Large_Initial (260529-method: fluid W-110 -> solve elastic)
+0 (integer)
+flac3d>
+flac3d>; --- export near-field zone stresses for the small model (IDW source) ---
+flac3d>fish define export_large_stress
+   Def>    local fn = 'large_stress_for_small.dat'
+   Def>    local st = file.open(fn,1,1)
+   Def>    local fl = array.create(1)
+   Def>    fl(1) = 'zid x y z sxx syy szz sxy sxz syz'
+   Def>    st = file.write(fl,1)
+   Def>    local nout = 0
+   Def>    loop foreach local iz zone.list
+   Def>        local x = zone.pos.x(iz)
+   Def>        if x > 1150.0 then
+   Def>        if x < 1450.0 then
+   Def>        local y = zone.pos.y(iz)
+   Def>        if y > 750.0 then
+   Def>        if y < 1050.0 then
+   Def>        local z = zone.pos.z(iz)
+   Def>        if z > 1600.0 then
+   Def>        if z < 1900.0 then
+   Def>            fl(1) = string(zone.id(iz))+' '+string(x)+' '+string(y)+' '+string(z)+' '+string(zone.stress.xx(iz))+' '+string(zone.stress.yy(iz))+' '+string(zone.stress.zz(iz))+' '+string(zone.stress.xy(iz))+' '+string(zone.stress.xz(iz))+' '+string(zone.stress.yz(iz))
+   Def>            st = file.write(fl,1)
+   Def>            nout = nout + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('LI-6 exported '+string(nout)+' near-field zone stresses to '+fn)
+   Def>end
+flac3d>[export_large_stress]
+LI-6 exported 51658 near-field zone stresses to large_stress_for_small.dat
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週四 七月 2 12:48:56 2026
+**********************************************

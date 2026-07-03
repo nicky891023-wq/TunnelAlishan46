@@ -1,0 +1,39 @@
+program log-file 'query_couple_extent.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../04_InitialBalance/Couple_Initial'
+fish automatic-create on
+fish define _ext
+    local xmn=1e20
+    local xmx=-1e20
+    local ymn=1e20
+    local ymx=-1e20
+    local zmn=1e20
+    local zmx=-1e20
+    loop foreach local gp gp.list
+        local p = gp.pos(gp)
+        if comp.x(p)<xmn then
+            xmn=comp.x(p)
+        end_if
+        if comp.x(p)>xmx then
+            xmx=comp.x(p)
+        end_if
+        if comp.y(p)<ymn then
+            ymn=comp.y(p)
+        end_if
+        if comp.y(p)>ymx then
+            ymx=comp.y(p)
+        end_if
+        if comp.z(p)<zmn then
+            zmn=comp.z(p)
+        end_if
+        if comp.z(p)>zmx then
+            zmx=comp.z(p)
+        end_if
+    end_loop
+    io.out('QCE coupled domain x['+string(xmn)+','+string(xmx)+'] y['+string(ymn)+','+string(ymx)+'] z['+string(zmn)+','+string(zmx)+']')
+end
+[_ext]
+[io.out('QCE-DONE')]
+program quit

@@ -1,0 +1,90 @@
+; test_large_creep.f3dat -- SHORT verification that the validated threshold-creep recipe
+;   (per-stage + water density + 0.8) works on the LARGE tet model (4-layer, FREE topographic
+;   surface -> slope-walking risk). 1 stage low water, 10-day creep. Watch dmax (walking?),
+;   active count, velocity field. If stable -> build the full 4-stage 120-day large creep.
+;   Large model = ALL rock (no tunnel, no 'rock' group) -> threshold loops every zone.
+;   cwd = 05_One_Way_Simulation.
+program log-file 'test_large_creep.log'
+program log on
+model restore '../04_InitialBalance/Large_Initial'
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain off
+model configure creep
+fish automatic-create on
+[io.out('TLC0 restored Large_Initial; zones='+string(zone.num))]
+
+; --- burgers-mohr on the 4 large-model layers (slot 'type') ---
+zone cmodel assign burgers-mohr
+zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+model creep active off
+zone water density [rho_w]
+[io.out('TLC1 burgers-mohr 4-layer assigned + water density set')]
+
+fish define dmax_all
+    local dm = 0.0
+    loop foreach local gp gp.list
+        local d = gp.disp(gp)
+        local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+        if mm > dm then
+            dm = mm
+        end_if
+    end_loop
+    dmax_all = dm
+end
+[global threhold = 0.6]
+fish define do_threshold      ; large model = ALL rock (no 'rock' filter)
+    local na = 0
+    loop foreach local z zone.list
+        local s1 = -zone.stress.prin.x(z)
+        local s3 = -zone.stress.prin.z(z)
+        local pore = zone.pp(z)
+        local pmean = (s1 + s3)/2.0 - pore
+        local q = (s1 - s3)/2.0
+        local c = zone.prop(z,'cohesion')
+        local phi = zone.prop(z,'friction')
+        local q_th = threhold*c + pmean*threhold*math.tan(phi*math.degrad)
+        if q >= q_th then
+            zone.prop(z,'viscosity-kelvin')  = eta_k
+            zone.prop(z,'viscosity-maxwell') = eta_m
+            zone.group(z,'creep') = 'CreepActive'
+            na = na + 1
+        else
+            zone.prop(z,'viscosity-kelvin')  = 1e100
+            zone.prop(z,'viscosity-maxwell') = 1e100
+            zone.group(z,'creep') = 'CreepOff'
+        end_if
+    end_loop
+    global n_active = na
+end
+
+; === STAGE 1 test: LOW water z1724 -> re-eq -> threshold ONCE -> 10-day creep ===
+geometry import 'watertable_lower.stl'               ; STL terrain-following water table (NOT flat plane -- that walked)
+zone water set 'watertable_lower'
+model calm
+model solve elastic ratio-local 1e-3 cycles 30000   ; Wade rule: LARGE uses elastic (no slope walk)
+[io.out('TLC2 LOW STL-water ELASTIC re-eq done. dmax(reeq)='+string(dmax_all))]
+[setKstrains]
+[do_threshold]
+[setKstrains]
+zone gridpoint initialize displacement 0 0 0
+zone gridpoint initialize velocity 0 0 0
+[io.out('TLC-S1eq active='+string(n_active)+' of '+string(zone.num)+' ('+string(100.0*float(n_active)/float(zone.num))+'%)')]
+model creep active on
+model creep timestep fix [crp_dt]
+fish define run_test(d0, d1, dd)
+    local d = d0 + dd
+    loop while d <= (d1 + 0.1)
+        command
+            model solve time-total [d*86400.0]
+        endcommand
+        io.out('   TLCcreep day='+string(d)+' dmax='+string(dmax_all)+' m  (active='+string(n_active)+')')
+        d = d + dd
+    endloop
+end
+[run_test(0.0, 10.0, 2.0)]
+[io.out('TLC-DONE large creep short test; final dmax='+string(dmax_all)+' (bounded=OK, 1e14=walking)')]
+program log off
+program quit

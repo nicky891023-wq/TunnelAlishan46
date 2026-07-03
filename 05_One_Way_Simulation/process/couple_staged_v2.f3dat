@@ -1,0 +1,255 @@
+; ============================================================================
+; couple_staged_v2.f3dat -- COUPLED model 11-stage lining response (Phase C, 2026-07-03).
+;   Restores Couple_Initial_free (v6: single elastic rock E_eq, feet anchored, FREE
+;   inner face, w_860/w_910 platens kept), then per stage k = 1..11:
+;     (1) read cpl_resid_sNN.txt (small-model couple-box boundary residual, Kabsch-
+;         cleaned, strain-gate-passed) -> IDW targets on 'driven' outer-boundary gps
+;     (2) RAMP: NSUB x NCYC velocity increments + model calm (SleevedTriaxial rampUp
+;         pattern; quasi-static, model mechanical timestep scale => dt=1)
+;     (3) HOLD (vel=0) -> model solve ratio-average 1e-4 (official coupled criterion)
+;     (4) OUTPUT: cracks->DFN dump, wall reactions, mid-band lining force, mid-band
+;         convergence (blue-line vs corner), crack sectors, p(theta,y) map, bore-wall
+;         disp (gate G2 vs small model)
+;   CONTROL-0 gate first: zero-target ramp must give 0 cracks + ~0 drift (G5).
+;   Crack tracking: proven fracture_track fis (bond_break event -> crack_tension/
+;   crack_shear DFNs). Checkpoint saves: stage 1 (dry), 6 (wet peak), 11 (final).
+;   cwd = 05 root.  Runtime est. 12-18 hr.
+; ============================================================================
+program log-file 'process/couple_staged_v2.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../04_InitialBalance/process/couple_solve/Couple_Initial_free'
+model largestrain on
+model mechanical timestep scale
+fish automatic-create on
+call 'process/fracture_track_v2.fis'
+call 'process/couple_qa_v2.fis'
+[global NSUB = 10]
+[global NCYC = 150]
+[io.out('CS-0 restored Couple_Initial_free: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num))]
+
+; ---- crack tracking on (resets DFNs, registers bond_break callback) ----
+[track_init]
+; datum: ball + gp displacements zeroed at staged-run start
+ball attribute displacement multiply 0.0
+zone gridpoint initialize displacement (0,0,0)
+
+; ---- tag + fix the driven outer-boundary gps (6 couple-box faces, +-0.3 m) ----
+fish define tag_cpl_driven
+    global ndriven = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local x = comp.x(p)
+        local y = comp.y(p)
+        local z = comp.z(p)
+        local onb = 0
+        if math.abs(x-1277.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(x-1317.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(y-860.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(y-910.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(z-1728.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(z-1768.0) < 0.3 then
+            onb = 1
+        end_if
+        if onb = 1 then
+            gp.group(g,'drive') = 'driven'
+            gp.vel(g) = vector(0.0,0.0,0.0)
+            gp.fix(g) = vector(1,1,1)
+            ndriven = ndriven + 1
+        end_if
+    end_loop
+    io.out('CS-driven outer-boundary gps tagged+fixed='+string(ndriven))
+end
+[tag_cpl_driven]
+
+; ---- drive-file reader (x y z dx dy dz, 1 header line) ----
+fish define read_drive(fname)
+    local arr = array.create(1)
+    local st = file.open(fname,0,1)
+    ndata = 0
+    st = file.read(arr,1)
+    st = file.read(arr,1)
+    loop while st = 0
+        ndata = ndata + 1
+        st = file.read(arr,1)
+    end_loop
+    st = file.close
+    xdat  = array.create(ndata)
+    ydat  = array.create(ndata)
+    zdat  = array.create(ndata)
+    uxdat = array.create(ndata)
+    uydat = array.create(ndata)
+    uzdat = array.create(ndata)
+    st = file.open(fname,0,1)
+    st = file.read(arr,1)
+    local i = 0
+    st = file.read(arr,1)
+    loop while st = 0
+        i = i + 1
+        local ln = arr(1)
+        xdat(i)  = string.token(ln,1)
+        ydat(i)  = string.token(ln,2)
+        zdat(i)  = string.token(ln,3)
+        uxdat(i) = string.token(ln,4)
+        uydat(i) = string.token(ln,5)
+        uzdat(i) = string.token(ln,6)
+        st = file.read(arr,1)
+    end_loop
+    st = file.close
+    io.out('   CS-read '+fname+' ndata='+string(ndata))
+end
+
+; ---- store per-gp IDW targets in gp.extra(1..3) (radius 6 m, 1/d^2, nearest fallback) ----
+fish define set_targets(radius)
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            local p = gp.pos(g)
+            local x = comp.x(p)
+            local y = comp.y(p)
+            local z = comp.z(p)
+            local sw = 0.0
+            local sux = 0.0
+            local suy = 0.0
+            local suz = 0.0
+            local dmin = 1e30
+            local i = 1
+            loop while i <= ndata
+                local dx = x - xdat(i)
+                local dy = y - ydat(i)
+                local dz = z - zdat(i)
+                local d2 = dx*dx + dy*dy + dz*dz
+                if d2 <= radius*radius then
+                    local w = 1.0/math.max(d2,1e-10)
+                    sw = sw + w
+                    sux = sux + uxdat(i)*w
+                    suy = suy + uydat(i)*w
+                    suz = suz + uzdat(i)*w
+                end_if
+                if d2 < dmin then
+                    dmin = d2
+                    global inear = i
+                end_if
+                i = i + 1
+            end_loop
+            if sw > 0.0 then
+                gp.extra(g,1) = sux/sw
+                gp.extra(g,2) = suy/sw
+                gp.extra(g,3) = suz/sw
+            else
+                gp.extra(g,1) = uxdat(inear)
+                gp.extra(g,2) = uydat(inear)
+                gp.extra(g,3) = uzdat(inear)
+            end_if
+        end_if
+    end_loop
+end
+
+; ---- one ramp substep: vel = remaining_delta / (subs_left * NCYC * dt=1) ----
+fish define set_sub_vel(subs_left)
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            local d = gp.disp(g)
+            local den = float(subs_left)*float(NCYC)
+            gp.vel(g) = vector((gp.extra(g,1)-comp.x(d))/den, (gp.extra(g,2)-comp.y(d))/den, (gp.extra(g,3)-comp.z(d))/den)
+        end_if
+    end_loop
+end
+fish define hold_driven
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            gp.vel(g) = vector(0.0,0.0,0.0)
+        end_if
+    end_loop
+end
+fish define ball_dmax
+    local dm = 0.0
+    loop foreach local b ball.list
+        local d = ball.disp(b)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > dm then
+            dm = m
+        end_if
+    end_loop
+    ball_dmax = dm
+end
+
+; ---- per-stage driver ----
+fish define cs_stage(stg, fname)
+    read_drive(fname)
+    set_targets(6.0)
+    local isub = 0
+    loop while isub < NSUB
+        isub = isub + 1
+        set_sub_vel(NSUB - isub + 1)
+        command
+            model cycle [NCYC]
+            model calm
+        endcommand
+    end_loop
+    hold_driven
+    command
+        model solve ratio-average 1e-4 or cycles 8000
+    endcommand
+    local pfx = 'process/cs_s'+string(stg)
+    dump_cracks(pfx)
+    qa_walls(pfx, stg)
+    mid_wall_force(pfx, 870.0, 900.0)
+    mid_convergence(pfx, 870.0, 900.0)
+    crack_sectors(pfx)
+    export_pmap(pfx+'_pmap.txt')
+    export_cwall(pfx+'_cwall.txt')
+    io.out('CS-CHK stg'+string(stg)+' cracks_t='+string(ncr_t)+' cracks_s='+string(ncr_s)+' ball_dmax='+string(ball_dmax))
+end
+
+; ============================================================================
+; CONTROL-0 (gate G5): zero-target ramp -> must give 0 cracks + ~0 drift
+; ============================================================================
+fish define zero_targets
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            gp.extra(g,1) = 0.0
+            gp.extra(g,2) = 0.0
+            gp.extra(g,3) = 0.0
+        end_if
+    end_loop
+end
+[zero_targets]
+[set_sub_vel(2)]
+model cycle 150
+model calm
+[hold_driven]
+model solve ratio-average 1e-4 or cycles 3000
+[dump_cracks('process/cs_control0')]
+[io.out('CS-CONTROL0 GATE: cracks='+string(ncr_t+ncr_s)+' (must be 0) ball_drift='+string(ball_dmax)+' m (must be <5e-4)')]
+
+; ============================================================================
+; 11 stages (cumulative residual targets from the small model)
+; ============================================================================
+[cs_stage(1,'process/cpl_resid_s01.txt')]
+model save 'output/cs_01'
+[cs_stage(2,'process/cpl_resid_s02.txt')]
+[cs_stage(3,'process/cpl_resid_s03.txt')]
+[cs_stage(4,'process/cpl_resid_s04.txt')]
+[cs_stage(5,'process/cpl_resid_s05.txt')]
+[cs_stage(6,'process/cpl_resid_s06.txt')]
+model save 'output/cs_06'
+[cs_stage(7,'process/cpl_resid_s07.txt')]
+[cs_stage(8,'process/cpl_resid_s08.txt')]
+[cs_stage(9,'process/cpl_resid_s09.txt')]
+[cs_stage(10,'process/cpl_resid_s10.txt')]
+[cs_stage(11,'process/cpl_resid_s11.txt')]
+model save 'output/cs_11'
+[io.out('CS-DONE 11-stage coupled lining response complete')]
+program log off
+program quit

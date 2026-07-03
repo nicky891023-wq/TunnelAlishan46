@@ -1,0 +1,702 @@
+**********************************************
+* Logging started at 週六 六月 27 00:12:37 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; (1) Restore the CLEAN coupled base + parameters + environment.
+flac3d>; ----------------------------------------------------------------------------
+flac3d>model restore '../../03_CoupleModel/Couple_Model'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週三 六月 24 14:33:54 2026
+Total Cycles: 0  Super Cycles: 0
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>call '../parameter.f3dat'
+flac3d>; ============================================================================
+flac3d>; parameter.f3dat -- Alishan #46 UNIFIED material parameters (Wade-ruled, 2026-06-22)
+flac3d>; Large(4-layer) / Small(6-layer) rock + lining(D7) + coupled PFC(D7 calib).
+flac3d>;
+flac3d>; Unification rulings (Wade):
+flac3d>;   * nu = 0.25 single value (static MC + creep bulk same source).
+flac3d>;   * E is PER-LAYER (not uniform): lithology-based within Hoek-Diederichs
+flac3d>;     rock-mass range (sandstone 3-8, sandshale 1-3 GPa; colluvium/weathered soft).
+flac3d>;     -> GSI/E have NO field data: per-layer E are documented-range central
+flac3d>;        judgements, GSI-basis TODO (D3). c/phi are GSI-reduced placeholders.
+flac3d>;   * Burgers creep: shear-maxwell = shear-kelvin = the layer ELASTIC G,
+flac3d>;     bulk = the layer elastic K  (instantaneous static==creep, no spurious soften).
+flac3d>;   * viscosity-maxwell eta_m = 6.0e15 Pa.s ; viscosity-kelvin eta_k = 2.4e13 Pa.s.
+flac3d>;   * creep threshold ratio = 0.6 :  q_th = 0.6*(c*cos(phi)+p'*sin(phi)).
+flac3d>;   * creep timestep = 600 s (fixed).
+flac3d>;   * layer4 sandshale(WET): c = 100 kPa, phi = 30 deg (Wade).
+flac3d>; Units: SI (Pa, kg/m3, deg, m, Pa.s).  Sign: compression negative.
+flac3d>; ============================================================================
+flac3d>
+flac3d>; ---------- global / environment ----------
+flac3d>[global nu     = 0.25]            ; single Poisson, all rock layers
+flac3d>[global K0     = 0.7]             ; lateral stress ratio (placeholder, no field basis)
+flac3d>[global grav   = 9.81]            ; m/s2
+flac3d>[global poro   = 0.1]             ; porosity n
+flac3d>[global satr   = 0.1]             ; saturation S
+flac3d>[global rho_w  = 1000.0]          ; water density kg/m3
+flac3d>[global pmb    = 1.0e-5]          ; FLAC mobility coeff m2/(Pa.s); near-tunnel x100
+flac3d>[global ten_r  = 1.0e5]           ; rock tension cutoff 100 kPa (all layers)
+flac3d>
+flac3d>; ---------- elastic helpers (nu=0.25 -> G=E/2.5, K=E/1.5) ----------
+flac3d>fish define _gk(ee)
+   Def>    _gk = ee / (2.0*(1.0+nu))     ; shear  G
+   Def>end
+flac3d>fish define _bk(ee)
+   Def>    _bk = ee / (3.0*(1.0-2.0*nu)) ; bulk   K
+   Def>end
+flac3d>
+flac3d>; ====================== LARGE model : 4 layers ======================
+flac3d>; layer1 colluvium / layer2 ssh / layer3 bedrock / layer4 basement
+flac3d>[global E_L_1 = 0.5e9 ]
+flac3d>[global co_L_1 = 1.9e5]
+flac3d>[global fr_L_1 = 29.1]
+flac3d>[global den_L_1 = 2150.0]
+flac3d>[global E_L_2 = 2.0e9 ]
+flac3d>[global co_L_2 = 2.9e5]
+flac3d>[global fr_L_2 = 35.1]
+flac3d>[global den_L_2 = 2630.0]
+flac3d>[global E_L_3 = 5.0e9 ]
+flac3d>[global co_L_3 = 4.7e5]
+flac3d>[global fr_L_3 = 44.3]
+flac3d>[global den_L_3 = 2600.0]
+flac3d>[global E_L_4 = 7.0e9 ]
+flac3d>[global co_L_4 = 8.0e5]
+flac3d>[global fr_L_4 = 51.5]
+flac3d>[global den_L_4 = 2600.0]
+flac3d>
+flac3d>; ====================== SMALL model : 6 layers ======================
+flac3d>; l1 weathered-ss / l2 ss+sandshale / l3 ss+shale / l4 sandshale(WET) / l5 sandshale / l6 basement
+flac3d>[global E_S_1 = 1.0e9 ]
+flac3d>[global co_S_1 = 1.9e5 ]
+flac3d>[global fr_S_1 = 29.1]
+flac3d>[global den_S_1 = 2600.0]
+flac3d>[global E_S_2 = 2.0e9 ]
+flac3d>[global co_S_2 = 2.9e5 ]
+flac3d>[global fr_S_2 = 35.1]
+flac3d>[global den_S_2 = 2630.0]
+flac3d>[global E_S_3 = 3.5e9 ]
+flac3d>[global co_S_3 = 4.7e5 ]
+flac3d>[global fr_S_3 = 44.3]
+flac3d>[global den_S_3 = 2630.0]
+flac3d>[global E_S_4 = 1.5e9 ]
+flac3d>[global co_S_4 = 1.0e5 ]   ; WET, Wade c100/phi30
+flac3d>[global fr_S_4 = 30.0]
+flac3d>[global den_S_4 = 2630.0]
+flac3d>[global E_S_5 = 3.0e9 ]
+flac3d>[global co_S_5 = 8.0e5 ]
+flac3d>[global fr_S_5 = 51.5]
+flac3d>[global den_S_5 = 2630.0]
+flac3d>[global E_S_6 = 7.0e9 ]
+flac3d>[global co_S_6 = 20.6e5]
+flac3d>[global fr_S_6 = 56.3]
+flac3d>[global den_S_6 = 2600.0]
+flac3d>
+flac3d>; ---------- creep (Burgers-Mohr) : per-layer G_m=G_k=G(E,nu), bulk=K(E,nu) ----------
+flac3d>[global eta_m = 6.0e15]           ; viscosity-maxwell (Wade)
+flac3d>[global eta_k = 2.4e13]           ; viscosity-kelvin (proven)
+flac3d>[global crp_threshold = 0.6]      ; q_th = 0.6*(c*cosphi + p'*sinphi)
+flac3d>[global crp_dt = 600.0]           ; creep timestep (s) (Wade)
+flac3d>
+flac3d>; ---------- lining (R.C. continuum, D7 DECIDED) ----------
+flac3d>[global shot_E   = 25e9]
+flac3d>[global shot_v   = 0.2]
+flac3d>[global shot_t   = 0.40]
+flac3d>[global shot_den = 2400.0]
+flac3d>[global shot_fc  = 41.2e6]
+flac3d>[global shot_ft  = 4.12e6]
+flac3d>
+flac3d>; ---------- coupled PFC lining BPM micro (D7 FINAL_CALIB) ----------
+flac3d>[global pfc_emod    = 9.65e9]     ; linear deformability
+flac3d>[global pfc_kratio  = 1.0]
+flac3d>[global pfc_pb_emod = 5.88e9]     ; parallel-bond deformability
+flac3d>[global pfc_pb_krat = 0.6]
+flac3d>[global pfc_pb_ten  = 2.10e6]     ; Pa
+flac3d>[global pfc_pb_coh  = 2.30e7]     ; Pa
+flac3d>[global pfc_pb_fa   = 25.0]       ; deg
+flac3d>[global pfc_bondgap = 0.03]       ; m  (= cmat proximity)
+flac3d>[global pfc_ball_den  = 2400.0]
+flac3d>[global pfc_ball_damp = 0.7]
+flac3d>[global pfc_fric      = 0.5]
+flac3d>[global pfc_bf_strong = 1.0e20]   ; ball-facet pb (unbreakable coupling, NOT material)
+flac3d>
+flac3d>[io.out('=== parameter.f3dat loaded : nu='+string(nu)+' K0='+string(K0)+' eta_m='+string(eta_m)+' crp_dt='+string(crp_dt)+' ===')]
+=== parameter.f3dat loaded : nu=0.25 K0=0.7 eta_m=6e+15 crp_dt=600 ===
+flac3d>model largestrain on
+flac3d>[global ovb = -1.40e6]
+flac3d>[io.out('V5-0 restored Couple_Model: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num)+' wall_facets='+string(wall.facet.num))]
+V5-0 restored Couple_Model: zones=424908 balls=456302 walls=4 wall_facets=52837
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; (2) Rock = ELASTIC for the initial balance (per-layer E_S_n, nu).
+flac3d>; ----------------------------------------------------------------------------
+flac3d>zone cmodel assign elastic
+flac3d>zone property young [E_S_2] poisson [nu] range group 'layer2' slot 'type'
+--- Property young set in 1704 zones using the elastic model.
+--- Property poisson set in 1704 zones using the elastic model.
+flac3d>zone property young [E_S_3] poisson [nu] range group 'layer3' slot 'type'
+--- Property young set in 28121 zones using the elastic model.
+--- Property poisson set in 28121 zones using the elastic model.
+flac3d>zone property young [E_S_4] poisson [nu] range group 'layer4' slot 'type'
+--- Property young set in 228014 zones using the elastic model.
+--- Property poisson set in 228014 zones using the elastic model.
+flac3d>zone property young [E_S_5] poisson [nu] range group 'layer5' slot 'type'
+--- Property young set in 158192 zones using the elastic model.
+--- Property poisson set in 158192 zones using the elastic model.
+flac3d>zone property young [E_S_6] poisson [nu] range group 'layer6' slot 'type'
+--- Property young set in 8877 zones using the elastic model.
+--- Property poisson set in 8877 zones using the elastic model.
+flac3d>; rock DENSITY per layer (Couple_Model only set ball density; rock needs it for gravity) --
+flac3d>zone initialize density [den_S_2] range group 'layer2' slot 'type'
+--- density modified in 1704 zones.
+flac3d>zone initialize density [den_S_3] range group 'layer3' slot 'type'
+--- density modified in 28121 zones.
+flac3d>zone initialize density [den_S_4] range group 'layer4' slot 'type'
+--- density modified in 228014 zones.
+flac3d>zone initialize density [den_S_5] range group 'layer5' slot 'type'
+--- density modified in 158192 zones.
+flac3d>zone initialize density [den_S_6] range group 'layer6' slot 'type'
+--- density modified in 8877 zones.
+flac3d>[io.out('V5-1 rock elastic + density assigned')]
+V5-1 rock elastic + density assigned
+0 (integer)
+flac3d>
+flac3d>; ============================================================================
+flac3d>; (3) BOND THE LINING -- THE CRITICAL STEP.  Force-free recipe replicated from
+flac3d>;     build_couple_cc_build.f3dat L172-208, WITH ONE DIFFERENCE: ball-facet is bonded
+flac3d>;     (1e20 unbreakable) ONLY on 'wz_outter'; ball-facet on the RIGID walls stays
+flac3d>;     frictional (plain linear).
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; (3a) SETTLE the raw-distributed overlaps (rock frozen), linear cmat, density-scaled.
+flac3d>;      Couple_Model balls are freshly distributed/inset-clipped (never settled), so we
+flac3d>;      settle first -- exactly as build_couple_cc L172-181.
+flac3d>; ----------------------------------------------------------------------------
+flac3d>zone gridpoint fix velocity                 ; freeze rock during the ball settle
+--- Fix velocity         specified in 441728 gridpoints.
+flac3d>model mechanical timestep scale             ; density scaling (stability)
+--- density scaling activated in mechanical process with a target timestep of 1.
+flac3d>cmat default type 'ball-ball'  model linear method deformability emod [pfc_emod] kratio [pfc_kratio] property fric [pfc_fric]
+flac3d>cmat default type 'ball-facet' model linear method deformability emod [pfc_emod] kratio [pfc_kratio] property fric [pfc_fric]
+flac3d>cmat apply
+flac3d>model calm
+flac3d>model cycle 3000
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     3000       3000 00:00:51:17      3000                        
+--- Global cycle limit of 3000 met.
+--- Cycling ended at: 2026-06-27 01:04:04
+flac3d>model calm
+flac3d>[io.out('V5-3a balls settled: balls='+string(ball.num)+' contacts='+string(contact.num))]
+V5-3a balls settled: balls=456302 contacts=1025766
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; (3b) Promote ALL contacts to linearpbond + instantiate contacts (model cycle 1),
+flac3d>;      then TAG every ball-facet contact by its parent wall name into a contact group:
+flac3d>;        - 'wz_outter'                  -> group 'bf_couple'  (will be bonded 1e20)
+flac3d>;        - w_inner / w_860 / w_910 etc. -> group 'bf_rigid'   (stays frictional linear)
+flac3d>;      Verified intrinsic chain (PFC "callbacks" tutorial, EXACT pattern):
+flac3d>;        type.pointer(c) == 'ball-facet'      ; it is a ball-facet contact
+flac3d>;        wfp = contact.end2(c)                ; end2 = the WALL-FACET piece (end1 = ball)
+flac3d>;        w   = wall.facet.wall(wfp)           ; the parent wall pointer
+flac3d>;        wall.name(w)                         ; the wall name string
+flac3d>; ----------------------------------------------------------------------------
+flac3d>cmat default type 'ball-ball'  model linearpbond method deformability emod [pfc_emod] kratio [pfc_kratio] proximity [pfc_bondgap] property fric [pfc_fric]
+flac3d>cmat default type 'ball-facet' model linearpbond method deformability emod [pfc_emod] kratio [pfc_kratio] proximity [pfc_bondgap] property fric [pfc_fric]
+flac3d>cmat apply
+flac3d>model cycle 1                               ; instantiate / refresh contacts so the loop sees them
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+        1       3001 00:00:00:13         1                        
+--- Global cycle limit of 1 met.
+--- Cycling ended at: 2026-06-27 01:04:20
+flac3d>
+flac3d>fish define tag_bf_contacts
+   Def>    local n_couple = 0
+   Def>    local n_rigid  = 0
+   Def>    local n_other  = 0
+   Def>    loop foreach local c contact.list
+   Def>        if type.pointer(c) = 'ball-facet' then
+   Def>            local wfp = contact.end2(c)          ; end2 = wall-facet piece (end1 = ball)
+   Def>            local w   = wall.facet.wall(wfp)
+   Def>            local wn  = wall.name(w)
+   Def>            if wn = 'wz_outter' then
+   Def>                contact.group(c) = 'bf_couple'        ; Default slot (contacts are fresh, no prior groups)
+   Def>                n_couple = n_couple + 1
+   Def>            else
+   Def>                contact.group(c) = 'bf_rigid'         ; Default slot
+   Def>                n_rigid = n_rigid + 1
+   Def>            end_if
+   Def>        else
+   Def>            n_other = n_other + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('V5-3b TAG ball-facet: bf_couple(wz_outter)='+string(n_couple)+' bf_rigid(w_inner/860/910)='+string(n_rigid)+' | non-ballfacet contacts='+string(n_other))
+   Def>end
+flac3d>[tag_bf_contacts]
+V5-3b TAG ball-facet: bf_couple(wz_outter)=62556 bf_rigid(w_inner/860/910)=55752 | non-ballfacet contacts=907467
+0 (integer)
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; (3c) BOND.
+flac3d>;   ball-ball : linearpbond, breakable D7 lining (pb_ten/pb_coh/pb_fa from parameter).
+flac3d>;   ball-facet on 'bf_couple' (= wz_outter ONLY): linearpbond, 1e20 UNBREAKABLE coupling.
+flac3d>;   ball-facet on 'bf_rigid'  (= w_inner/w_860/w_910): RESET to plain linear (FRICTIONAL,
+flac3d>;       NO parallel bond) -- the lining slides against the rigid confining walls.
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; -- SAFETY (match CC recipe): explicitly promote the to-be-bonded contacts to linearpbond
+flac3d>;    + set linear deformability, in case cmat apply did not fully promote existing contacts --
+flac3d>contact model linearpbond range contact type 'ball-ball'
+--- Assigned model linearpbond to 4359038 contacts.
+flac3d>contact model linearpbond range contact group 'bf_couple'
+--- Assigned model linearpbond to 62556 contacts.
+flac3d>contact method deformability emod [pfc_emod] kratio [pfc_kratio] range contact type 'ball-ball'
+--- Method deformability applied to 4359038 contacts in range.
+flac3d>contact method deformability emod [pfc_emod] kratio [pfc_kratio] range contact group 'bf_couple'
+--- Method deformability applied to 62556 contacts in range.
+flac3d>
+flac3d>; -- ball-ball: parallel-bond deformability, bond within gap, breakable strengths --
+flac3d>contact method pb_deform emod [pfc_pb_emod] kratio [pfc_pb_krat] range contact type 'ball-ball'
+--- Method pb_deformability applied to 4359038 contacts in range.
+flac3d>contact method bond gap [pfc_bondgap] range contact type 'ball-ball'
+--- Method bond applied to 4359038 contacts in range.
+flac3d>contact property pb_ten [pfc_pb_ten] pb_coh [pfc_pb_coh] pb_fa [pfc_pb_fa] range contact type 'ball-ball'
+--- Property pb_coh set in 4359038 contacts in range.
+--- Property pb_fa set in 4359038 contacts in range.
+--- Property pb_ten set in 4359038 contacts in range.
+flac3d>
+flac3d>; -- ball-facet coupling on wz_outter ONLY: 1e20 unbreakable parallel bond --
+flac3d>contact method pb_deform emod [pfc_pb_emod] kratio [pfc_pb_krat] range contact group 'bf_couple'
+--- Method pb_deformability applied to 62556 contacts in range.
+flac3d>contact method bond gap [pfc_bondgap] range contact group 'bf_couple'
+--- Method bond applied to 62556 contacts in range.
+flac3d>contact property pb_ten [pfc_bf_strong] pb_coh [pfc_bf_strong] pb_fa [pfc_pb_fa] range contact group 'bf_couple'
+--- Property pb_coh set in 62556 contacts in range.
+--- Property pb_fa set in 62556 contacts in range.
+--- Property pb_ten set in 62556 contacts in range.
+flac3d>
+flac3d>; -- ball-facet on the RIGID walls: revert to plain linear (frictional, NO bond) --
+flac3d>contact model linear range contact group 'bf_rigid'
+--- Assigned model linear to 55752 contacts.
+flac3d>contact method deformability emod [pfc_emod] kratio [pfc_kratio] range contact group 'bf_rigid'
+--- Method deformability applied to 55752 contacts in range.
+flac3d>
+flac3d>; -- friction everywhere (linear part of all contacts) --
+flac3d>contact property fric [pfc_fric]
+--- Property fric set in 5280119 contacts in range.
+flac3d>[io.out('V5-3c BONDED: ball-ball D7 breakable + ball-facet 1e20 unbreakable on wz_outter; rigid-wall ball-facet kept frictional (plain linear)')]
+V5-3c BONDED: ball-ball D7 breakable + ball-facet 1e20 unbreakable on wz_outter; rigid-wall ball-facet kept frictional (plain linear)
+0 (integer)
+flac3d>
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; (3d) FORCE-FREE install (proven lin_mode 1).  Done ONCE here at ZERO in-situ stress.
+flac3d>;      The solve (step 6) does NOT re-zero forces -- see A2 note.
+flac3d>; ----------------------------------------------------------------------------
+flac3d>model calm
+flac3d>ball fix velocity spin
+--- Fixity conditions changed in 456302 balls.
+flac3d>ball attribute force-contact multiply 0.0
+--- Attribute force-contact initialized in 456302 ball(s).
+flac3d>ball attribute moment-contact multiply 0.0
+--- Attribute moment-contact initialized in 456302 ball(s).
+flac3d>contact property lin_force 0.0 0.0 0.0 lin_mode 1
+--- Property lin_mode set in 5280119 contacts in range.
+--- Property lin_force set in 5280119 contacts in range.
+flac3d>model cycle 2
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+        2       3003 00:00:00:05         2                        
+--- Global cycle limit of 2 met.
+--- Cycling ended at: 2026-06-27 01:05:33
+flac3d>ball free velocity spin
+--- Fixity conditions changed in 456302 balls.
+flac3d>[io.out('V5-3d install forces zeroed (force-free, lin_mode 1)')]
+V5-3d install forces zeroed (force-free, lin_mode 1)
+0 (integer)
+flac3d>
+flac3d>; ============================================================================
+flac3d>; (4) IN-SITU: map the LARGE field over the WHOLE domain (proven-clean method, the
+flac3d>;     same as the small -> no box artifact).  idw_map.f3dat maps onto rock+lining zones.
+flac3d>; ============================================================================
+flac3d>model gravity 0 0 [-grav]
+--- Gravity has been set to: ( 0.0e+00 0.0e+00 -9.8e+00).
+flac3d>call '../idw_map.f3dat'
+flac3d>; idw_map.f3dat -- submodel stress transfer (reused from proven G:/260529 io_stress).
+flac3d>; ReadFile_ss(fname): load parent zone-stress export into global arrays.
+flac3d>; MapStress_IDW(radius): inverse-distance-weighted map onto ALL target zones
+flac3d>;   (rock + lining).  Wade 2026-06-22: the conformal lining shares nodes with the
+flac3d>;   rock, so it is initialized to the same in-situ field (true wished-in-place,
+flac3d>;   continuous interface at t=0, no internal force jump).
+flac3d>fish automatic-create off
+flac3d>
+flac3d>[global ss_ndata = 1]
+flac3d>[global ss_xdat = array.create(1)]
+flac3d>[global ss_ydat = array.create(1)]
+flac3d>[global ss_zdat = array.create(1)]
+flac3d>[global sxxdat = array.create(1)]
+flac3d>[global syydat = array.create(1)]
+flac3d>[global szzdat = array.create(1)]
+flac3d>[global sxydat = array.create(1)]
+flac3d>[global sxzdat = array.create(1)]
+flac3d>[global syzdat = array.create(1)]
+flac3d>
+flac3d>def ReadFile_ss(fname)
+   Def>    local arr = array.create(1)
+   Def>    ss_ndata = 0
+   Def>    local stat = file.close
+   Def>    stat = file.open(fname,0,1)
+   Def>    if stat # 0 then
+   Def>        io.out('ReadFile_ss: file.open failed status='+string(stat))
+   Def>        exit
+   Def>    endif
+   Def>    stat = file.read(arr,1)            ; header
+   Def>    stat = file.read(arr,1)            ; first data row
+   Def>    loop while stat = 0
+   Def>        ss_ndata = ss_ndata + 1
+   Def>        stat = file.read(arr,1)
+   Def>    endloop
+   Def>    stat = file.close
+   Def>    io.out('ReadFile_ss: data rows = '+string(ss_ndata))
+   Def>    if ss_ndata <= 0 then
+   Def>        exit
+   Def>    endif
+   Def>    ss_xdat = array.create(ss_ndata)
+   Def>    ss_ydat = array.create(ss_ndata)
+   Def>    ss_zdat = array.create(ss_ndata)
+   Def>    sxxdat = array.create(ss_ndata)
+   Def>    syydat = array.create(ss_ndata)
+   Def>    szzdat = array.create(ss_ndata)
+   Def>    sxydat = array.create(ss_ndata)
+   Def>    sxzdat = array.create(ss_ndata)
+   Def>    syzdat = array.create(ss_ndata)
+   Def>    stat = file.open(fname,0,1)
+   Def>    stat = file.read(arr,1)            ; skip header
+   Def>    local i = 0
+   Def>    stat = file.read(arr,1)
+   Def>    loop while stat = 0
+   Def>        i = i + 1
+   Def>        local line = arr(1)
+   Def>        ss_xdat(i) = string.token(line,2)
+   Def>        ss_ydat(i) = string.token(line,3)
+   Def>        ss_zdat(i) = string.token(line,4)
+   Def>        sxxdat(i) = string.token(line,5)
+   Def>        syydat(i) = string.token(line,6)
+   Def>        szzdat(i) = string.token(line,7)
+   Def>        sxydat(i) = string.token(line,8)
+   Def>        sxzdat(i) = string.token(line,9)
+   Def>        syzdat(i) = string.token(line,10)
+   Def>        stat = file.read(arr,1)
+   Def>    endloop
+   Def>    stat = file.close
+   Def>    io.out('ReadFile_ss: parsed '+string(i)+' rows')
+   Def>end
+flac3d>
+flac3d>def MapStress_IDW(search_radius)
+   Def>    local nmap = 0
+   Def>    loop foreach local iz zone.list
+   Def>        if zone.id(iz) > 0 then            ; ALL zones (rock + lining) -- wished-in-place
+   Def>            local x = zone.pos.x(iz)
+   Def>            local y = zone.pos.y(iz)
+   Def>            local z = zone.pos.z(iz)
+   Def>            local sum_w = 0.0
+   Def>            local s_xx = 0.0
+   Def>            local s_yy = 0.0
+   Def>            local s_zz = 0.0
+   Def>            local s_xy = 0.0
+   Def>            local s_xz = 0.0
+   Def>            local s_yz = 0.0
+   Def>            local dmin = 1.0e30
+   Def>            local inear = 1
+   Def>            local i = 1
+   Def>            loop while i <= ss_ndata
+   Def>                local dx = math.abs(x - ss_xdat(i))
+   Def>                if dx <= search_radius then
+   Def>                    local dy = math.abs(y - ss_ydat(i))
+   Def>                    if dy <= search_radius then
+   Def>                        local dz = math.abs(z - ss_zdat(i))
+   Def>                        if dz <= search_radius then
+   Def>                            local d2 = dx*dx + dy*dy + dz*dz
+   Def>                            if d2 <= (search_radius*search_radius) then
+   Def>                                if d2 < dmin then
+   Def>                                    dmin = d2
+   Def>                                    inear = i
+   Def>                                endif
+   Def>                                local w = 1.0 / math.max(d2,1e-10)
+   Def>                                sum_w = sum_w + w
+   Def>                                s_xx = s_xx + sxxdat(i)*w
+   Def>                                s_yy = s_yy + syydat(i)*w
+   Def>                                s_zz = s_zz + szzdat(i)*w
+   Def>                                s_xy = s_xy + sxydat(i)*w
+   Def>                                s_xz = s_xz + sxzdat(i)*w
+   Def>                                s_yz = s_yz + syzdat(i)*w
+   Def>                            endif
+   Def>                        endif
+   Def>                    endif
+   Def>                endif
+   Def>                i = i + 1
+   Def>            endloop
+   Def>            if sum_w > 0.0 then
+   Def>                zone.stress.xx(iz) = s_xx / sum_w
+   Def>                zone.stress.yy(iz) = s_yy / sum_w
+   Def>                zone.stress.zz(iz) = s_zz / sum_w
+   Def>                zone.stress.xy(iz) = s_xy / sum_w
+   Def>                zone.stress.xz(iz) = s_xz / sum_w
+   Def>                zone.stress.yz(iz) = s_yz / sum_w
+   Def>            else
+   Def>                i = 1
+   Def>                loop while i <= ss_ndata
+   Def>                    local d2b = (x-ss_xdat(i))^2 + (y-ss_ydat(i))^2 + (z-ss_zdat(i))^2
+   Def>                    if d2b < dmin then
+   Def>                        dmin = d2b
+   Def>                        inear = i
+   Def>                    endif
+   Def>                    i = i + 1
+   Def>                endloop
+   Def>                zone.stress.xx(iz) = sxxdat(inear)
+   Def>                zone.stress.yy(iz) = syydat(inear)
+   Def>                zone.stress.zz(iz) = szzdat(inear)
+   Def>                zone.stress.xy(iz) = sxydat(inear)
+   Def>                zone.stress.xz(iz) = sxzdat(inear)
+   Def>                zone.stress.yz(iz) = syzdat(inear)
+   Def>            endif
+   Def>            nmap = nmap + 1
+   Def>        endif
+   Def>    endloop
+   Def>    io.out('MapStress_IDW: mapped onto '+string(nmap)+' zones rock+lining (radius '+string(search_radius)+')')
+   Def>end
+flac3d>[ReadFile_ss('../large_stress_coarse.dat')]
+ReadFile_ss: data rows = 3583
+ReadFile_ss: parsed 3583 rows
+0 (integer)
+flac3d>[MapStress_IDW(40.0)]
+MapStress_IDW: mapped onto 424908 zones rock+lining (radius 40)
+0 (integer)
+flac3d>[io.out('V5-4 in-situ: mapped large field over whole domain (no box)')]
+V5-4 in-situ: mapped large field over whole domain (no box)
+0 (integer)
+flac3d>
+flac3d>; ============================================================================
+flac3d>; (5) BC: 6 outer faces velocity-fixed (submodel held at parent).
+flac3d>; ============================================================================
+flac3d>zone gridpoint fix velocity range position-x 1276.7 1277.3
+--- Fix velocity         specified in 3584 gridpoints.
+flac3d>zone gridpoint fix velocity range position-x 1316.7 1317.3
+--- Fix velocity         specified in 3584 gridpoints.
+flac3d>zone gridpoint fix velocity range position-y 859.7 860.3
+--- Fix velocity         specified in 3944 gridpoints.
+flac3d>zone gridpoint fix velocity range position-y 909.7 910.3
+--- Fix velocity         specified in 3944 gridpoints.
+flac3d>zone gridpoint fix velocity range position-z 1727.7 1728.3
+--- Fix velocity         specified in 3248 gridpoints.
+flac3d>zone gridpoint fix velocity range position-z 1767.7 1768.3
+--- Fix velocity         specified in 3024 gridpoints.
+flac3d>[io.out('V5-5 6 outer faces velocity-fixed')]
+V5-5 6 outer faces velocity-fixed
+0 (integer)
+flac3d>model save 'v5_preA'      ; checkpoint: bonds + in-situ + BC done, before the gravity solve (continue here if STEP A errors)
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/couple_solve/v5_preA.f3sav.
+flac3d>
+flac3d>; ============================================================================
+flac3d>; (6) SOLVE (gradual) -- same sequence as couple_servo_v4, EXCEPT A2 does NOT re-zero
+flac3d>;     forces (force-free install already done ONCE in step 3 -> no double-zeroing).
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; STEP A: rock equilibrium with balls FROZEN.
+flac3d>;   NOTE: step 3d ended with balls FREE; STEP A re-freezes them for the rock-eq.  The
+flac3d>;   wz_outter facets move with the rock, so the frozen-ball coupling contacts pick up
+flac3d>;   overlap forces -- which is exactly why A2 (below) re-frees the balls so they can
+flac3d>;   relax those forces under the rigid-wall confinement.
+flac3d>; ----------------------------------------------------------------------------
+flac3d>ball fix velocity spin
+--- Fixity conditions changed in 456302 balls.
+flac3d>model solve ratio-average 1e-4 cycles 8000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+        1       3004 0.0000e+00 00:00:00:04      8000            1.0000e-04             
+--- Limit ratio-average of 1.0000e-04 met in process(es): mech Zone Main (0.0000e+00),mech Struct Main (0.0000e+00),mech Ball (0.0000e+00),mech Clump (0.0000e+00).
+--- Cycling ended at: 2026-06-27 01:22:41
+flac3d>[io.out('V5-A STEP A done (rock-eq, balls frozen)')]
+V5-A STEP A done (rock-eq, balls frozen)
+0 (integer)
+flac3d>model save 'v5_rockeq'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/couple_solve/v5_rockeq.f3sav.
+flac3d>
+flac3d>; --- A1: support pressure on the bore (balls still frozen) ---
+flac3d>zone face apply stress-normal [ovb] range group 'rock' slot 'mat' position-x 1292 1303 position-y 860.05 909.95 position-z 1743 1752
+--- Apply conditions added to 12876 faces.
+flac3d>model solve ratio-average 1e-4 cycles 3000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+        1       3005 0.0000e+00 00:00:00:04      3000            1.0000e-04             
+--- Limit ratio-average of 1.0000e-04 met in process(es): mech Zone Main (0.0000e+00),mech Struct Main (0.0000e+00),mech Ball (0.0000e+00),mech Clump (0.0000e+00).
+--- Cycling ended at: 2026-06-27 01:23:07
+flac3d>[io.out('V5-A1 support pressure applied (balls frozen)')]
+V5-A1 support pressure applied (balls frozen)
+0 (integer)
+flac3d>
+flac3d>; --- A2: FREE the balls (NO re-zeroing of forces -- force-free install was step 3d).
+flac3d>;     Balls are CONFINED by wz_outter (rock) + rigid w_inner/w_860/w_910 -> no free face.
+flac3d>; ----------------------------------------------------------------------------
+flac3d>ball free velocity spin
+--- Fixity conditions changed in 456302 balls.
+flac3d>ball attribute displacement multiply 0.0     ; reset disp datum for the solve-phase disp report (NOT a force op)
+--- Attribute displacement initialized in 456302 ball(s).
+flac3d>model mechanical timestep automatic
+--- timestep calculation activated in mechanical process.
+flac3d>[io.out('V5-A2 balls freed (no double force-zeroing); confined by wz_outter + rigid walls')]
+V5-A2 balls freed (no double force-zeroing); confined by wz_outter + rigid walls
+0 (integer)
+flac3d>
+flac3d>; --- B: servo reduce -> gradually bleed the bore support pressure toward 0 ---
+flac3d>zone face apply stress-normal [ovb] servo reduce ratio average lower-bound 2e-3 upper-bound 1e-2 upper-multiplier 0.95 latency 30 range group 'rock' slot 'mat' position-x 1292 1303 position-y 860.05 909.95 position-z 1743 1752
+--- Apply conditions added to 12876 faces.
+flac3d>model solve ratio-average 1e-4 cycles 2000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+     2000       5005 1.7253e-02 00:00:48:06      2000            1.0000e-04             
+--- Global cycle limit of 2000 met.
+--- Cycling ended at: 2026-06-27 02:11:19
+flac3d>[io.out('V5-B1 servo ~2000')]
+V5-B1 servo ~2000
+0 (integer)
+flac3d>model save 'v5_servo_m1'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/couple_solve/v5_servo_m1.f3sav.
+flac3d>model solve ratio-average 1e-4 cycles 3000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+     3000       8005 1.7212e-02 00:01:12:03      3000            1.0000e-04             
+--- Global cycle limit of 3000 met.
+--- Cycling ended at: 2026-06-27 03:23:45
+flac3d>[io.out('V5-B2 servo ~5000')]
+V5-B2 servo ~5000
+0 (integer)
+flac3d>model solve ratio-average 1e-4 cycles 5000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+     5000      13005 9.4699e-03 00:01:59:47      5000            1.0000e-04             
+--- Global cycle limit of 5000 met.
+--- Cycling ended at: 2026-06-27 05:23:33
+flac3d>[io.out('V5-B3 servo ~10000')]
+V5-B3 servo ~10000
+0 (integer)
+flac3d>
+flac3d>; --- FINALIZE: zero residual bore pressure + re-converge ---
+flac3d>zone face apply stress-normal 0 range group 'rock' slot 'mat' position-x 1292 1303 position-y 860.05 909.95 position-z 1743 1752
+--- 12876 faces with conflicting conditions had those conditions removed.
+--- Apply conditions added to 12876 faces.
+flac3d>model solve ratio-average 1e-4 cycles 8000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+     8000      21005 6.0954e-03 00:03:11:31      8000            1.0000e-04             
+--- Global cycle limit of 8000 met.
+--- Cycling ended at: 2026-06-27 08:35:04
+flac3d>[io.out('V5-FIN residual bore pressure zeroed + re-converged')]
+V5-FIN residual bore pressure zeroed + re-converged
+0 (integer)
+flac3d>model save 'Couple_Initial_v5'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/couple_solve/Couple_Initial_v5.f3sav.
+flac3d>
+flac3d>; ============================================================================
+flac3d>; (7) VERIFY.
+flac3d>; ----------------------------------------------------------------------------
+flac3d>; -- bond state + ball/rock disp_max at the y~885 slice (count_bonds filters ball-ball
+flac3d>;    bonds by pb_ten<1e10, so the 1e20 wz_outter coupling + linear rigid-wall contacts
+flac3d>;    are correctly excluded; only the breakable D7 lining bonds are counted) --
+flac3d>call 'count_bonds.f3fis'
+flac3d>fish automatic-create on
+flac3d>fish define count_state
+   Def>    local nbb = 0
+   Def>    local ntens = 0
+   Def>    local nshear = 0
+   Def>    loop foreach local c contact.list
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_ten') < 1.0e10 then
+   Def>                local cp = contact.pos(c)
+   Def>                if comp.y(cp) > 884.5 then
+   Def>                if comp.y(cp) < 885.5 then
+   Def>                    nbb = nbb + 1
+   Def>                    local st = contact.prop(c,'pb_state')
+   Def>                    if st = 1 then
+   Def>                        ntens = ntens + 1
+   Def>                    end_if
+   Def>                    if st = 2 then
+   Def>                        nshear = nshear + 1
+   Def>                    end_if
+   Def>                end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local dmax = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local dx = ball.disp(b,1)
+   Def>        local dy = ball.disp(b,2)
+   Def>        local dz = ball.disp(b,3)
+   Def>        local dm = math.sqrt(dx*dx+dy*dy+dz*dz)
+   Def>        if dm > dmax then
+   Def>            dmax = dm
+   Def>        end_if
+   Def>    end_loop
+   Def>    local gpmax = 0.0
+   Def>    loop foreach local gp gp.list
+   Def>        local gd = gp.disp(gp)
+   Def>        local gm = math.sqrt(comp.x(gd)*comp.x(gd)+comp.y(gd)*comp.y(gd)+comp.z(gd)*comp.z(gd))
+   Def>        if gm > gpmax then
+   Def>            gpmax = gm
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('   bonds(slice)='+string(nbb)+' tension-broken='+string(ntens)+' shear-broken='+string(nshear)+' | ball disp_max='+string(dmax)+' m | rock gp disp_max='+string(gpmax)+' m')
+   Def>end
+flac3d>[io.out('V5-BONDCHK at Couple_Initial_v5:')]
+V5-BONDCHK at Couple_Initial_v5:
+0 (integer)
+flac3d>[count_state]
+   bonds(slice)=44742 tension-broken=0 shear-broken=0 | ball disp_max=0.00781732 m | rock gp disp_max=0 m
+0 (integer)
+flac3d>
+flac3d>; -- export full stress tensor at y~885 (rock zones only, 884<y<886) --
+flac3d>fish define _exp_v5
+   Def>    local fz = file.open('couple_v5_y885.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x z sxx syy szz sxy sxz syz'
+   Def>    fz = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.group(z,'mat') = 'rock' then
+   Def>            local p = zone.pos(z)
+   Def>            if comp.y(p) > 884.0 then
+   Def>            if comp.y(p) < 886.0 then
+   Def>                a(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))
+   Def>                fz = file.write(a,1)
+   Def>                n = n + 1
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fz = file.close
+   Def>    io.out('V5-EXP exported '+string(n)+' rock zones @y885 -> couple_v5_y885.txt')
+   Def>end
+flac3d>[_exp_v5]
+V5-EXP exported 19140 rock zones @y885 -> couple_v5_y885.txt
+0 (integer)
+flac3d>[io.out('V5-DONE')]
+V5-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週六 六月 27 08:35:46 2026
+**********************************************

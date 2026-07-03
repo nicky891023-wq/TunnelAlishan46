@@ -1,0 +1,16 @@
+﻿THREAD-A-REVIEW: WITH CONDITIONS.
+
+The physics reproduction is acceptable. `s4_rerun_convhist.f3dat` follows the proven `small_4stage_standalone.f3dat` sequence: same restore, parameter call, water density, threshold logic, water planes, solve/order, one displacement zero after S1 equilibrium, creep timestep, and cumulative stages. The added `io.out`, histories, and separate save names should not change mechanics. At y885, the final `report_conv` sign convention should match the saved `s4_s4` diameter check: vertical `crown - invert ~= -0.749 mm`, horizontal `sprR - sprL ~= -1.068 mm`, negative meaning closing.
+
+The J/C separation is conceptually right:
+`J = S2-EQ - S1-END`, `C_high = S2-END - S2-EQ`, then same for S4. S1 should only be a post-low-equilibrium datum plus low-water creep increment; zeroing displacement after S1 equilibrium is the right deformation clock if you want to exclude initial balance/excavation displacement.
+
+The conditions before a multi-hour run:
+
+1. Do not rely on the exported `zone history ... position` values as the authoritative closure histories. That is the same mechanism that previously gave the crown mismatch. Keep them if useful, but add FISH histories tied to `g_crown`, `g_invert`, `g_sprR`, `g_sprL`, and preferably direct `vert_closure` / `horiz_closure` histories from those pointers. `report_conv` itself is good; `diag_convhist.log` already proves `gp.disp(g)` plus `comp.x/z` works under FLAC3D 6.00.
+
+2. Add a real physical time export. Current `phys_day=@cur_day` is a stage/target label, not continuous time; during each 5-day solve it is set to the target day before the solve. Name and export creep time, e.g. FLAC3D 6 examples support `model history name 'ctime' creep time-total`, then export `ctime`. Use `cur_day` only as a marker label.
+
+3. For the acceptance threshold, y885 alone is not enough. It is fine as a sentinel and reproduction check, but the criterion I stated was over y860-910. Add a y-band averaged crown-invert and springline closure, and ideally min/max or p10/p90 over the band. Use the band average for the C/J pass/fail call.
+
+With those recording fixes, I would approve the re-run. Without them, the run may reproduce the physics but still leave the creep-dominance verification under-documented.

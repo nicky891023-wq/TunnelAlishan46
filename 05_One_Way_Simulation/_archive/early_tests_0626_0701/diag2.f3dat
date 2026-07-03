@@ -1,0 +1,39 @@
+program log-file 'diag2.log'
+program log on
+fish automatic-create on
+model restore 's4_s1'
+fish define diag2
+    io.out('D2-start')
+    local fo = file.open('bc_s1.txt',1,1)
+    io.out('D2-opened status='+string(fo))
+    local a = array.create(1)
+    a(1) = 'x y z dx dy dz'
+    fo = file.write(a,1)
+    io.out('D2-header')
+    local cnt = 0
+    loop foreach local gp gp.list
+        local p = gp.pos(gp)
+        if comp.x(p)>=1272.0 then
+        if comp.x(p)<=1322.0 then
+        if comp.y(p)>=855.0 then
+        if comp.y(p)<=915.0 then
+        if comp.z(p)>=1723.0 then
+        if comp.z(p)<=1773.0 then
+            local d = gp.disp(gp)
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+            fo = file.write(a,1)
+            cnt = cnt + 1
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    io.out('D2-loop cnt='+string(cnt))
+    fo = file.close
+    io.out('D2-closed')
+end
+[diag2]
+[io.out('D2-DONE')]
+program quit

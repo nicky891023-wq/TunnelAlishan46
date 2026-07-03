@@ -1,0 +1,116 @@
+; ============================================================================
+; run_small_init.f3dat -- Alishan #46 SMALL model INITIAL force balance (submodel).
+; 6-layer rock Mohr-Coulomb + lining elastic(D7) ; IDW-map large in-situ stress
+; onto rock + lining (wished-in-place: lining shares nodes with rock, so it is
+; initialized to the same in-situ field -> continuous interface, no t=0 jump) ;
+; fix box boundary ; gravity ; model solve elastic. Exports focus rock stress.
+; cwd = 04_InitialBalance.
+; ============================================================================
+program log-file 'run_small_init.log'
+program log on
+model restore '../02_SmallModel/Small_Model'
+call 'parameter.f3dat'
+call 'idw_map.f3dat'
+model largestrain off
+
+; --- 6-layer rock Mohr-Coulomb ---
+zone cmodel assign mohr-coulomb range group 'rock' slot 'mat'
+zone property young [E_S_1] poisson [nu] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property young [E_S_2] poisson [nu] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property young [E_S_3] poisson [nu] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property young [E_S_4] poisson [nu] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+zone property young [E_S_5] poisson [nu] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+zone property young [E_S_6] poisson [nu] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+zone initialize density [den_S_1] range group 'layer1' slot 'type'
+zone initialize density [den_S_2] range group 'layer2' slot 'type'
+zone initialize density [den_S_3] range group 'layer3' slot 'type'
+zone initialize density [den_S_4] range group 'layer4' slot 'type'
+zone initialize density [den_S_5] range group 'layer5' slot 'type'
+zone initialize density [den_S_6] range group 'layer6' slot 'type'
+
+; --- lining: elastic continuum (D7) ---
+zone cmodel assign elastic range group 'lining' slot 'type'
+zone property young [shot_E] poisson [shot_v] range group 'lining' slot 'type'
+zone initialize density [shot_den] range group 'lining' slot 'type'
+[io.out('CHK1 small materials assigned: zones='+string(zone.num))]
+
+; --- map large in-situ stress onto rock (IDW from coarse-subsampled field) ---
+;   coarse (every 30th zone, ~1721 pts) keeps the smooth in-situ field but cuts
+;   the single-thread IDW from ~40 min to ~1-2 min.  radius 40 m covers the
+;   coarser spacing.
+[ReadFile_ss('large_stress_coarse.dat')]
+[MapStress_IDW(40.0)]
+[io.out('CHK2 large stress mapped onto rock')]
+
+; --- boundary: fix the 6 box faces (submodel held at parent state) ---
+; Route C is conformal (no attach) -> full-face fix is fine, no slave conflict.
+zone gridpoint fix velocity range position-x 1249 1251
+zone gridpoint fix velocity range position-x 1349 1351
+zone gridpoint fix velocity range position-y 849 851
+zone gridpoint fix velocity range position-y 949 951
+zone gridpoint fix velocity range position-z 1699 1701
+zone gridpoint fix velocity range position-z 1799 1801
+
+; --- gravity + elastic balance ---
+model gravity 0 0 [-grav]
+fish define _srep(tag)
+    local zmn = 1e30
+    local zmx = -1e30
+    loop foreach local z zone.list
+        local s = zone.stress.zz(z)
+        if s < zmn then
+            zmn = s
+        end_if
+        if s > zmx then
+            zmx = s
+        end_if
+    end_loop
+    io.out('CHK '+tag+' szz[min='+string(zmn)+' max='+string(zmx)+']')
+end
+[_srep('before-solve')]
+; guard: stop at ratio 1e-3 OR 8000 cycles so a stubborn interface imbalance
+; cannot run unbounded (verify-before-long-run discipline).
+model solve elastic ratio-local 1e-3 cycles 8000
+[_srep('after-solve')]
+[io.out('CHK3 small solved elastic')]
+
+model save 'Small_Initial'
+[io.out('CHK4 saved Small_Initial')]
+
+; --- export focus-region (y 860-910) rock stress for the coupled model ---
+fish define export_small_ss
+    local fn = 'small_stress_for_coupled.dat'
+    local st = file.open(fn,1,1)
+    local fl = array.create(1)
+    fl(1) = 'zid x y z sxx syy szz sxy sxz syz'
+    st = file.write(fl,1)
+    local nout = 0
+    loop foreach local iz zone.list
+        if zone.group(iz,'mat') = 'rock' then
+        local x = zone.pos.x(iz)
+        if x > 1268.0 then
+        if x < 1306.0 then
+        local y = zone.pos.y(iz)
+        if y > 855.0 then
+        if y < 915.0 then
+        local z = zone.pos.z(iz)
+        if z > 1738.0 then
+        if z < 1758.0 then
+            fl(1) = string(zone.id(iz))+' '+string(x)+' '+string(y)+' '+string(z)+' '+string(zone.stress.xx(iz))+' '+string(zone.stress.yy(iz))+' '+string(zone.stress.zz(iz))+' '+string(zone.stress.xy(iz))+' '+string(zone.stress.xz(iz))+' '+string(zone.stress.yz(iz))
+            st = file.write(fl,1)
+            nout = nout + 1
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('CHK5 exported '+string(nout)+' focus rock-zone stresses to '+fn)
+end
+[export_small_ss]
+
+program log off
+program quit

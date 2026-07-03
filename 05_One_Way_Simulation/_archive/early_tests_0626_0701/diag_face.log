@@ -1,0 +1,73 @@
+**********************************************
+* Logging started at 週一 六月 29 09:36:31 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>fish automatic-create on
+flac3d>model restore 's4_s1'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:30:08 2026
+Total Cycles: 15428  Super Cycles: 15428
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish define diag
+   Def>    local cx=1297.0
+   Def>    local cz=1747.5
+   Def>    local nlin=0
+   Def>    local rmn=1e20
+   Def>    local rmx=-1e20
+   Def>    local k=0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.group(z,'type')='lining' then
+   Def>            nlin=nlin+1
+   Def>            local p=zone.pos(z)
+   Def>            local rr=math.sqrt((comp.x(p)-cx)*(comp.x(p)-cx)+(comp.z(p)-cz)*(comp.z(p)-cz))
+   Def>            if rr<rmn then
+   Def>                rmn=rr
+   Def>            end_if
+   Def>            if rr>rmx then
+   Def>                rmx=rr
+   Def>            end_if
+   Def>            if k<3 then
+   Def>                k=k+1
+   Def>                io.out('LZ'+string(k)+' pos=('+string(comp.x(p))+','+string(comp.y(p))+','+string(comp.z(p))+')')
+   Def>                local j=1
+   Def>                loop while j<=4
+   Def>                    local fa=zone.face.area(z,j)
+   Def>                    local fpx=zone.face.pos.x(z,j)
+   Def>                    local fpz=zone.face.pos.z(z,j)
+   Def>                    io.out('   face'+string(j)+' area='+string(fa)+' pos=('+string(fpx)+','+string(fpz)+')')
+   Def>                    j=j+1
+   Def>                end_loop
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('LINING nlin='+string(nlin)+' radial_extent['+string(rmn)+','+string(rmx)+']m')
+   Def>end
+flac3d>[diag]
+LZ1 pos=(1297.11,866.365,1748.59)
+   face1 area=0.0225789 pos=(1297.11,1748.52)
+   face2 area=0.0225789 pos=(1297.09,1748.79)
+   face3 area=0.0325004 pos=(1297.07,1748.57)
+   face4 area=0.0239347 pos=(1297.15,1748.63)
+LZ2 pos=(1293.49,857.614,1747.15)
+   face1 area=0.0541734 pos=(1293.46,1747.13)
+   face2 area=0.0541734 pos=(1293.57,1747.22)
+   face3 area=0.0380077 pos=(1293.49,1747.14)
+   face4 area=0.0406274 pos=(1293.56,1747.14)
+LZ3 pos=(1298.03,885.039,1744.43)
+   face1 area=0.0351351 pos=(1297.97,1744.44)
+   face2 area=0.0351351 pos=(1298.21,1744.39)
+   face3 area=0.0440137 pos=(1298.08,1744.38)
+   face4 area=0.0237171 pos=(1298.04,1744.52)
+LINING nlin=335011 radial_extent[0.00409765,24.715]m
+0 (integer)
+flac3d>[io.out('DIAG-FACE-DONE')]
+DIAG-FACE-DONE
+0 (integer)
+flac3d>program quit

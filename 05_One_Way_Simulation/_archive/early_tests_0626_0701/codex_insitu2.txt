@@ -1,0 +1,57 @@
+﻿INSITU2-VERDICT: this is not a K0 problem. It is a terrain-compatible equilibrium plus no-tension initialization problem.
+
+`model solve elastic` in FLAC3D 6.00 solves with yielding suppressed, then reactivates failure and checks equilibrium. Your `+100 kPa = ten_r` result proves the restored Mohr-Coulomb tension cutoff is being hit. Setting `tension 0` should cap those zones at about `0` instead of `+0.1 MPa`, but I would not rely on `model solve elastic` alone as the final state. Use it to build the gravity stress field, then run a normal `model solve` with `tension 0` to let the tensile cutoff actually redistribute.
+
+The 425 mm settlement is the bigger warning. It says the imposed gravity + K0 stress field is not close to the terrain equilibrium for this soft, steep, irregular surface. Do not judge the construction-stage displacement itself; reset displacement after equilibrium. But if a second solve after reset still moves significantly, the material/mesh/BC system is not stable.
+
+Use this as the robust in-situ sequence:
+
+```flac3d
+; after grid import/generation, zone groups, and real MC properties are assigned
+
+model largestrain off
+model gravity 9.81
+
+; boundary conditions: adapt group names if your skin names differ
+zone face skin
+zone face apply velocity-normal 0 range group 'East' or 'West'
+zone face apply velocity-normal 0 range group 'North' or 'South'
+zone face apply velocity (0,0,0) range group 'Bottom'
+
+; no-tension in-situ construction
+; apply globally, or range it to colluvium + fractured/weathered rock if justified
+zone property tension 0
+
+; start from zero stress and let terrain/gravity create a compatible field
+zone initialize stress xx 0 yy 0 zz 0 xy 0 xz 0 yz 0
+zone initialize state 0
+zone gridpoint initialize displacement (0,0,0)
+zone gridpoint initialize velocity (0,0,0)
+
+history interval 50
+model history mechanical ratio-local
+
+; elastic gravity equilibration, then actual MC no-tension relaxation
+model solve elastic ratio-local 1e-4
+model solve ratio-local 1e-4
+
+; make this the zero-displacement initial condition
+zone initialize state 0
+zone gridpoint initialize displacement (0,0,0)
+zone gridpoint initialize velocity (0,0,0)
+
+model save 'insitu_no_tension'
+```
+
+Quick test on your failed state:
+
+```flac3d
+zone property tension 0
+model solve ratio-local 1e-4
+```
+
+If max-principal remains materially positive, either not all zones received `tension 0`, the solve has not converged, or the model has another source of stress/BC inconsistency.
+
+On `E = 0.5 GPa`: it is soft relative to rock, but not automatically unrealistic for dense colluvium/weathered rock mass. It will magnify gravity-settlement during in-situ construction. Do not stiffen it just to hide the 425 mm jump. Check units, layer thickness, tetra quality near convex ridges, and whether the surface layer is only one poor-quality element thick. If the no-tension elastoplastic solve keeps moving after reset, then stiffness/strength/mesh need review.
+
+Sources checked: FLAC3D 6.00 `HelpExcerpts\flac3dmodeling.pdf` Initial Conditions discussion; official examples `datafiles\UsersGuide\ProblemSolving\InitialConditions\irregular.f3dat`, `compact.f3dat`, and `datafiles\ExampleApplications\ReinforcedTunnelExcavation\ReinforcedTunnelExcavation.f3dat`.

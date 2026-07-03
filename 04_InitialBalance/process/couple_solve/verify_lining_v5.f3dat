@@ -1,0 +1,66 @@
+; verify_lining_v5.f3dat -- extract the FINAL lining state from Couple_Initial_v5 for a
+;   visual "睜開眼睛看": ball displacement (convergence) + ball-ball bond state at y~885.
+;   cwd = 04_InitialBalance/couple_solve.
+program log-file 'verify_lining_v5.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'Couple_Initial_v5'
+[io.out('VL5-0 restored Couple_Initial_v5: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num))]
+fish define _vl5
+    ; (A) ball disp @y~885
+    local fb = file.open('lining_disp_v5.txt',1,1)
+    local arr = array.create(1)
+    arr(1) = 'x z dx dz dmag'
+    fb = file.write(arr,1)
+    local nb = 0
+    local dmax = 0.0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        if comp.y(p) > 884.5 then
+        if comp.y(p) < 885.5 then
+            local dx = ball.disp(b,1)
+            local dz = ball.disp(b,3)
+            local dm = math.sqrt(dx*dx+dz*dz)
+            arr(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(dx)+' '+string(dz)+' '+string(dm)
+            fb = file.write(arr,1)
+            nb = nb + 1
+            if dm > dmax then
+                dmax = dm
+            end_if
+        end_if
+        end_if
+    end_loop
+    fb = file.close
+    io.out('VL5-A ball disp slice n='+string(nb)+' disp_max='+string(dmax)+' m')
+    ; (B) ball-ball bond state @y~885 (pb_ten<1e10 = the D7 lining bonds, not the 1e20 coupling)
+    local fc = file.open('lining_bonds_v5.txt',1,1)
+    local arr2 = array.create(1)
+    arr2(1) = 'x z pbsig pbstate'
+    fc = file.write(arr2,1)
+    local nbb = 0
+    local nbroken = 0
+    loop foreach local c contact.list
+        if contact.model(c) = 'linearpbond' then
+            if contact.prop(c,'pb_ten') < 1.0e10 then
+                local cp = contact.pos(c)
+                if comp.y(cp) > 884.5 then
+                if comp.y(cp) < 885.5 then
+                    local st = contact.prop(c,'pb_state')
+                    arr2(1) = string(comp.x(cp))+' '+string(comp.z(cp))+' '+string(contact.prop(c,'pb_sigma'))+' '+string(st)
+                    fc = file.write(arr2,1)
+                    nbb = nbb + 1
+                    if st < 3 then
+                        nbroken = nbroken + 1
+                    end_if
+                end_if
+                end_if
+            end_if
+        end_if
+    end_loop
+    fc = file.close
+    io.out('VL5-B ball-ball bonds slice n='+string(nbb)+' broken(state<3)='+string(nbroken))
+end
+[_vl5]
+[io.out('VL5-DONE')]
+program quit

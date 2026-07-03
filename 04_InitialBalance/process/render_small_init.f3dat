@@ -1,0 +1,31 @@
+; render_small_init.f3dat -- export y884-886 slice of Small_Initial for render-verify:
+;   x z szz sxx pp state dispmag. cwd = 04_InitialBalance.
+program log-file 'render_small_init.log'
+program log on
+model restore 'Small_Initial'
+fish define export_slice
+    local fn = 'slice_small_init.txt'
+    local st = file.open(fn,1,1)
+    local fl = array.create(1)
+    fl(1) = 'x z szz sxx pp state'
+    st = file.write(fl,1)
+    local nout = 0
+    loop foreach local z zone.list
+        if zone.model(z) # 'null' then
+            local y = zone.pos.y(z)
+            if y > 884.0 then
+            if y < 886.0 then
+                local x = zone.pos.x(z)
+                local zz = zone.pos.z(z)
+                fl(1) = string(x)+' '+string(zz)+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.pp(z))+' '+string(zone.state(z,1))
+                st = file.write(fl,1)
+                nout = nout + 1
+            end_if
+            end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('RSI exported '+string(nout)+' zones (y884-886 slice) to '+fn)
+end
+[export_slice]
+program quit

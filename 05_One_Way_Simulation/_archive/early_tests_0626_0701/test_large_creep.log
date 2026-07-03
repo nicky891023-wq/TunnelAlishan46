@@ -1,0 +1,306 @@
+**********************************************
+* Logging started at 週日 六月 28 03:02:08 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../04_InitialBalance/Large_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週一 六月 22 17:10:41 2026
+Total Cycles: 7482  Super Cycles: 7482
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>call '../04_InitialBalance/parameter.f3dat'
+flac3d>; ============================================================================
+flac3d>; parameter.f3dat -- Alishan #46 UNIFIED material parameters (Wade-ruled, 2026-06-22)
+flac3d>; Large(4-layer) / Small(6-layer) rock + lining(D7) + coupled PFC(D7 calib).
+flac3d>;
+flac3d>; Unification rulings (Wade):
+flac3d>;   * nu = 0.25 single value (static MC + creep bulk same source).
+flac3d>;   * E is PER-LAYER (not uniform): lithology-based within Hoek-Diederichs
+flac3d>;     rock-mass range (sandstone 3-8, sandshale 1-3 GPa; colluvium/weathered soft).
+flac3d>;     -> GSI/E have NO field data: per-layer E are documented-range central
+flac3d>;        judgements, GSI-basis TODO (D3). c/phi are GSI-reduced placeholders.
+flac3d>;   * Burgers creep: shear-maxwell = shear-kelvin = the layer ELASTIC G,
+flac3d>;     bulk = the layer elastic K  (instantaneous static==creep, no spurious soften).
+flac3d>;   * viscosity-maxwell eta_m = 6.0e15 Pa.s ; viscosity-kelvin eta_k = 2.4e13 Pa.s.
+flac3d>;   * creep threshold ratio = 0.6 :  q_th = 0.6*(c*cos(phi)+p'*sin(phi)).
+flac3d>;   * creep timestep = 600 s (fixed).
+flac3d>;   * layer4 sandshale(WET): c = 100 kPa, phi = 30 deg (Wade).
+flac3d>; Units: SI (Pa, kg/m3, deg, m, Pa.s).  Sign: compression negative.
+flac3d>; ============================================================================
+flac3d>
+flac3d>; ---------- global / environment ----------
+flac3d>[global nu     = 0.25]            ; single Poisson, all rock layers
+flac3d>[global K0     = 0.7]             ; lateral stress ratio (placeholder, no field basis)
+flac3d>[global grav   = 9.81]            ; m/s2
+flac3d>[global poro   = 0.1]             ; porosity n
+flac3d>[global satr   = 0.1]             ; saturation S
+flac3d>[global rho_w  = 1000.0]          ; water density kg/m3
+flac3d>[global pmb    = 1.0e-5]          ; FLAC mobility coeff m2/(Pa.s); near-tunnel x100
+flac3d>[global ten_r  = 1.0e5]           ; rock tension cutoff 100 kPa (all layers)
+flac3d>
+flac3d>; ---------- elastic helpers (nu=0.25 -> G=E/2.5, K=E/1.5) ----------
+flac3d>fish define _gk(ee)
+   Def>    _gk = ee / (2.0*(1.0+nu))     ; shear  G
+   Def>end
+flac3d>fish define _bk(ee)
+   Def>    _bk = ee / (3.0*(1.0-2.0*nu)) ; bulk   K
+   Def>end
+flac3d>
+flac3d>; ====================== LARGE model : 4 layers ======================
+flac3d>; layer1 colluvium / layer2 ssh / layer3 bedrock / layer4 basement
+flac3d>[global E_L_1 = 0.5e9 ]
+flac3d>[global co_L_1 = 1.9e5]
+flac3d>[global fr_L_1 = 29.1]
+flac3d>[global den_L_1 = 2150.0]
+flac3d>[global E_L_2 = 2.0e9 ]
+flac3d>[global co_L_2 = 2.9e5]
+flac3d>[global fr_L_2 = 35.1]
+flac3d>[global den_L_2 = 2630.0]
+flac3d>[global E_L_3 = 5.0e9 ]
+flac3d>[global co_L_3 = 4.7e5]
+flac3d>[global fr_L_3 = 44.3]
+flac3d>[global den_L_3 = 2600.0]
+flac3d>[global E_L_4 = 7.0e9 ]
+flac3d>[global co_L_4 = 8.0e5]
+flac3d>[global fr_L_4 = 51.5]
+flac3d>[global den_L_4 = 2600.0]
+flac3d>
+flac3d>; ====================== SMALL model : 6 layers ======================
+flac3d>; l1 weathered-ss / l2 ss+sandshale / l3 ss+shale / l4 sandshale(WET) / l5 sandshale / l6 basement
+flac3d>[global E_S_1 = 1.0e9 ]
+flac3d>[global co_S_1 = 1.9e5 ]
+flac3d>[global fr_S_1 = 29.1]
+flac3d>[global den_S_1 = 2600.0]
+flac3d>[global E_S_2 = 2.0e9 ]
+flac3d>[global co_S_2 = 2.9e5 ]
+flac3d>[global fr_S_2 = 35.1]
+flac3d>[global den_S_2 = 2630.0]
+flac3d>[global E_S_3 = 3.5e9 ]
+flac3d>[global co_S_3 = 4.7e5 ]
+flac3d>[global fr_S_3 = 44.3]
+flac3d>[global den_S_3 = 2630.0]
+flac3d>[global E_S_4 = 1.5e9 ]
+flac3d>[global co_S_4 = 1.0e5 ]   ; WET, Wade c100/phi30
+flac3d>[global fr_S_4 = 30.0]
+flac3d>[global den_S_4 = 2630.0]
+flac3d>[global E_S_5 = 3.0e9 ]
+flac3d>[global co_S_5 = 8.0e5 ]
+flac3d>[global fr_S_5 = 51.5]
+flac3d>[global den_S_5 = 2630.0]
+flac3d>[global E_S_6 = 7.0e9 ]
+flac3d>[global co_S_6 = 20.6e5]
+flac3d>[global fr_S_6 = 56.3]
+flac3d>[global den_S_6 = 2600.0]
+flac3d>
+flac3d>; ---------- creep (Burgers-Mohr) : per-layer G_m=G_k=G(E,nu), bulk=K(E,nu) ----------
+flac3d>[global eta_m = 6.0e15]           ; viscosity-maxwell (Wade)
+flac3d>[global eta_k = 2.4e13]           ; viscosity-kelvin (proven)
+flac3d>[global crp_threshold = 0.6]      ; q_th = 0.6*(c*cosphi + p'*sinphi)
+flac3d>[global crp_dt = 600.0]           ; creep timestep (s) (Wade)
+flac3d>
+flac3d>; ---------- lining (R.C. continuum, D7 DECIDED) ----------
+flac3d>[global shot_E   = 25e9]
+flac3d>[global shot_v   = 0.2]
+flac3d>[global shot_t   = 0.40]
+flac3d>[global shot_den = 2400.0]
+flac3d>[global shot_fc  = 41.2e6]
+flac3d>[global shot_ft  = 4.12e6]
+flac3d>
+flac3d>; ---------- coupled PFC lining BPM micro (D7 FINAL_CALIB) ----------
+flac3d>[global pfc_emod    = 9.65e9]     ; linear deformability
+flac3d>[global pfc_kratio  = 1.0]
+flac3d>[global pfc_pb_emod = 5.88e9]     ; parallel-bond deformability
+flac3d>[global pfc_pb_krat = 0.6]
+flac3d>[global pfc_pb_ten  = 2.10e6]     ; Pa
+flac3d>[global pfc_pb_coh  = 2.30e7]     ; Pa
+flac3d>[global pfc_pb_fa   = 25.0]       ; deg
+flac3d>[global pfc_bondgap = 0.03]       ; m  (= cmat proximity)
+flac3d>[global pfc_ball_den  = 2400.0]
+flac3d>[global pfc_ball_damp = 0.7]
+flac3d>[global pfc_fric      = 0.5]
+flac3d>[global pfc_bf_strong = 1.0e20]   ; ball-facet pb (unbreakable coupling, NOT material)
+flac3d>
+flac3d>[io.out('=== parameter.f3dat loaded : nu='+string(nu)+' K0='+string(K0)+' eta_m='+string(eta_m)+' crp_dt='+string(crp_dt)+' ===')]
+=== parameter.f3dat loaded : nu=0.25 K0=0.7 eta_m=6e+15 crp_dt=600 ===
+flac3d>model largestrain off
+flac3d>model configure creep
+--- Process creep configured
+flac3d>fish automatic-create on
+flac3d>[io.out('TLC0 restored Large_Initial; zones='+string(zone.num))]
+TLC0 restored Large_Initial; zones=511988
+flac3d>
+flac3d>; --- burgers-mohr on the 4 large-model layers (slot 'type') ---
+flac3d>zone cmodel assign burgers-mohr
+flac3d>zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 27379 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property cohesion set in 27379 zones using the burgers-mohr model.
+--- Property friction set in 27379 zones using the burgers-mohr model.
+--- Property tension set in 27379 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 59649 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property cohesion set in 59649 zones using the burgers-mohr model.
+--- Property friction set in 59649 zones using the burgers-mohr model.
+--- Property tension set in 59649 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 83804 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property cohesion set in 83804 zones using the burgers-mohr model.
+--- Property friction set in 83804 zones using the burgers-mohr model.
+--- Property tension set in 83804 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 341156 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property cohesion set in 341156 zones using the burgers-mohr model.
+--- Property friction set in 341156 zones using the burgers-mohr model.
+--- Property tension set in 341156 zones using the burgers-mohr model.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone water density [rho_w]
+flac3d>[io.out('TLC1 burgers-mohr 4-layer assigned + water density set')]
+TLC1 burgers-mohr 4-layer assigned + water density set
+0 (integer)
+flac3d>
+flac3d>fish define dmax_all
+   Def>    local dm = 0.0
+   Def>    loop foreach local gp gp.list
+   Def>        local d = gp.disp(gp)
+   Def>        local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+   Def>        if mm > dm then
+   Def>            dm = mm
+   Def>        end_if
+   Def>    end_loop
+   Def>    dmax_all = dm
+   Def>end
+flac3d>[global threhold = 0.6]
+flac3d>fish define do_threshold      ; large model = ALL rock (no 'rock' filter)
+   Def>    local na = 0
+   Def>    loop foreach local z zone.list
+   Def>        local s1 = -zone.stress.prin.x(z)
+   Def>        local s3 = -zone.stress.prin.z(z)
+   Def>        local pore = zone.pp(z)
+   Def>        local pmean = (s1 + s3)/2.0 - pore
+   Def>        local q = (s1 - s3)/2.0
+   Def>        local c = zone.prop(z,'cohesion')
+   Def>        local phi = zone.prop(z,'friction')
+   Def>        local q_th = threhold*c + pmean*threhold*math.tan(phi*math.degrad)
+   Def>        if q >= q_th then
+   Def>            zone.prop(z,'viscosity-kelvin')  = eta_k
+   Def>            zone.prop(z,'viscosity-maxwell') = eta_m
+   Def>            zone.group(z,'creep') = 'CreepActive'
+   Def>            na = na + 1
+   Def>        else
+   Def>            zone.prop(z,'viscosity-kelvin')  = 1e100
+   Def>            zone.prop(z,'viscosity-maxwell') = 1e100
+   Def>            zone.group(z,'creep') = 'CreepOff'
+   Def>        end_if
+   Def>    end_loop
+   Def>    global n_active = na
+   Def>end
+flac3d>
+flac3d>; === STAGE 1 test: LOW water z1724 -> re-eq -> threshold ONCE -> 10-day creep ===
+flac3d>geometry import 'watertable_lower.stl'               ; STL terrain-following water table (NOT flat plane -- that walked)
+--- 2861 nodes, 8370 edges, and 5510 polygons added to geometry set watertable_lower.
+flac3d>zone water set 'watertable_lower'
+flac3d>model calm
+flac3d>model solve elastic ratio-local 1e-3 cycles 30000   ; Wade rule: LARGE uses elastic (no slope walk)
+    Cycle      Total Ratio-loca       Clock
+--------- ---------- ---------- ----------- 
+        1       7483 9.4929e-04 00:00:00:00     30000            1.0000e-03             
+--- Limit ratio-local of 1.0000e-03 met in process(es): mech Zone Main (9.4929e-04),mech Struct Main (0.0000e+00).
+--- Cycling ended at: 2026-06-28 03:02:15
+    Cycle      Total Ratio-loca       Clock
+--------- ---------- ---------- ----------- 
+     2594      10077 9.8815e-04 00:00:01:10     30000            1.0000e-03             
+--- Limit ratio-local of 1.0000e-03 met in process(es): mech Zone Main (9.8815e-04),mech Struct Main (0.0000e+00).
+--- Cycling ended at: 2026-06-28 03:03:25
+flac3d>[io.out('TLC2 LOW STL-water ELASTIC re-eq done. dmax(reeq)='+string(dmax_all))]
+TLC2 LOW STL-water ELASTIC re-eq done. dmax(reeq)=0.431774
+flac3d>[setKstrains]
+0 (integer)
+flac3d>[do_threshold]
+0 (integer)
+flac3d>[setKstrains]
+0 (integer)
+flac3d>zone gridpoint initialize displacement 0 0 0
+--- displacement modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>[io.out('TLC-S1eq active='+string(n_active)+' of '+string(zone.num)+' ('+string(100.0*float(n_active)/float(zone.num))+'%)')]
+TLC-S1eq active=71492 of 511988 (13.9636%)
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>fish define run_test(d0, d1, dd)
+   Def>    local d = d0 + dd
+   Def>    loop while d <= (d1 + 0.1)
+   Def>        command
+   Def>            model solve time-total [d*86400.0]
+   Def>        endcommand
+   Def>        io.out('   TLCcreep day='+string(d)+' dmax='+string(dmax_all)+' m  (active='+string(n_active)+')')
+   Def>        d = d + dd
+   Def>    endloop
+   Def>end
+flac3d>[run_test(0.0, 10.0, 2.0)]
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      288      10365 6.00000E+02  1.728000e+05 00:00:00:07                                   1.728000e+05             
+--- Limit time-total of 1.728000e+05 met in process(es): creep (1.728000e+05).
+--- Cycling ended at: 2026-06-28 03:03:35
+   TLCcreep day=2 dmax=0.23485 m  (active=71492)
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      288      10653 6.00000E+02  3.456000e+05 00:00:00:07                                   3.456000e+05             
+--- Limit time-total of 3.456000e+05 met in process(es): creep (3.456000e+05).
+--- Cycling ended at: 2026-06-28 03:03:43
+   TLCcreep day=4 dmax=0.261264 m  (active=71492)
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      288      10941 6.00000E+02  5.184000e+05 00:00:00:08                                   5.184000e+05             
+--- Limit time-total of 5.184000e+05 met in process(es): creep (5.184000e+05).
+--- Cycling ended at: 2026-06-28 03:03:51
+   TLCcreep day=6 dmax=0.278162 m  (active=71492)
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      288      11229 6.00000E+02  6.912000e+05 00:00:00:08                                   6.912000e+05             
+--- Limit time-total of 6.912000e+05 met in process(es): creep (6.912000e+05).
+--- Cycling ended at: 2026-06-28 03:04:00
+   TLCcreep day=8 dmax=0.291433 m  (active=71492)
+flac3d>model solve time-total [d*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      288      11517 6.00000E+02  8.640000e+05 00:00:00:09                                   8.640000e+05             
+--- Limit time-total of 8.640000e+05 met in process(es): creep (8.640000e+05).
+--- Cycling ended at: 2026-06-28 03:04:09
+   TLCcreep day=10 dmax=0.304591 m  (active=71492)
+0 (integer)
+flac3d>[io.out('TLC-DONE large creep short test; final dmax='+string(dmax_all)+' (bounded=OK, 1e14=walking)')]
+TLC-DONE large creep short test; final dmax=0.304591 (bounded=OK, 1e14=walking)
+flac3d>program log off
+**********************************************
+* Logging ended at 週日 六月 28 03:04:09 2026
+**********************************************

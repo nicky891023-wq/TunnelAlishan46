@@ -1,0 +1,67 @@
+program log-file 'extract_interface_disp.log'
+program log on
+model restore 's4_s4'
+fish automatic-create on
+; extract small-model gp displacement at the lining-rock interface (r~4.7-5.3m), y-band, full vector
+; -> couple_interface_disp_s4.txt (id x y z dx dy dz) for IDW onto coupled interface. + sector ovalization.
+fish define extract_iface
+    local cx = 1297.0
+    local cz = 1747.5
+    local fo = file.open('couple_interface_disp_s4.txt',1,1)
+    local buf = array.create(1)
+    buf(1) = 'x y z dx dy dz'
+    file.write(buf,1)
+    local cnt = 0
+    local sect = array.create(12)
+    local scnt = array.create(12)
+    local kk = 1
+    loop while kk <= 12
+        sect(kk) = 0.0
+        scnt(kk) = 0
+        kk = kk + 1
+    end_loop
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local yy = comp.y(p)
+        if yy >= 870.0 then
+        if yy <= 900.0 then
+            local rx = comp.x(p)-cx
+            local rz = comp.z(p)-cz
+            local rr = math.sqrt(rx*rx+rz*rz)
+            if rr >= 4.7 then
+            if rr <= 5.3 then
+                local d = gp.disp(g)
+                buf(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+                file.write(buf,1)
+                cnt = cnt + 1
+                local ang = math.atan2(rz,rx)/math.degrad
+                if ang < 0.0 then
+                    ang = 360.0+ang
+                end_if
+                local s = int(ang/30.0)+1
+                if s > 12 then
+                    s = 12
+                end_if
+                local ri = -(comp.x(d)*rx/rr + comp.z(d)*rz/rr)
+                sect(s) = sect(s) + ri
+                scnt(s) = scnt(s) + 1
+            end_if
+            end_if
+        end_if
+        end_if
+    end_loop
+    fo = file.close
+    io.out('IFACE extracted '+string(cnt)+' interface gps (r4.7-5.3, y870-900) -> couple_interface_disp_s4.txt')
+    local j = 1
+    loop while j <= 12
+        local m = 0.0
+        if scnt(j) > 0 then
+            m = sect(j)/float(scnt(j))
+        end_if
+        io.out('   IFACE-SECT '+string((j-1)*30)+'-'+string(j*30)+'deg radial_inward_mean='+string(m*1000.0)+'mm (n'+string(scnt(j))+')')
+        j = j + 1
+    end_loop
+end
+[extract_iface]
+[io.out('IFACE-DONE')]
+program quit

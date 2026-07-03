@@ -1,0 +1,381 @@
+; ============================================================================
+; small_staged.f3dat -- Alishan #46 SMALL model 11-STAGE staged creep (260529 METHOD).
+;   Faithful port of 260529 crp_process_n_wp: per stage three-phase
+;     (1) set water W-XX -> FLUID steady-state (ratio-flow)
+;     (2) FLUID off -> MC solve ratio 1e-5 (force balance)
+;     (3) BURGERS creep + ApplyVel_IDW GRADUAL box-face drive to large target
+;         (lg_disp_sNN.txt) over the stage days + Maxwell-only threshold callback
+;         + WadeCreepSupport shell E-reduction callback (cap shell stress <= fc).
+;   Restores Small_Initial (shell + fluid + relaxed rock, datum zeroed).
+;   11 stages: dry1 W-110(30) raise W-90/70/50/30(5) wet W-10(30) drop W-30/50/70/90(5) dry2 W-110(30).
+;   cwd = 05.  Grounding: 260529 crp_process_n_wp + io_disp ApplyVel_IDW + WadeCreepSupport.f3dat.
+; ============================================================================
+program log-file 'small_staged.log'
+program log on
+model restore '../04_InitialBalance/Small_Initial'
+call '../04_InitialBalance/parameter.f3dat'
+call 'C:/Program Files/Itasca/Flac3d600/datafiles/Creep/SetKStrains.f3fis'
+model configure creep
+model largestrain off
+fish automatic-create on
+geometry import '../00_geometry_water/W-90.stl'
+geometry import '../00_geometry_water/W-70.stl'
+geometry import '../00_geometry_water/W-50.stl'
+geometry import '../00_geometry_water/W-30.stl'
+geometry import '../00_geometry_water/W-10.stl'
+zone water density [rho_w]
+[io.out('SS-0 restored Small_Initial + water tables; zones='+string(zone.num)+' gps='+string(gp.num)+' shells='+string(struct.num))]
+
+; --- tag box-face gridpoints as 'driven' (the 6 submodel box planes) ---
+fish define tag_driven
+    global ndriven = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local x = comp.x(p)
+        local y = comp.y(p)
+        local z = comp.z(p)
+        local onb = 0
+        if math.abs(x-1250.0) < 0.6 then
+            onb = 1
+        end_if
+        if math.abs(x-1350.0) < 0.6 then
+            onb = 1
+        end_if
+        if math.abs(y-850.0) < 0.6 then
+            onb = 1
+        end_if
+        if math.abs(y-950.0) < 0.6 then
+            onb = 1
+        end_if
+        if math.abs(z-1700.0) < 0.6 then
+            onb = 1
+        end_if
+        if math.abs(z-1800.0) < 0.6 then
+            onb = 1
+        end_if
+        if onb = 1 then
+            gp.group(g,'drive') = 'driven'
+            ndriven = ndriven + 1
+        end_if
+    end_loop
+    io.out('SS-driven box-face gps tagged='+string(ndriven))
+end
+[tag_driven]
+
+; --- ReadFile_disp adapted: lg_disp_sNN.txt = header + rows 'x y z dx dy dz' (tokens 1-6) ---
+fish define read_drive(fname)
+    local arr = array.create(1)
+    local st = file.open(fname,0,1)
+    ndata = 0
+    st = file.read(arr,1)              ; header
+    st = file.read(arr,1)
+    loop while st = 0
+        ndata = ndata + 1
+        st = file.read(arr,1)
+    end_loop
+    st = file.close
+    xdat  = array.create(ndata)
+    ydat  = array.create(ndata)
+    zdat  = array.create(ndata)
+    uxdat = array.create(ndata)
+    uydat = array.create(ndata)
+    uzdat = array.create(ndata)
+    st = file.open(fname,0,1)
+    st = file.read(arr,1)              ; header
+    local i = 0
+    st = file.read(arr,1)
+    loop while st = 0
+        i = i + 1
+        local ln = arr(1)
+        xdat(i)  = string.token(ln,1)
+        ydat(i)  = string.token(ln,2)
+        zdat(i)  = string.token(ln,3)
+        uxdat(i) = string.token(ln,4)
+        uydat(i) = string.token(ln,5)
+        uzdat(i) = string.token(ln,6)
+        st = file.read(arr,1)
+    end_loop
+    st = file.close
+    io.out('   SS-read '+fname+' ndata='+string(ndata))
+end
+
+; --- ApplyVel_IDW: gradual velocity drive of 'driven' gps to large target over creep_time ---
+fish define apply_vel_idw(creep_time, radius)
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            local p = gp.pos(g)
+            local x = comp.x(p)
+            local y = comp.y(p)
+            local z = comp.z(p)
+            local sw = 0.0
+            local sux = 0.0
+            local suy = 0.0
+            local suz = 0.0
+            local dmin = 1e30
+            local inr = 0
+            local i = 1
+            loop while i <= ndata
+                local dx = x - xdat(i)
+                local dy = y - ydat(i)
+                local dz = z - zdat(i)
+                local d2 = dx*dx + dy*dy + dz*dz
+                if d2 <= radius*radius then
+                    local w = 1.0/math.max(d2,1e-10)
+                    sw = sw + w
+                    sux = sux + uxdat(i)*w
+                    suy = suy + uydat(i)*w
+                    suz = suz + uzdat(i)*w
+                    inr = inr + 1
+                end_if
+                if d2 < dmin then
+                    dmin = d2
+                    global inear = i
+                end_if
+                i = i + 1
+            end_loop
+            local tx = 0.0
+            local ty = 0.0
+            local tz = 0.0
+            if sw > 0.0 then
+                tx = sux/sw
+                ty = suy/sw
+                tz = suz/sw
+            else
+                tx = uxdat(inear)
+                ty = uydat(inear)
+                tz = uzdat(inear)
+            end_if
+            local d = gp.disp(g)
+            gp.vel(g) = vector((tx-comp.x(d))/creep_time, (ty-comp.y(d))/creep_time, (tz-comp.z(d))/creep_time)
+            gp.fix(g) = vector(1,1,1)
+        end_if
+    end_loop
+end
+
+; --- Maxwell-only threshold gating (Kelvin always on), 260529 corrected MC envelope ---
+fish define do_threshold
+    local na = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pmean = (s1 + s3)/2.0 - pore
+            local q = (s1 - s3)/2.0
+            local c = zone.prop(z,'cohesion')
+            local phi = zone.prop(z,'friction')
+            local q_th = crp_threshold*(c*math.cos(phi*math.degrad) + pmean*math.sin(phi*math.degrad))
+            if q >= q_th then
+                zone.prop(z,'viscosity-maxwell') = eta_m
+                na = na + 1
+            else
+                zone.prop(z,'viscosity-maxwell') = 1e100
+            end_if
+        end_if
+    end_loop
+    global n_active = na
+end
+
+; --- WadeCreepSupport shell stress cap: iterative E-reduction (cap compressive <= fc) ---
+[global sig_cap = shot_fc]        ; 41.2e6 compressive cap
+[global sig_eps = 0.01]
+fish define shell_stress
+    command
+        structure shell recover surface (0,1,0)
+        structure shell recover stress depth-factor 0
+    endcommand
+    loop foreach local s struct.list
+        if struct.type(s) = 'shell' then
+            local smn = 1e30
+            loop local k (0,3)
+                local sp = struct.shell.stress.prin.x(s,k)
+                if sp < smn then
+                    smn = sp
+                end_if
+            end_loop
+            local sc = 0.0
+            if smn < 0.0 then
+                sc = -smn
+            end_if
+            if sc > (1.0+sig_eps)*sig_cap then
+                local en = struct.shell.young(s)
+                struct.shell.young(s) = en*(sig_cap/sc)
+            end_if
+        end_if
+    end_loop
+end
+
+; --- switch rock to burgers-mohr once (props per layer; eta_m gated later, eta_k always on) ---
+zone cmodel assign burgers-mohr range group 'rock' slot 'mat'
+zone property bulk [_bk(E_S_1)] shear-maxwell [_gk(E_S_1)] shear-kelvin [_gk(E_S_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property bulk [_bk(E_S_2)] shear-maxwell [_gk(E_S_2)] shear-kelvin [_gk(E_S_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property bulk [_bk(E_S_3)] shear-maxwell [_gk(E_S_3)] shear-kelvin [_gk(E_S_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property bulk [_bk(E_S_4)] shear-maxwell [_gk(E_S_4)] shear-kelvin [_gk(E_S_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+zone property bulk [_bk(E_S_5)] shear-maxwell [_gk(E_S_5)] shear-kelvin [_gk(E_S_5)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+zone property bulk [_bk(E_S_6)] shear-maxwell [_gk(E_S_6)] shear-kelvin [_gk(E_S_6)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+model creep active off
+[io.out('SS-1 rock -> burgers-mohr (G_m=G_k=_gk, eta_k on, eta_m gated)')]
+
+; --- convergence sentinels (y885 crown/invert/springline) + dmax ---
+fish define find_conv
+    global g_cr = null
+    global g_iv = null
+    global g_sr = null
+    global g_sl = null
+    local bc=1e20
+    local bi=1e20
+    local br=1e20
+    local bl=1e20
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        if comp.y(p) > 884.0 then
+        if comp.y(p) < 886.0 then
+            local dc=(comp.x(p)-1297.0)^2+(comp.z(p)-1752.0)^2
+            if dc<bc then
+                bc=dc
+                g_cr=g
+            end_if
+            local di=(comp.x(p)-1297.0)^2+(comp.z(p)-1743.0)^2
+            if di<bi then
+                bi=di
+                g_iv=g
+            end_if
+            local dr=(comp.x(p)-1303.0)^2+(comp.z(p)-1747.0)^2
+            if dr<br then
+                br=dr
+                g_sr=g
+            end_if
+            local dl=(comp.x(p)-1291.0)^2+(comp.z(p)-1747.0)^2
+            if dl<bl then
+                bl=dl
+                g_sl=g
+            end_if
+        end_if
+        end_if
+    end_loop
+end
+[find_conv]
+fish define vclose
+    vclose = (comp.z(gp.disp(g_cr))-comp.z(gp.disp(g_iv)))*1000.0
+end
+fish define hclose
+    hclose = (comp.x(gp.disp(g_sr))-comp.x(gp.disp(g_sl)))*1000.0
+end
+fish define dmax_all
+    local dm=0.0
+    loop foreach local g gp.list
+        local d=gp.disp(g)
+        local m=math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m>dm then
+            dm=m
+        end_if
+    end_loop
+    dmax_all=dm
+end
+fish define shell_maxc
+    command
+        structure shell recover surface (0,1,0)
+        structure shell recover stress depth-factor 0
+    endcommand
+    local mc=0.0
+    loop foreach local s struct.list
+        if struct.type(s)='shell' then
+            loop local k (0,3)
+                local sp=-struct.shell.stress.prin.x(s,k)
+                if sp>mc then
+                    mc=sp
+                end_if
+            end_loop
+        end_if
+    end_loop
+    shell_maxc=mc
+end
+
+; --- per-stage three-phase + gradual drive + threshold + shell cap ---
+fish define crp_stage(stg, wtname, fname, days)
+    ; (phase 1) new water table + fluid steady-state (rock as MC for balance)
+    command
+        zone cmodel assign mohr-coulomb range group 'rock' slot 'mat'
+        zone property young [E_S_1] poisson [nu] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+        zone property young [E_S_2] poisson [nu] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+        zone property young [E_S_3] poisson [nu] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+        zone property young [E_S_4] poisson [nu] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+        zone property young [E_S_5] poisson [nu] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+        zone property young [E_S_6] poisson [nu] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+        zone gridpoint initialize pore-pressure 0
+        zone water set [wtname]
+        zone gridpoint initialize saturation 1
+        zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+        zone gridpoint initialize pore-pressure 0 range geometry-distance 'tunnel_inner' gap 1.0
+        zone gridpoint fix pore-pressure range group 'East' or 'West' or 'North' or 'South' or 'Top' or 'Bottom'
+        model mechanical active off
+        model creep active off
+        model fluid active on
+        model solve ratio-flow 1e-4 or cycles 20000
+    endcommand
+    io.out('   SS-stg'+string(stg)+' '+wtname+' fluid steady-state done')
+    ; (phase 2) fluid off -> MC balance ratio 1e-5 (driven gps held at current disp)
+    command
+        model fluid active off
+        model mechanical active on
+        model creep active off
+        zone gridpoint initialize fluid-modulus 0
+        zone gridpoint initialize velocity 0 0 0
+        model solve ratio 1e-5 or cycles 40000
+    endcommand
+    io.out('   SS-stg'+string(stg)+' MC balance done')
+    ; (phase 3) burgers creep + gradual drive + threshold + shell cap
+    command
+        zone cmodel assign burgers-mohr range group 'rock' slot 'mat'
+        zone property bulk [_bk(E_S_1)] shear-maxwell [_gk(E_S_1)] shear-kelvin [_gk(E_S_1)] viscosity-kelvin [eta_k] range group 'layer1' slot 'type'
+        zone property bulk [_bk(E_S_2)] shear-maxwell [_gk(E_S_2)] shear-kelvin [_gk(E_S_2)] viscosity-kelvin [eta_k] range group 'layer2' slot 'type'
+        zone property bulk [_bk(E_S_3)] shear-maxwell [_gk(E_S_3)] shear-kelvin [_gk(E_S_3)] viscosity-kelvin [eta_k] range group 'layer3' slot 'type'
+        zone property bulk [_bk(E_S_4)] shear-maxwell [_gk(E_S_4)] shear-kelvin [_gk(E_S_4)] viscosity-kelvin [eta_k] range group 'layer4' slot 'type'
+        zone property bulk [_bk(E_S_5)] shear-maxwell [_gk(E_S_5)] shear-kelvin [_gk(E_S_5)] viscosity-kelvin [eta_k] range group 'layer5' slot 'type'
+        zone property bulk [_bk(E_S_6)] shear-maxwell [_gk(E_S_6)] shear-kelvin [_gk(E_S_6)] viscosity-kelvin [eta_k] range group 'layer6' slot 'type'
+        model creep active on
+    endcommand
+    read_drive(fname)
+    setKstrains
+    do_threshold
+    setKstrains
+    apply_vel_idw(days*86400.0, 60.0)
+    command
+        fish callback add @do_threshold 43 interval 200
+        fish callback add @shell_stress 12 interval 200
+        model creep timestep fix [crp_dt]
+        model solve creep time-total [days*86400.0]
+        fish callback remove @do_threshold
+        fish callback remove @shell_stress
+    endcommand
+    io.out('SS-CHK stg'+string(stg)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+'mm dmax='+string(dmax_all)+' active='+string(n_active)+' shellMaxC='+string(shell_maxc/1e6)+'MPa')
+end
+
+; ============================================================================
+; 11 stages
+; ============================================================================
+[crp_stage(1,'W-110','lg_disp_resid_s01.txt',30.0)]
+model save 'ss_01'
+[crp_stage(2,'W-90','lg_disp_resid_s02.txt',5.0)]
+model save 'ss_02'
+[crp_stage(3,'W-70','lg_disp_resid_s03.txt',5.0)]
+model save 'ss_03'
+[crp_stage(4,'W-50','lg_disp_resid_s04.txt',5.0)]
+model save 'ss_04'
+[crp_stage(5,'W-30','lg_disp_resid_s05.txt',5.0)]
+model save 'ss_05'
+[crp_stage(6,'W-10','lg_disp_resid_s06.txt',30.0)]
+model save 'ss_06'
+[crp_stage(7,'W-30','lg_disp_resid_s07.txt',5.0)]
+model save 'ss_07'
+[crp_stage(8,'W-50','lg_disp_resid_s08.txt',5.0)]
+model save 'ss_08'
+[crp_stage(9,'W-70','lg_disp_resid_s09.txt',5.0)]
+model save 'ss_09'
+[crp_stage(10,'W-90','lg_disp_resid_s10.txt',5.0)]
+model save 'ss_10'
+[crp_stage(11,'W-110','lg_disp_resid_s11.txt',30.0)]
+model save 'ss_11'
+[io.out('SS-DONE 11-stage small staged creep complete; final vclose='+string(vclose)+'mm hclose='+string(hclose)+'mm dmax='+string(dmax_all))]
+program log off
+program quit

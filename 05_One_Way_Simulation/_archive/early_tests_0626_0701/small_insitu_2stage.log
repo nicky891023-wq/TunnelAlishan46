@@ -1,0 +1,501 @@
+**********************************************
+* Logging started at ¶g¤T ¤C¤ë 1 12:00:03 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../02_SmallModel/Small_Model'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on ¶g¤G ¤»¤ë 23 09:43:34 2026
+Total Cycles: 0  Super Cycles: 0
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>call '../04_InitialBalance/parameter.f3dat'
+flac3d>; ============================================================================
+flac3d>; parameter.f3dat -- Alishan #46 UNIFIED material parameters (Wade-ruled, 2026-06-22)
+flac3d>; Large(4-layer) / Small(6-layer) rock + lining(D7) + coupled PFC(D7 calib).
+flac3d>;
+flac3d>; Unification rulings (Wade):
+flac3d>;   * nu = 0.25 single value (static MC + creep bulk same source).
+flac3d>;   * E is PER-LAYER (not uniform): lithology-based within Hoek-Diederichs
+flac3d>;     rock-mass range (sandstone 3-8, sandshale 1-3 GPa; colluvium/weathered soft).
+flac3d>;     -> GSI/E have NO field data: per-layer E are documented-range central
+flac3d>;        judgements, GSI-basis TODO (D3). c/phi are GSI-reduced placeholders.
+flac3d>;   * Burgers creep: shear-maxwell = shear-kelvin = the layer ELASTIC G,
+flac3d>;     bulk = the layer elastic K  (instantaneous static==creep, no spurious soften).
+flac3d>;   * viscosity-maxwell eta_m = 6.0e15 Pa.s ; viscosity-kelvin eta_k = 2.4e13 Pa.s.
+flac3d>;   * creep threshold ratio = 0.6 :  q_th = 0.6*(c*cos(phi)+p'*sin(phi)).
+flac3d>;   * creep timestep = 600 s (fixed).
+flac3d>;   * layer4 sandshale(WET): c = 100 kPa, phi = 30 deg (Wade).
+flac3d>; Units: SI (Pa, kg/m3, deg, m, Pa.s).  Sign: compression negative.
+flac3d>; ============================================================================
+flac3d>
+flac3d>; ---------- global / environment ----------
+flac3d>[global nu     = 0.25]            ; single Poisson, all rock layers
+flac3d>[global K0     = 0.7]             ; lateral stress ratio (placeholder, no field basis)
+flac3d>[global grav   = 9.81]            ; m/s2
+flac3d>[global poro   = 0.1]             ; porosity n
+flac3d>[global satr   = 0.1]             ; saturation S
+flac3d>[global rho_w  = 1000.0]          ; water density kg/m3
+flac3d>[global pmb    = 1.0e-5]          ; FLAC mobility coeff m2/(Pa.s); near-tunnel x100
+flac3d>[global ten_r  = 1.0e5]           ; rock tension cutoff 100 kPa (all layers)
+flac3d>
+flac3d>; ---------- elastic helpers (nu=0.25 -> G=E/2.5, K=E/1.5) ----------
+flac3d>fish define _gk(ee)
+   Def>    _gk = ee / (2.0*(1.0+nu))     ; shear  G
+   Def>end
+flac3d>fish define _bk(ee)
+   Def>    _bk = ee / (3.0*(1.0-2.0*nu)) ; bulk   K
+   Def>end
+flac3d>
+flac3d>; ====================== LARGE model : 4 layers ======================
+flac3d>; layer1 colluvium / layer2 ssh / layer3 bedrock / layer4 basement
+flac3d>[global E_L_1 = 0.5e9 ]
+flac3d>[global co_L_1 = 1.9e5]
+flac3d>[global fr_L_1 = 29.1]
+flac3d>[global den_L_1 = 2150.0]
+flac3d>[global E_L_2 = 2.0e9 ]
+flac3d>[global co_L_2 = 2.9e5]
+flac3d>[global fr_L_2 = 35.1]
+flac3d>[global den_L_2 = 2630.0]
+flac3d>[global E_L_3 = 5.0e9 ]
+flac3d>[global co_L_3 = 4.7e5]
+flac3d>[global fr_L_3 = 44.3]
+flac3d>[global den_L_3 = 2600.0]
+flac3d>[global E_L_4 = 7.0e9 ]
+flac3d>[global co_L_4 = 8.0e5]
+flac3d>[global fr_L_4 = 51.5]
+flac3d>[global den_L_4 = 2600.0]
+flac3d>
+flac3d>; ====================== SMALL model : 6 layers ======================
+flac3d>; l1 weathered-ss / l2 ss+sandshale / l3 ss+shale / l4 sandshale(WET) / l5 sandshale / l6 basement
+flac3d>[global E_S_1 = 1.0e9 ]
+flac3d>[global co_S_1 = 1.9e5 ]
+flac3d>[global fr_S_1 = 29.1]
+flac3d>[global den_S_1 = 2600.0]
+flac3d>[global E_S_2 = 2.0e9 ]
+flac3d>[global co_S_2 = 2.9e5 ]
+flac3d>[global fr_S_2 = 35.1]
+flac3d>[global den_S_2 = 2630.0]
+flac3d>[global E_S_3 = 3.5e9 ]
+flac3d>[global co_S_3 = 4.7e5 ]
+flac3d>[global fr_S_3 = 44.3]
+flac3d>[global den_S_3 = 2630.0]
+flac3d>[global E_S_4 = 1.5e9 ]
+flac3d>[global co_S_4 = 1.0e5 ]   ; WET, Wade c100/phi30
+flac3d>[global fr_S_4 = 30.0]
+flac3d>[global den_S_4 = 2630.0]
+flac3d>[global E_S_5 = 3.0e9 ]
+flac3d>[global co_S_5 = 8.0e5 ]
+flac3d>[global fr_S_5 = 51.5]
+flac3d>[global den_S_5 = 2630.0]
+flac3d>[global E_S_6 = 7.0e9 ]
+flac3d>[global co_S_6 = 20.6e5]
+flac3d>[global fr_S_6 = 56.3]
+flac3d>[global den_S_6 = 2600.0]
+flac3d>
+flac3d>; ---------- creep (Burgers-Mohr) : per-layer G_m=G_k=G(E,nu), bulk=K(E,nu) ----------
+flac3d>[global eta_m = 6.0e15]           ; viscosity-maxwell (Wade)
+flac3d>[global eta_k = 2.4e13]           ; viscosity-kelvin (proven)
+flac3d>[global crp_threshold = 0.6]      ; q_th = 0.6*(c*cosphi + p'*sinphi)
+flac3d>[global crp_dt = 600.0]           ; creep timestep (s) (Wade)
+flac3d>
+flac3d>; ---------- lining (R.C. continuum, D7 DECIDED) ----------
+flac3d>[global shot_E   = 25e9]
+flac3d>[global shot_v   = 0.2]
+flac3d>[global shot_t   = 0.40]
+flac3d>[global shot_den = 2400.0]
+flac3d>[global shot_fc  = 41.2e6]
+flac3d>[global shot_ft  = 4.12e6]
+flac3d>
+flac3d>; ---------- coupled PFC lining BPM micro (D7 FINAL_CALIB) ----------
+flac3d>[global pfc_emod    = 9.65e9]     ; linear deformability
+flac3d>[global pfc_kratio  = 1.0]
+flac3d>[global pfc_pb_emod = 5.88e9]     ; parallel-bond deformability
+flac3d>[global pfc_pb_krat = 0.6]
+flac3d>[global pfc_pb_ten  = 2.10e6]     ; Pa
+flac3d>[global pfc_pb_coh  = 2.30e7]     ; Pa
+flac3d>[global pfc_pb_fa   = 25.0]       ; deg
+flac3d>[global pfc_bondgap = 0.03]       ; m  (= cmat proximity)
+flac3d>[global pfc_ball_den  = 2400.0]
+flac3d>[global pfc_ball_damp = 0.7]
+flac3d>[global pfc_fric      = 0.5]
+flac3d>[global pfc_bf_strong = 1.0e20]   ; ball-facet pb (unbreakable coupling, NOT material)
+flac3d>
+flac3d>[io.out('=== parameter.f3dat loaded : nu='+string(nu)+' K0='+string(K0)+' eta_m='+string(eta_m)+' crp_dt='+string(crp_dt)+' ===')]
+=== parameter.f3dat loaded : nu=0.25 K0=0.7 eta_m=6e+15 crp_dt=600 ===
+flac3d>call '../04_InitialBalance/idw_map.f3dat'
+flac3d>; idw_map.f3dat -- submodel stress transfer (reused from proven G:/260529 io_stress).
+flac3d>; ReadFile_ss(fname): load parent zone-stress export into global arrays.
+flac3d>; MapStress_IDW(radius): inverse-distance-weighted map onto ALL target zones
+flac3d>;   (rock + lining).  Wade 2026-06-22: the conformal lining shares nodes with the
+flac3d>;   rock, so it is initialized to the same in-situ field (true wished-in-place,
+flac3d>;   continuous interface at t=0, no internal force jump).
+flac3d>fish automatic-create off
+flac3d>
+flac3d>[global ss_ndata = 1]
+flac3d>[global ss_xdat = array.create(1)]
+flac3d>[global ss_ydat = array.create(1)]
+flac3d>[global ss_zdat = array.create(1)]
+flac3d>[global sxxdat = array.create(1)]
+flac3d>[global syydat = array.create(1)]
+flac3d>[global szzdat = array.create(1)]
+flac3d>[global sxydat = array.create(1)]
+flac3d>[global sxzdat = array.create(1)]
+flac3d>[global syzdat = array.create(1)]
+flac3d>
+flac3d>def ReadFile_ss(fname)
+   Def>    local arr = array.create(1)
+   Def>    ss_ndata = 0
+   Def>    local stat = file.close
+   Def>    stat = file.open(fname,0,1)
+   Def>    if stat # 0 then
+   Def>        io.out('ReadFile_ss: file.open failed status='+string(stat))
+   Def>        exit
+   Def>    endif
+   Def>    stat = file.read(arr,1)            ; header
+   Def>    stat = file.read(arr,1)            ; first data row
+   Def>    loop while stat = 0
+   Def>        ss_ndata = ss_ndata + 1
+   Def>        stat = file.read(arr,1)
+   Def>    endloop
+   Def>    stat = file.close
+   Def>    io.out('ReadFile_ss: data rows = '+string(ss_ndata))
+   Def>    if ss_ndata <= 0 then
+   Def>        exit
+   Def>    endif
+   Def>    ss_xdat = array.create(ss_ndata)
+   Def>    ss_ydat = array.create(ss_ndata)
+   Def>    ss_zdat = array.create(ss_ndata)
+   Def>    sxxdat = array.create(ss_ndata)
+   Def>    syydat = array.create(ss_ndata)
+   Def>    szzdat = array.create(ss_ndata)
+   Def>    sxydat = array.create(ss_ndata)
+   Def>    sxzdat = array.create(ss_ndata)
+   Def>    syzdat = array.create(ss_ndata)
+   Def>    stat = file.open(fname,0,1)
+   Def>    stat = file.read(arr,1)            ; skip header
+   Def>    local i = 0
+   Def>    stat = file.read(arr,1)
+   Def>    loop while stat = 0
+   Def>        i = i + 1
+   Def>        local line = arr(1)
+   Def>        ss_xdat(i) = string.token(line,2)
+   Def>        ss_ydat(i) = string.token(line,3)
+   Def>        ss_zdat(i) = string.token(line,4)
+   Def>        sxxdat(i) = string.token(line,5)
+   Def>        syydat(i) = string.token(line,6)
+   Def>        szzdat(i) = string.token(line,7)
+   Def>        sxydat(i) = string.token(line,8)
+   Def>        sxzdat(i) = string.token(line,9)
+   Def>        syzdat(i) = string.token(line,10)
+   Def>        stat = file.read(arr,1)
+   Def>    endloop
+   Def>    stat = file.close
+   Def>    io.out('ReadFile_ss: parsed '+string(i)+' rows')
+   Def>end
+flac3d>
+flac3d>def MapStress_IDW(search_radius)
+   Def>    local nmap = 0
+   Def>    loop foreach local iz zone.list
+   Def>        if zone.id(iz) > 0 then            ; ALL zones (rock + lining) -- wished-in-place
+   Def>            local x = zone.pos.x(iz)
+   Def>            local y = zone.pos.y(iz)
+   Def>            local z = zone.pos.z(iz)
+   Def>            local sum_w = 0.0
+   Def>            local s_xx = 0.0
+   Def>            local s_yy = 0.0
+   Def>            local s_zz = 0.0
+   Def>            local s_xy = 0.0
+   Def>            local s_xz = 0.0
+   Def>            local s_yz = 0.0
+   Def>            local dmin = 1.0e30
+   Def>            local inear = 1
+   Def>            local i = 1
+   Def>            loop while i <= ss_ndata
+   Def>                local dx = math.abs(x - ss_xdat(i))
+   Def>                if dx <= search_radius then
+   Def>                    local dy = math.abs(y - ss_ydat(i))
+   Def>                    if dy <= search_radius then
+   Def>                        local dz = math.abs(z - ss_zdat(i))
+   Def>                        if dz <= search_radius then
+   Def>                            local d2 = dx*dx + dy*dy + dz*dz
+   Def>                            if d2 <= (search_radius*search_radius) then
+   Def>                                if d2 < dmin then
+   Def>                                    dmin = d2
+   Def>                                    inear = i
+   Def>                                endif
+   Def>                                local w = 1.0 / math.max(d2,1e-10)
+   Def>                                sum_w = sum_w + w
+   Def>                                s_xx = s_xx + sxxdat(i)*w
+   Def>                                s_yy = s_yy + syydat(i)*w
+   Def>                                s_zz = s_zz + szzdat(i)*w
+   Def>                                s_xy = s_xy + sxydat(i)*w
+   Def>                                s_xz = s_xz + sxzdat(i)*w
+   Def>                                s_yz = s_yz + syzdat(i)*w
+   Def>                            endif
+   Def>                        endif
+   Def>                    endif
+   Def>                endif
+   Def>                i = i + 1
+   Def>            endloop
+   Def>            if sum_w > 0.0 then
+   Def>                zone.stress.xx(iz) = s_xx / sum_w
+   Def>                zone.stress.yy(iz) = s_yy / sum_w
+   Def>                zone.stress.zz(iz) = s_zz / sum_w
+   Def>                zone.stress.xy(iz) = s_xy / sum_w
+   Def>                zone.stress.xz(iz) = s_xz / sum_w
+   Def>                zone.stress.yz(iz) = s_yz / sum_w
+   Def>            else
+   Def>                i = 1
+   Def>                loop while i <= ss_ndata
+   Def>                    local d2b = (x-ss_xdat(i))^2 + (y-ss_ydat(i))^2 + (z-ss_zdat(i))^2
+   Def>                    if d2b < dmin then
+   Def>                        dmin = d2b
+   Def>                        inear = i
+   Def>                    endif
+   Def>                    i = i + 1
+   Def>                endloop
+   Def>                zone.stress.xx(iz) = sxxdat(inear)
+   Def>                zone.stress.yy(iz) = syydat(inear)
+   Def>                zone.stress.zz(iz) = szzdat(inear)
+   Def>                zone.stress.xy(iz) = sxydat(inear)
+   Def>                zone.stress.xz(iz) = sxzdat(inear)
+   Def>                zone.stress.yz(iz) = syzdat(inear)
+   Def>            endif
+   Def>            nmap = nmap + 1
+   Def>        endif
+   Def>    endloop
+   Def>    io.out('MapStress_IDW: mapped onto '+string(nmap)+' zones rock+lining (radius '+string(search_radius)+')')
+   Def>end
+flac3d>model largestrain off
+flac3d>fish automatic-create on
+flac3d>
+flac3d>; --- rock 6-layer MC. tension = Mohr-Coulomb APEX c/tan(phi) per layer (physical max
+flac3d>;     the MC material can carry; replaces the low uniform 0.1MPa -> far fewer tension-
+flac3d>;     failure zones, leaving the real shear/squeezing plastic). SMALL ONLY (large ten_r
+flac3d>;     in parameter.f3dat unchanged). Wade: ‰åå¼·åº¦è¨­å¤§¿åå¤ªå‰åå¡‘æ€§å. ---
+flac3d>zone cmodel assign mohr-coulomb range group 'rock' slot 'mat'
+flac3d>zone property young [E_S_1] poisson [nu] cohesion [co_S_1] friction [fr_S_1] tension [co_S_1/math.tan(fr_S_1*math.degrad)] range group 'layer1' slot 'type'
+--- Property young set in 20346 zones using the mohr-coulomb model.
+--- Property poisson set in 20346 zones using the mohr-coulomb model.
+--- Property cohesion set in 20346 zones using the mohr-coulomb model.
+--- Property friction set in 20346 zones using the mohr-coulomb model.
+--- Property tension set in 20346 zones using the mohr-coulomb model.
+flac3d>zone property young [E_S_2] poisson [nu] cohesion [co_S_2] friction [fr_S_2] tension [co_S_2/math.tan(fr_S_2*math.degrad)] range group 'layer2' slot 'type'
+--- Property young set in 23503 zones using the mohr-coulomb model.
+--- Property poisson set in 23503 zones using the mohr-coulomb model.
+--- Property cohesion set in 23503 zones using the mohr-coulomb model.
+--- Property friction set in 23503 zones using the mohr-coulomb model.
+--- Property tension set in 23503 zones using the mohr-coulomb model.
+flac3d>zone property young [E_S_3] poisson [nu] cohesion [co_S_3] friction [fr_S_3] tension [co_S_3/math.tan(fr_S_3*math.degrad)] range group 'layer3' slot 'type'
+--- Property young set in 151327 zones using the mohr-coulomb model.
+--- Property poisson set in 151327 zones using the mohr-coulomb model.
+--- Property cohesion set in 151327 zones using the mohr-coulomb model.
+--- Property friction set in 151327 zones using the mohr-coulomb model.
+--- Property tension set in 151327 zones using the mohr-coulomb model.
+flac3d>zone property young [E_S_4] poisson [nu] cohesion [co_S_4] friction [fr_S_4] tension [co_S_4/math.tan(fr_S_4*math.degrad)] range group 'layer4' slot 'type'
+--- Property young set in 618771 zones using the mohr-coulomb model.
+--- Property poisson set in 618771 zones using the mohr-coulomb model.
+--- Property cohesion set in 618771 zones using the mohr-coulomb model.
+--- Property friction set in 618771 zones using the mohr-coulomb model.
+--- Property tension set in 618771 zones using the mohr-coulomb model.
+flac3d>zone property young [E_S_5] poisson [nu] cohesion [co_S_5] friction [fr_S_5] tension [co_S_5/math.tan(fr_S_5*math.degrad)] range group 'layer5' slot 'type'
+--- Property young set in 255448 zones using the mohr-coulomb model.
+--- Property poisson set in 255448 zones using the mohr-coulomb model.
+--- Property cohesion set in 255448 zones using the mohr-coulomb model.
+--- Property friction set in 255448 zones using the mohr-coulomb model.
+--- Property tension set in 255448 zones using the mohr-coulomb model.
+flac3d>zone property young [E_S_6] poisson [nu] cohesion [co_S_6] friction [fr_S_6] tension [co_S_6/math.tan(fr_S_6*math.degrad)] range group 'layer6' slot 'type'
+--- Property young set in 29060 zones using the mohr-coulomb model.
+--- Property poisson set in 29060 zones using the mohr-coulomb model.
+--- Property cohesion set in 29060 zones using the mohr-coulomb model.
+--- Property friction set in 29060 zones using the mohr-coulomb model.
+--- Property tension set in 29060 zones using the mohr-coulomb model.
+flac3d>zone initialize density [den_S_1] range group 'layer1' slot 'type'
+--- density modified in 20346 zones.
+flac3d>zone initialize density [den_S_2] range group 'layer2' slot 'type'
+--- density modified in 23503 zones.
+flac3d>zone initialize density [den_S_3] range group 'layer3' slot 'type'
+--- density modified in 151327 zones.
+flac3d>zone initialize density [den_S_4] range group 'layer4' slot 'type'
+--- density modified in 618771 zones.
+flac3d>zone initialize density [den_S_5] range group 'layer5' slot 'type'
+--- density modified in 255448 zones.
+flac3d>zone initialize density [den_S_6] range group 'layer6' slot 'type'
+--- density modified in 29060 zones.
+flac3d>; --- null the lining (bare rock; shell installed later) ---
+flac3d>zone cmodel assign null range group 'lining' slot 'type'
+flac3d>[io.out('SI2-1 rock MC + lining nulled (bare rock)')]
+SI2-1 rock MC + lining nulled (bare rock)
+0 (integer)
+flac3d>
+flac3d>; --- IDW-map the large in-situ stress onto the rock ---
+flac3d>[ReadFile_ss('../04_InitialBalance/large_stress_coarse.dat')]
+ReadFile_ss: data rows = 2582
+ReadFile_ss: parsed 2582 rows
+0 (integer)
+flac3d>[MapStress_IDW(40.0)]
+MapStress_IDW: mapped onto 1433466 zones rock+lining (radius 40)
+0 (integer)
+flac3d>[io.out('SI2-2 large stress IDW-mapped')]
+SI2-2 large stress IDW-mapped
+0 (integer)
+flac3d>
+flac3d>; --- BC + gravity ---
+flac3d>zone gridpoint fix velocity range position-x 1249 1251
+--- Fix velocity         specified in 904 gridpoints.
+flac3d>zone gridpoint fix velocity range position-x 1349 1351
+--- Fix velocity         specified in 852 gridpoints.
+flac3d>zone gridpoint fix velocity range position-y 849 851
+--- Fix velocity         specified in 4207 gridpoints.
+flac3d>zone gridpoint fix velocity range position-y 949 951
+--- Fix velocity         specified in 5398 gridpoints.
+flac3d>zone gridpoint fix velocity range position-z 1699 1701
+--- Fix velocity         specified in 790 gridpoints.
+flac3d>zone gridpoint fix velocity range position-z 1799 1801
+--- Fix velocity         specified in 790 gridpoints.
+flac3d>model gravity 0 0 [-grav]
+--- Gravity has been set to: ( 0.0e+00 0.0e+00 -9.8e+00).
+flac3d>
+flac3d>fish define qa_rock(tag)
+   Def>    local maxprin = -1e30
+   Def>    local nten = 0
+   Def>    local nplas = 0
+   Def>    local nplas_tun = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local pz = zone.stress.prin.z(z)
+   Def>            if pz > maxprin then
+   Def>                maxprin = pz
+   Def>            end_if
+   Def>            if pz > 1000.0 then
+   Def>                nten = nten + 1
+   Def>            end_if
+   Def>            if zone.state(z,1) # 0 then
+   Def>                nplas = nplas + 1
+   Def>                local rx = zone.pos.x(z)-1297.0
+   Def>                local rz = zone.pos.z(z)-1747.5
+   Def>                if math.sqrt(rx*rx+rz*rz) < 15.0 then
+   Def>                    nplas_tun = nplas_tun + 1
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local mv = 0.0
+   Def>    local mdsp = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        local v = gp.vel(g)
+   Def>        local m = math.sqrt(comp.x(v)^2+comp.y(v)^2+comp.z(v)^2)
+   Def>        if m > mv then
+   Def>            mv = m
+   Def>        end_if
+   Def>        local d = gp.disp(g)
+   Def>        local md = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if md > mdsp then
+   Def>            mdsp = md
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('SI2-QA-ROCK '+tag+' max_principal='+string(maxprin)+'Pa tension='+string(nten)+' plastic='+string(nplas)+' plastic_near_tunnel(r<15)='+string(nplas_tun)+' max_vel='+string(mv)+' max_disp='+string(mdsp*1000.0)+'mm')
+   Def>end
+flac3d>fish define qa_shell(tag)
+   Def>    command
+   Def>        structure shell recover surface (0,1,0)
+   Def>        structure shell recover stress depth-factor 0
+   Def>    endcommand
+   Def>    local maxc = 0.0
+   Def>    local maxt = 0.0
+   Def>    loop foreach local s struct.list
+   Def>        loop local k (0,3)
+   Def>            local smin = struct.shell.stress.prin.x(s,k)
+   Def>            local smax = struct.shell.stress.prin.z(s,k)
+   Def>            if -smin > maxc then
+   Def>                maxc = -smin
+   Def>            end_if
+   Def>            if smax > maxt then
+   Def>                maxt = smax
+   Def>            end_if
+   Def>        end_loop
+   Def>    end_loop
+   Def>    io.out('SI2-QA-SHELL '+tag+' max_comp='+string(maxc/1e6)+'MPa max_tension='+string(maxt/1e6)+'MPa (cap 41.2/4.12) shells='+string(struct.num))
+   Def>end
+flac3d>
+flac3d>[qa_rock('after-IDW')]
+SI2-QA-ROCK after-IDW max_principal=-19212Pa tension=0 plastic=0 plastic_near_tunnel(r<15)=0 max_vel=0 max_disp=0mm
+0 (integer)
+flac3d>; === STAGE A: bare rock relax to 1e-4 (excavation relaxation -> plastic zone) ===
+flac3d>model solve ratio-local 1e-4 cycles 50000
+    Cycle      Total Ratio-loca       Clock
+--------- ---------- ---------- ----------- 
+     9058       9058 9.2923e-05 00:00:10:20     50000            1.0000e-04             
+--- Limit ratio-local of 1.0000e-04 met in process(es): mech Zone Main (9.2923e-05),mech Struct Main (0.0000e+00).
+--- Cycling ended at: 2026-07-01 12:32:51
+flac3d>[qa_rock('after-bare-relax-1e-4')]
+SI2-QA-ROCK after-bare-relax-1e-4 max_principal=635843Pa tension=116891 plastic=524036 plastic_near_tunnel(r<15)=480461 max_vel=3.82054e-10 max_disp=22.1644mm
+0 (integer)
+flac3d>
+flac3d>; === STAGE B: install shell on the relaxed cavity wall, solve ratio 1e-5 ===
+flac3d>; position-y 850.05..949.95 covers the tunnel ENDS (Wade: ©æç¼ºäå°æ®µ) while the
+flac3d>; 6 box planes (centroids exactly at y=850/950, x=1250/1350, z=1700/1800) fall outside
+flac3d>; the +-0.05/1m interior bands and get NO shell.
+flac3d>structure shell create by-face element-type=dkt-csth range group 'rock' slot 'mat' position-x 1250.5 1349.5 position-y 850.05 949.95 position-z 1700.5 1799.5
+--- 69828 elements, 35025 nodes, and 35025 links created.
+flac3d>structure shell property isotropic ([shot_E], [shot_v]) thickness [shot_t] density [shot_den]
+--- Property isotropic set to 2.5e+10,0.2 in 69828 shell elements.
+--- Property thickness set to 0.4 in 69828 shell elements.
+--- Property density set to 2400 in 69828 shell elements.
+flac3d>; --- shell coverage QA: count (should stay ~68-72k = cavity wall; a jump means box planes leaked in) + y-extent ---
+flac3d>fish define shell_extent
+   Def>    local ns = 0
+   Def>    local ymn = 1e30
+   Def>    local ymx = -1e30
+   Def>    loop foreach local s struct.list
+   Def>        if struct.type(s) = 'shell' then
+   Def>            ns = ns + 1
+   Def>            local sy = struct.pos.y(s)
+   Def>            if sy < ymn then
+   Def>                ymn = sy
+   Def>            end_if
+   Def>            if sy > ymx then
+   Def>                ymx = sy
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('SI2-3 shell installed; shells='+string(ns)+' y-extent=['+string(ymn)+','+string(ymx)+'] (tunnel ends covered if ~850.1/949.9; box-plane leak if count>>68k)')
+   Def>end
+flac3d>[shell_extent]
+SI2-3 shell installed; shells=69828 y-extent=[850.05,949.949] (tunnel ends covered if ~850.1/949.9; box-plane leak if count>>68k)
+0 (integer)
+flac3d>[qa_shell('after-shell-create')]
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+SI2-QA-SHELL after-shell-create max_comp=0MPa max_tension=0MPa (cap 41.2/4.12) shells=69828
+0 (integer)
+flac3d>model solve ratio-local 1e-5 cycles 40000
+    Cycle      Total Ratio-loca       Clock
+--------- ---------- ---------- ----------- 
+    17424      26482 9.8806e-06 00:00:49:35     40000            1.0000e-05             
+--- Limit ratio-local of 1.0000e-05 met in process(es): mech Zone Main (3.1661e-07),mech Struct Main (9.8806e-06).
+--- Cycling ended at: 2026-07-01 13:22:37
+flac3d>[qa_rock('after-shell-solve-1e-5')]
+SI2-QA-ROCK after-shell-solve-1e-5 max_principal=634641Pa tension=116533 plastic=524440 plastic_near_tunnel(r<15)=480723 max_vel=1.44703e-14 max_disp=22.1766mm
+0 (integer)
+flac3d>[qa_shell('after-shell-solve-1e-5')]
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+SI2-QA-SHELL after-shell-solve-1e-5 max_comp=0.183652MPa max_tension=0.193035MPa (cap 41.2/4.12) shells=69828
+0 (integer)
+flac3d>
+flac3d>; --- datum: keep deformation (day-0 non-zero, Wade rule), zero velocity only ---
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 206341 gridpoints.
+flac3d>model save '../04_InitialBalance/Small_Initial'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/Small_Initial.f3sav.
+flac3d>[io.out('SI2-DONE saved Small_Initial (2-stage: bare-relax 1e-4 -> shell 1e-5)')]
+SI2-DONE saved Small_Initial (2-stage: bare-relax 1e-4 -> shell 1e-5)
+0 (integer)
+flac3d>program quit

@@ -1,0 +1,242 @@
+; ============================================================================
+; couple_servo_v6.f3dat -- Alishan #46 COUPLED initial force-balance v6 (Claude 2026-07-03).
+;   = proven v5 servo recipe with THREE deliberate changes (Wade D2/D4/D6, 07-02):
+;   (1) ROCK = SINGLE EQUIVALENT ELASTIC material (D2):
+;       E_eq = 2.31 GPa (zone-count weighted per-layer E over couple_hex layers:
+;       l2:1704x2.0 l3:28121x3.5 l4:228014x1.5 l5:158192x3.0 l6:8877x7.0 GPa),
+;       nu = 0.25, density 2630 (dominant layers). Rationale: plasticity/creep/layers
+;       already live in the SMALL model and enter through the staged boundary drive;
+;       the coupled model is the load-transfer + lining-damage device. E_eq is subject
+;       to gate G2 (per-stage cavity-wall displacement match vs small model, +-15%).
+;   (2) CORNER-FEET STRIPS UNBREAKABLE (D4/D6): the lining has NO INVERT (open ring:
+;       arch + two side walls ending at the floor rim z~1744.85). The bottom ~0.45 m
+;       of both wall feet get UNBREAKABLE ball-ball bonds (1e100) so the feet stay
+;       anchored (they also remain glued to the rock wall via the 1e20 wz_outter
+;       coupling). Cracking is studied in the sidewall-to-crown region (focus area).
+;   (3) FREE INNER FACE: after the confined equilibrium (Couple_Initial_v6), the rigid
+;       clearance wall 'w_inner' is DELETED and the model re-converged (STEP F).
+;       Gates: zero new broken ball-ball bonds + ball disp delta report (mm-level).
+;       End platens w_860/w_910 are KEPT (artificial y-boundaries).
+;   Base recipe unchanged from v5: settle -> selective bond (ball-ball D7 breakable /
+;   wz_outter 1e20 unbreakable / rigid walls frictional) -> force-free install ->
+;   gravity + IDW large in-situ (NEW 07-02 field) -> 6 faces fixed -> freeze-ball
+;   rock-eq -> bore support pressure -> free balls -> servo reduce bleed -> finalize.
+;   Host: flac3d600_console (pfc + wallzone). cwd = this couple_solve dir.
+; ============================================================================
+program log-file 'couple_servo_v6.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+
+; ---- (1) restore clean base + parameters ----
+model restore '../../../03_CoupleModel/output/Couple_Model'
+call '../../parameter.f3dat'
+model largestrain on
+[global ovb = -1.40e6]
+[global E_eq  = 2.31e9]
+[global den_eq = 2630.0]
+[io.out('V6-0 restored Couple_Model: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num)+' facets='+string(wall.facet.num))]
+
+; ---- (2) rock = SINGLE equivalent elastic (D2) ----
+zone cmodel assign elastic
+zone property young [E_eq] poisson [nu]
+zone initialize density [den_eq]
+[io.out('V6-1 rock single elastic E_eq='+string(E_eq/1e9)+'GPa nu='+string(nu)+' den='+string(den_eq))]
+
+; ---- (3a) settle raw balls (rock frozen, linear cmat, density-scaled) ----
+zone gridpoint fix velocity
+model mechanical timestep scale
+cmat default type 'ball-ball'  model linear method deformability emod [pfc_emod] kratio [pfc_kratio] property fric [pfc_fric]
+cmat default type 'ball-facet' model linear method deformability emod [pfc_emod] kratio [pfc_kratio] property fric [pfc_fric]
+cmat apply
+model calm
+model cycle 3000
+model calm
+[io.out('V6-3a balls settled: contacts='+string(contact.num))]
+
+; ---- (3b) promote to linearpbond + tag ball-facet contacts by parent wall ----
+cmat default type 'ball-ball'  model linearpbond method deformability emod [pfc_emod] kratio [pfc_kratio] proximity [pfc_bondgap] property fric [pfc_fric]
+cmat default type 'ball-facet' model linearpbond method deformability emod [pfc_emod] kratio [pfc_kratio] proximity [pfc_bondgap] property fric [pfc_fric]
+cmat apply
+model cycle 1
+fish define tag_bf_contacts
+    local n_couple = 0
+    local n_rigid  = 0
+    loop foreach local c contact.list
+        if type.pointer(c) = 'ball-facet' then
+            local wfp = contact.end2(c)
+            local w   = wall.facet.wall(wfp)
+            local wn  = wall.name(w)
+            if wn = 'wz_outter' then
+                contact.group(c) = 'bf_couple'
+                n_couple = n_couple + 1
+            else
+                contact.group(c) = 'bf_rigid'
+                n_rigid = n_rigid + 1
+            end_if
+        end_if
+    end_loop
+    io.out('V6-3b TAG: bf_couple='+string(n_couple)+' bf_rigid='+string(n_rigid))
+end
+[tag_bf_contacts]
+
+; ---- (3c) bond: ball-ball D7 breakable / wz_outter 1e20 / rigid walls frictional ----
+contact model linearpbond range contact type 'ball-ball'
+contact model linearpbond range contact group 'bf_couple'
+contact method deformability emod [pfc_emod] kratio [pfc_kratio] range contact type 'ball-ball'
+contact method deformability emod [pfc_emod] kratio [pfc_kratio] range contact group 'bf_couple'
+contact method pb_deform emod [pfc_pb_emod] kratio [pfc_pb_krat] range contact type 'ball-ball'
+contact method bond gap [pfc_bondgap] range contact type 'ball-ball'
+contact property pb_ten [pfc_pb_ten] pb_coh [pfc_pb_coh] pb_fa [pfc_pb_fa] range contact type 'ball-ball'
+contact method pb_deform emod [pfc_pb_emod] kratio [pfc_pb_krat] range contact group 'bf_couple'
+contact method bond gap [pfc_bondgap] range contact group 'bf_couple'
+contact property pb_ten [pfc_bf_strong] pb_coh [pfc_bf_strong] pb_fa [pfc_pb_fa] range contact group 'bf_couple'
+contact model linear range contact group 'bf_rigid'
+contact method deformability emod [pfc_emod] kratio [pfc_kratio] range contact group 'bf_rigid'
+contact property fric [pfc_fric]
+[io.out('V6-3c bonded (D7 breakable ball-ball; 1e20 wz_outter; rigid walls frictional)')]
+
+; ---- (3c2) CORNER-FEET STRIPS -> UNBREAKABLE (D4/D6): bottom 0.45 m of both wall feet.
+;      Ring bottom rim z~1744.85 (open invert): contacts with z<=1745.30 are exactly
+;      the two feet strips. Overrides the D7 strengths locally; wz_outter 1e20 keeps
+;      them glued to rock; they follow the rock wall, cannot shatter or kick in. ----
+contact property pb_ten [pfc_bf_strong] pb_coh [pfc_bf_strong] range contact type 'ball-ball' position-z 1740.0 1745.30
+fish define count_feet
+    local nf = 0
+    loop foreach local c contact.list
+        if type.pointer(c) = 'ball-ball' then
+            if comp.z(contact.pos(c)) < 1745.30 then
+                nf = nf + 1
+            end_if
+        end_if
+    end_loop
+    io.out('V6-3c2 FEET unbreakable ball-ball bonds='+string(nf))
+end
+[count_feet]
+
+; ---- (3d) force-free install (lin_mode 1, once, at zero in-situ) ----
+model calm
+ball fix velocity spin
+ball attribute force-contact multiply 0.0
+ball attribute moment-contact multiply 0.0
+contact property lin_force 0.0 0.0 0.0 lin_mode 1
+model cycle 2
+ball free velocity spin
+[io.out('V6-3d force-free install done')]
+
+; ---- (4) in-situ: gravity + IDW map of the NEW (07-02) large field, whole domain ----
+model gravity 0 0 [-grav]
+call '../idw_map.f3dat'
+[ReadFile_ss('../../output/large_stress_coarse.dat')]
+[MapStress_IDW(40.0)]
+[io.out('V6-4 in-situ mapped (NEW large field, whole domain)')]
+
+; ---- (5) BC: 6 outer faces velocity-fixed ----
+zone gridpoint fix velocity range position-x 1276.7 1277.3
+zone gridpoint fix velocity range position-x 1316.7 1317.3
+zone gridpoint fix velocity range position-y 859.7 860.3
+zone gridpoint fix velocity range position-y 909.7 910.3
+zone gridpoint fix velocity range position-z 1727.7 1728.3
+zone gridpoint fix velocity range position-z 1767.7 1768.3
+[io.out('V6-5 outer faces fixed')]
+model save 'v6_preA'
+
+; ---- (6) solve: freeze-ball rock-eq -> support pressure -> free -> servo bleed ----
+ball fix velocity spin
+model solve ratio-average 1e-4 cycles 8000
+[io.out('V6-A rock-eq (balls frozen) done')]
+model save 'v6_rockeq'
+zone face apply stress-normal [ovb] range group 'rock' slot 'mat' position-x 1292 1303 position-y 860.05 909.95 position-z 1743 1752
+model solve ratio-average 1e-4 cycles 3000
+[io.out('V6-A1 bore support pressure on (balls frozen)')]
+ball free velocity spin
+ball attribute displacement multiply 0.0
+model mechanical timestep automatic
+[io.out('V6-A2 balls freed (confined by wz_outter + rigid walls)')]
+zone face apply stress-normal [ovb] servo reduce ratio average lower-bound 2e-3 upper-bound 1e-2 upper-multiplier 0.95 latency 30 range group 'rock' slot 'mat' position-x 1292 1303 position-y 860.05 909.95 position-z 1743 1752
+model solve ratio-average 1e-4 cycles 2000
+[io.out('V6-B1 servo ~2000')]
+model save 'v6_servo_m1'
+model solve ratio-average 1e-4 cycles 3000
+[io.out('V6-B2 servo ~5000')]
+model solve ratio-average 1e-4 cycles 5000
+[io.out('V6-B3 servo ~10000')]
+zone face apply stress-normal 0 range group 'rock' slot 'mat' position-x 1292 1303 position-y 860.05 909.95 position-z 1743 1752
+model solve ratio-average 1e-4 cycles 8000
+[io.out('V6-FIN confined equilibrium reached')]
+model save 'Couple_Initial_v6'
+
+; ---- verify at confined state ----
+call 'count_bonds.f3fis'
+[io.out('V6-BONDCHK at Couple_Initial_v6 (confined):')]
+[count_state]
+
+; ============================================================================
+; STEP F -- FREE INNER FACE (D4): delete rigid clearance wall, re-converge, gates.
+; ============================================================================
+fish define ball_dmax
+    local dm = 0.0
+    loop foreach local b ball.list
+        local d = ball.disp(b)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > dm then
+            dm = m
+        end_if
+    end_loop
+    ball_dmax = dm
+end
+fish define broken_count
+    local nb = 0
+    loop foreach local c contact.list
+        if type.pointer(c) = 'ball-ball' then
+            local st = contact.prop(c,'pb_state')
+            if st = 1 then
+                nb = nb + 1
+            end_if
+            if st = 2 then
+                nb = nb + 1
+            end_if
+        end_if
+    end_loop
+    broken_count = nb
+end
+[global brk0 = broken_count]
+[global bdm0 = ball_dmax]
+[io.out('V6-F0 baseline: broken='+string(brk0)+' ball_dmax='+string(bdm0))]
+ball attribute displacement multiply 0.0
+wall delete wall range name 'w_inner'
+[io.out('V6-F1 w_inner DELETED (inner face now FREE; feet anchored; w_860/w_910 kept)')]
+model solve ratio-average 1e-4 cycles 12000
+[global brk1 = broken_count]
+[global bdm1 = ball_dmax]
+[io.out('V6-F2 GATE after free-face re-converge: new_broken='+string(brk1-brk0)+' (must be 0) ball_disp_delta='+string(bdm1)+' m (expect mm-level)')]
+model save 'Couple_Initial_free'
+[io.out('V6-BONDCHK at Couple_Initial_free:')]
+[count_state]
+
+; ---- y885 slice export for QA render ----
+fish define _exp_v6
+    local fz = file.open('couple_v6_y885.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x z sxx syy szz sxy sxz syz'
+    fz = file.write(a,1)
+    local n = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            local p = zone.pos(z)
+            if comp.y(p) > 884.0 then
+            if comp.y(p) < 886.0 then
+                a(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))
+                fz = file.write(a,1)
+                n = n + 1
+            end_if
+            end_if
+        end_if
+    end_loop
+    fz = file.close
+    io.out('V6-EXP '+string(n)+' rock zones @y885 -> couple_v6_y885.txt')
+end
+[_exp_v6]
+[io.out('V6-DONE')]
+program log off
+program quit

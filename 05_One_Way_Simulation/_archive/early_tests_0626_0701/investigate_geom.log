@@ -1,0 +1,113 @@
+**********************************************
+* Logging started at 週一 六月 29 22:54:02 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore 'cb_full_s4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週一 六月 29 18:38:42 2026
+Total Cycles: 27755  Super Cycles: 27755
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>; --- lining ball ang/z distribution (arch shape; cx,cz=1297,1747.5; ang 0=+x right,90=+z crown,180=-x left,270=-z bottom) ---
+flac3d>fish define lining_geom
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    local sect = array.create(12)
+   Def>    local kk = 1
+   Def>    loop while kk <= 12
+   Def>        sect(kk) = 0
+   Def>        kk = kk + 1
+   Def>    end_loop
+   Def>    local zmin = 1e20
+   Def>    local zmax = -1e20
+   Def>    local nb = 0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        ; only mid-band balls y870-900
+   Def>        if comp.y(p) >= 870.0 then
+   Def>        if comp.y(p) <= 900.0 then
+   Def>            nb = nb + 1
+   Def>            local zz = comp.z(p)
+   Def>            if zz < zmin then
+   Def>                zmin = zz
+   Def>            end_if
+   Def>            if zz > zmax then
+   Def>                zmax = zz
+   Def>            end_if
+   Def>            local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+   Def>            if ang < 0.0 then
+   Def>                ang = 360.0 + ang
+   Def>            end_if
+   Def>            local s = int(ang/30.0) + 1
+   Def>            if s > 12 then
+   Def>                s = 12
+   Def>            end_if
+   Def>            sect(s) = sect(s) + 1
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('GEOM mid lining balls='+string(nb)+' z['+string(zmin)+','+string(zmax)+']')
+   Def>    io.out('GEOM ang-sectors(30deg 0=+x/Rspring,90=crown,180=Lspring,270=bottom): '+string(sect(1))+' '+string(sect(2))+' '+string(sect(3))+' '+string(sect(4))+' '+string(sect(5))+' '+string(sect(6))+' '+string(sect(7))+' '+string(sect(8))+' '+string(sect(9))+' '+string(sect(10))+' '+string(sect(11))+' '+string(sect(12)))
+   Def>end
+flac3d>[lining_geom]
+GEOM mid lining balls=272744 z[1744.34,1750.76]
+GEOM ang-sectors(30deg 0=+x/Rspring,90=crown,180=Lspring,270=bottom): 41061 39396 33528 22992 13915 9605 9744 18384 28636 0 9826 45657
+0 (integer)
+flac3d>; --- upper-arch (ang 0-180) vs bottom mid reaction (pb_ten>=1e10 coupling) ---
+flac3d>fish define arch_force
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    global fup = 0.0
+   Def>    global fbot = 0.0
+   Def>    local nu = 0
+   Def>    local nb2 = 0
+   Def>    loop foreach local c contact.list
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_ten') >= 1.0e10 then
+   Def>                local p = contact.pos(c)
+   Def>                local yy = comp.y(p)
+   Def>                if yy >= 870.0 then
+   Def>                if yy <= 900.0 then
+   Def>                    local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+   Def>                    if ang < 0.0 then
+   Def>                        ang = 360.0 + ang
+   Def>                    end_if
+   Def>                    local fn = contact.force.normal(c)
+   Def>                    local af = fn
+   Def>                    if af < 0.0 then
+   Def>                        af = -af
+   Def>                    end_if
+   Def>                    if ang <= 180.0 then
+   Def>                        fup = fup + af
+   Def>                        nu = nu + 1
+   Def>                    else
+   Def>                        fbot = fbot + af
+   Def>                        nb2 = nb2 + 1
+   Def>                    end_if
+   Def>                end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('ARCH-FORCE upper(ang0-180)='+string(fup/1e6)+'MN n='+string(nu)+' | bottom(ang180-360)='+string(fbot/1e6)+'MN n='+string(nb2))
+   Def>end
+flac3d>[arch_force]
+ARCH-FORCE upper(ang0-180)=4.36352MN n=22262 | bottom(ang180-360)=2.80773MN n=15431
+0 (integer)
+flac3d>[io.out('GEOM-DONE')]
+GEOM-DONE
+0 (integer)
+flac3d>program quit

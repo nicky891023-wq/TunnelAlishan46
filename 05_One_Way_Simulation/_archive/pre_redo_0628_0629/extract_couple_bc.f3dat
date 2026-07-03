@@ -1,0 +1,134 @@
+; extract_couple_bc.f3dat -- STEP 1 (WORKING). Export small cumulative gp disp (s4_s1..s4) in
+;   coupled domain x[1277,1317] y[860,910] z[1728,1768] +5m margin -> 4 BC files.
+;   ROOT CAUSE of earlier failures: fish define BEFORE any model exists -> func treated as var
+;   ([f] returns 0, body never runs). FIX: define each function AFTER its restore (model exists).
+;   cwd=05.
+program log-file 'extract_couple_bc.log'
+program log on
+fish automatic-create on
+
+model restore 's4_s1'
+fish define wbcs1
+    local fo = file.open('bc_s1.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x y z dx dy dz'
+    fo = file.write(a,1)
+    local cnt = 0
+    loop foreach local gp gp.list
+        local p = gp.pos(gp)
+        if comp.x(p)>=1272.0 then
+        if comp.x(p)<=1322.0 then
+        if comp.y(p)>=855.0 then
+        if comp.y(p)<=915.0 then
+        if comp.z(p)>=1723.0 then
+        if comp.z(p)<=1773.0 then
+            local d = gp.disp(gp)
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+            fo = file.write(a,1)
+            cnt = cnt + 1
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    fo = file.close
+    io.out('EXP bc_s1.txt gps='+string(cnt))
+end
+[wbcs1]
+
+model restore 's4_s2'
+fish define wbcs2
+    local fo = file.open('bc_s2.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x y z dx dy dz'
+    fo = file.write(a,1)
+    local cnt = 0
+    loop foreach local gp gp.list
+        local p = gp.pos(gp)
+        if comp.x(p)>=1272.0 then
+        if comp.x(p)<=1322.0 then
+        if comp.y(p)>=855.0 then
+        if comp.y(p)<=915.0 then
+        if comp.z(p)>=1723.0 then
+        if comp.z(p)<=1773.0 then
+            local d = gp.disp(gp)
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+            fo = file.write(a,1)
+            cnt = cnt + 1
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    fo = file.close
+    io.out('EXP bc_s2.txt gps='+string(cnt))
+end
+[wbcs2]
+
+model restore 's4_s3'
+fish define wbcs3
+    local fo = file.open('bc_s3.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x y z dx dy dz'
+    fo = file.write(a,1)
+    local cnt = 0
+    loop foreach local gp gp.list
+        local p = gp.pos(gp)
+        if comp.x(p)>=1272.0 then
+        if comp.x(p)<=1322.0 then
+        if comp.y(p)>=855.0 then
+        if comp.y(p)<=915.0 then
+        if comp.z(p)>=1723.0 then
+        if comp.z(p)<=1773.0 then
+            local d = gp.disp(gp)
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+            fo = file.write(a,1)
+            cnt = cnt + 1
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    fo = file.close
+    io.out('EXP bc_s3.txt gps='+string(cnt))
+end
+[wbcs3]
+
+model restore 's4_s4'
+fish define wbcs4
+    local fo = file.open('bc_s4.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x y z dx dy dz'
+    fo = file.write(a,1)
+    local cnt = 0
+    loop foreach local gp gp.list
+        local p = gp.pos(gp)
+        if comp.x(p)>=1272.0 then
+        if comp.x(p)<=1322.0 then
+        if comp.y(p)>=855.0 then
+        if comp.y(p)<=915.0 then
+        if comp.z(p)>=1723.0 then
+        if comp.z(p)<=1773.0 then
+            local d = gp.disp(gp)
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+            fo = file.write(a,1)
+            cnt = cnt + 1
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    fo = file.close
+    io.out('EXP bc_s4.txt gps='+string(cnt))
+end
+[wbcs4]
+[io.out('EXP-DONE all 4 stage BC files written')]
+program quit

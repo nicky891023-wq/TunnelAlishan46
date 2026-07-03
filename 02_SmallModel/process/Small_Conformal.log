@@ -1,0 +1,113 @@
+**********************************************
+* Logging started at 週二 六月 23 09:43:04 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+**********************************************
+flac3d>
+flac3d>; --- import the single conformal tet mesh (rock 6 layers + lining ring) -----
+flac3d>zone import 'small_conformal.inp'
+--- Updating zone connectivity......
+--- 269452 gridpoints created.
+--- 1433466 zones created.
+--- 7 zone groups assigned.
+--- Importing grid from ABAQUS files completed.
+flac3d>zone group 'layer1' slot 'type' range group 'layer1'
+--- Group layer1 assigned to 20346 Zones in slot type.
+flac3d>zone group 'layer2' slot 'type' range group 'layer2'
+--- Group layer2 assigned to 23503 Zones in slot type.
+flac3d>zone group 'layer3' slot 'type' range group 'layer3'
+--- Group layer3 assigned to 151327 Zones in slot type.
+flac3d>zone group 'layer4' slot 'type' range group 'layer4'
+--- Group layer4 assigned to 618771 Zones in slot type.
+flac3d>zone group 'layer5' slot 'type' range group 'layer5'
+--- Group layer5 assigned to 255448 Zones in slot type.
+flac3d>zone group 'layer6' slot 'type' range group 'layer6'
+--- Group layer6 assigned to 29060 Zones in slot type.
+flac3d>zone group 'lining' slot 'type' range group 'lining'
+--- Group lining assigned to 335011 Zones in slot type.
+flac3d>
+flac3d>; --- bookkeeping slots ------------------------------------------------------
+flac3d>zone group 'rock'    slot 'mat' range group 'lining' not
+--- Group rock assigned to 1098455 Zones in slot mat.
+flac3d>zone group 'lining'  slot 'mat' range group 'lining'
+--- Group lining assigned to 335011 Zones in slot mat.
+flac3d>zone group 'm_small' slot 'model'
+--- Group m_small assigned to 1433466 Zones in slot model.
+flac3d>zone gridpoint group 'gp_small'
+--- Group gp_small assigned to 269452 Gps in slot Default.
+flac3d>
+flac3d>; --- build stage: elastic placeholder cmodel (params at analysis stage) -----
+flac3d>zone cmodel assign elastic
+flac3d>
+flac3d>; --- NO zone attach: lining shares nodes with rock (conformal) --------------
+flac3d>
+flac3d>; --- skin + box boundary face groups ---------------------------------------
+flac3d>zone face skin
+--- 111664 surface faces assigned names in slot Skin.
+flac3d>zone face group 'West1'   range position-x 1249 1251
+--- Group West1 added to 1754 faces in slot Default.
+flac3d>zone face group 'East1'   range position-x 1349 1351
+--- Group East1 added to 1644 faces in slot Default.
+flac3d>zone face group 'South1'  range position-y 849 851
+--- Group South1 added to 6745 faces in slot Default.
+flac3d>zone face group 'North1'  range position-y 949 951
+--- Group North1 added to 8058 faces in slot Default.
+flac3d>zone face group 'Bottom1' range position-z 1699 1701
+--- Group Bottom1 added to 1489 faces in slot Default.
+flac3d>zone face group 'Top1'    range position-z 1799 1801
+--- Group Top1 added to 1489 faces in slot Default.
+flac3d>
+flac3d>model save 'Small_Model'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/02_SmallModel/Small_Model.f3sav.
+flac3d>
+flac3d>; --- verify -----------------------------------------------------------------
+flac3d>fish define small_check
+   Def>    local nz = 0
+   Def>    local lc = array.create(7)
+   Def>    loop local i (1,7)
+   Def>        lc(i) = 0
+   Def>    end_loop
+   Def>    loop foreach local z zone.list
+   Def>        nz = nz + 1
+   Def>        local g = zone.group(z,'type')
+   Def>        loop local j (1,6)
+   Def>            if g = 'layer'+string(j) then
+   Def>                lc(j) = lc(j) + 1
+   Def>            end_if
+   Def>        end_loop
+   Def>        if g = 'lining' then
+   Def>            lc(7) = lc(7) + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    local ung = nz - lc(1)-lc(2)-lc(3)-lc(4)-lc(5)-lc(6)-lc(7)
+   Def>    io.out('=== SMALL_CONFORMAL_VERIFY ===')
+   Def>    io.out('zones_total = '+string(nz))
+   Def>    loop local kk (1,6)
+   Def>        io.out('  layer'+string(kk)+' = '+string(lc(kk)))
+   Def>    end_loop
+   Def>    io.out('  lining = '+string(lc(7)))
+   Def>    io.out('  ungrouped(type) = '+string(ung))
+   Def>    io.out('  attach_points = '+string(attach.num))
+   Def>    io.out('SMALL_DONE')
+   Def>end
+flac3d>[small_check]
+=== SMALL_CONFORMAL_VERIFY ===
+zones_total = 1433466
+  layer1 = 20346
+  layer2 = 23503
+  layer3 = 151327
+  layer4 = 618771
+  layer5 = 255448
+  layer6 = 29060
+  lining = 335011
+  ungrouped(type) = 0
+  attach_points = 0
+SMALL_DONE
+0 (integer)
+flac3d>
+flac3d>program log off
+**********************************************
+* Logging ended at 週二 六月 23 09:43:44 2026
+**********************************************

@@ -1,0 +1,12 @@
+program log-file 'test_fis.log'
+program log on
+model new
+zone create brick size 3 3 3
+zone cmodel assign elastic
+zone group 'layer4' slot 'type'
+fish automatic-create on
+call 'gate0_funcs.fis'
+[count_active(1,'s4')]
+[count_active(2,'lg')]
+[io.out('TESTFIS-DONE')]
+program quit

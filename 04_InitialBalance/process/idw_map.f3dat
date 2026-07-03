@@ -1,0 +1,143 @@
+; idw_map.f3dat -- submodel stress transfer (reused from proven G:/260529 io_stress).
+; ReadFile_ss(fname): load parent zone-stress export into global arrays.
+; MapStress_IDW(radius): inverse-distance-weighted map onto ALL target zones
+;   (rock + lining).  Wade 2026-06-22: the conformal lining shares nodes with the
+;   rock, so it is initialized to the same in-situ field (true wished-in-place,
+;   continuous interface at t=0, no internal force jump).
+fish automatic-create off
+
+[global ss_ndata = 1]
+[global ss_xdat = array.create(1)]
+[global ss_ydat = array.create(1)]
+[global ss_zdat = array.create(1)]
+[global sxxdat = array.create(1)]
+[global syydat = array.create(1)]
+[global szzdat = array.create(1)]
+[global sxydat = array.create(1)]
+[global sxzdat = array.create(1)]
+[global syzdat = array.create(1)]
+
+def ReadFile_ss(fname)
+    local arr = array.create(1)
+    ss_ndata = 0
+    local stat = file.close
+    stat = file.open(fname,0,1)
+    if stat # 0 then
+        io.out('ReadFile_ss: file.open failed status='+string(stat))
+        exit
+    endif
+    stat = file.read(arr,1)            ; header
+    stat = file.read(arr,1)            ; first data row
+    loop while stat = 0
+        ss_ndata = ss_ndata + 1
+        stat = file.read(arr,1)
+    endloop
+    stat = file.close
+    io.out('ReadFile_ss: data rows = '+string(ss_ndata))
+    if ss_ndata <= 0 then
+        exit
+    endif
+    ss_xdat = array.create(ss_ndata)
+    ss_ydat = array.create(ss_ndata)
+    ss_zdat = array.create(ss_ndata)
+    sxxdat = array.create(ss_ndata)
+    syydat = array.create(ss_ndata)
+    szzdat = array.create(ss_ndata)
+    sxydat = array.create(ss_ndata)
+    sxzdat = array.create(ss_ndata)
+    syzdat = array.create(ss_ndata)
+    stat = file.open(fname,0,1)
+    stat = file.read(arr,1)            ; skip header
+    local i = 0
+    stat = file.read(arr,1)
+    loop while stat = 0
+        i = i + 1
+        local line = arr(1)
+        ss_xdat(i) = string.token(line,2)
+        ss_ydat(i) = string.token(line,3)
+        ss_zdat(i) = string.token(line,4)
+        sxxdat(i) = string.token(line,5)
+        syydat(i) = string.token(line,6)
+        szzdat(i) = string.token(line,7)
+        sxydat(i) = string.token(line,8)
+        sxzdat(i) = string.token(line,9)
+        syzdat(i) = string.token(line,10)
+        stat = file.read(arr,1)
+    endloop
+    stat = file.close
+    io.out('ReadFile_ss: parsed '+string(i)+' rows')
+end
+
+def MapStress_IDW(search_radius)
+    local nmap = 0
+    loop foreach local iz zone.list
+        if zone.id(iz) > 0 then            ; ALL zones (rock + lining) -- wished-in-place
+            local x = zone.pos.x(iz)
+            local y = zone.pos.y(iz)
+            local z = zone.pos.z(iz)
+            local sum_w = 0.0
+            local s_xx = 0.0
+            local s_yy = 0.0
+            local s_zz = 0.0
+            local s_xy = 0.0
+            local s_xz = 0.0
+            local s_yz = 0.0
+            local dmin = 1.0e30
+            local inear = 1
+            local i = 1
+            loop while i <= ss_ndata
+                local dx = math.abs(x - ss_xdat(i))
+                if dx <= search_radius then
+                    local dy = math.abs(y - ss_ydat(i))
+                    if dy <= search_radius then
+                        local dz = math.abs(z - ss_zdat(i))
+                        if dz <= search_radius then
+                            local d2 = dx*dx + dy*dy + dz*dz
+                            if d2 <= (search_radius*search_radius) then
+                                if d2 < dmin then
+                                    dmin = d2
+                                    inear = i
+                                endif
+                                local w = 1.0 / math.max(d2,1e-10)
+                                sum_w = sum_w + w
+                                s_xx = s_xx + sxxdat(i)*w
+                                s_yy = s_yy + syydat(i)*w
+                                s_zz = s_zz + szzdat(i)*w
+                                s_xy = s_xy + sxydat(i)*w
+                                s_xz = s_xz + sxzdat(i)*w
+                                s_yz = s_yz + syzdat(i)*w
+                            endif
+                        endif
+                    endif
+                endif
+                i = i + 1
+            endloop
+            if sum_w > 0.0 then
+                zone.stress.xx(iz) = s_xx / sum_w
+                zone.stress.yy(iz) = s_yy / sum_w
+                zone.stress.zz(iz) = s_zz / sum_w
+                zone.stress.xy(iz) = s_xy / sum_w
+                zone.stress.xz(iz) = s_xz / sum_w
+                zone.stress.yz(iz) = s_yz / sum_w
+            else
+                i = 1
+                loop while i <= ss_ndata
+                    local d2b = (x-ss_xdat(i))^2 + (y-ss_ydat(i))^2 + (z-ss_zdat(i))^2
+                    if d2b < dmin then
+                        dmin = d2b
+                        inear = i
+                    endif
+                    i = i + 1
+                endloop
+                zone.stress.xx(iz) = sxxdat(inear)
+                zone.stress.yy(iz) = syydat(inear)
+                zone.stress.zz(iz) = szzdat(inear)
+                zone.stress.xy(iz) = sxydat(inear)
+                zone.stress.xz(iz) = sxzdat(inear)
+                zone.stress.yz(iz) = syzdat(inear)
+            endif
+            nmap = nmap + 1
+        endif
+    endloop
+    io.out('MapStress_IDW: mapped onto '+string(nmap)+' zones rock+lining (radius '+string(search_radius)+')')
+end

@@ -1,0 +1,542 @@
+; ============================================================================
+; small_driven.f3dat -- Alishan #46 LARGE->SMALL DRIVEN staged creep simulation.
+;   The small model (6-layer Burgers-Mohr rock + dkt-csth shell lining on the
+;   D-shape cavity wall) is DRIVEN by the LARGE model's per-stage CUMULATIVE
+;   box-face displacement (small_drive.txt, IDW-mapped by small_idw.py onto the
+;   6 box faces x=1250/1350 y=850/950 z=1700/1800). It runs its own threshold-
+;   gated Burgers-Mohr creep; the shell carries an E-reduction-on-yield damage
+;   law; the y860-910 crown/sidewall convergence time-history is recorded.
+;   4 water stages LOW-HIGH-LOW-HIGH (~120 days). Squeeze target ~10-20 cm comes
+;   from the LARGE-driven boundary, NOT from tuning eta/threshold (Wade rule #1).
+;
+; GROUNDING (verbatim-fused proven files, all in this tree):
+;   - burgers-mohr assignment + _bk/_gk : prototype_small_creep.f3dat L18-24,
+;     parameter.f3dat L30-36 ; large_creep_4stage.f3dat L15-19.
+;   - do_threshold (corrected MC q_th=0.6*(c*cos+p'*sin)) : s4_rerun_convhist.f3dat
+;     L32-58 / small_4stage_standalone.f3dat L27-53.
+;   - setKstrains : C:/Program Files/Itasca/Flac3d600/datafiles/Creep/SetKStrains.f3fis
+;     (prototype_small_creep.f3dat L27).
+;   - drive_and_creep (FIX driven-gp vel, sub-step ramp+calm, hold, ratio-average
+;     re-eq, threshold creep) : couple_drive.f3dat L82-116 + SHELL_LINING_recipe.md
+;     STEP 4b.
+;   - shell_damage (two-cap monotonic E-reduction-on-yield) : SHELL_LINING_recipe.md
+;     STEP 3.
+;   - convergence FISH (find_conv_gps/vclose/hclose/report_conv/band_conv) :
+;     s4_rerun_convhist.f3dat L60-205 (verbatim).
+;   - 4-stage water-plane cadence (LOW z1724 / HIGH z1807) : small_4stage_standalone.f3dat.
+;   - solve discipline 'model solve ratio-average 1e-5' NOT 'solve elastic'
+;     (Wade rule #3) : prototype_small_creep.f3dat L95-96.
+;
+; Console launch (Wade rule: argv, stdin closed, ends quit):
+;   flac3d600_console.exe small_driven.f3dat
+; Units SI (Pa, kg/m3, m, deg, s). Sign: compression negative. cwd = 05.
+; ============================================================================
+program log-file 'small_driven.log'
+program log on
+model restore '../04_InitialBalance/Small_Initial'   ; rock MC + lining + in-situ deformation KEPT (datum = undeformed, NOT zeroed at in-situ -- Wade rule #2)
+call '../04_InitialBalance/parameter.f3dat'           ; E_S_*/co_S_*/fr_S_*, eta_m/eta_k, crp_dt, shot_*, _bk/_gk, rho_w, grav
+[global eta_m = 5.0e14]                                ; Wade 2026-07-02: etaM 1e15 -> 5e14 (steady creep x2, push deformation into high-water stages)
+[global eta_k = eta_k * 10.0]                          ; Wade 2026-07-02: etaK x10 (2.4e13 -> 2.4e14) suppress transient/primary creep => FLAT S1 (green-line target)
+call 'C:/Program Files/Itasca/Flac3d600/datafiles/Creep/SetKStrains.f3fis'   ; defines setKstrains (prototype_small_creep.f3dat L27)
+model largestrain off                                 ; small/creep model = largestrain off (prototype L12; NOT the coupled 'on')
+model configure creep                                 ; enable creep timestepping (prototype L13)
+fish automatic-create on
+zone water density [rho_w]                             ; MANDATORY for effective stress (small_4stage_standalone.f3dat L13)
+[io.out('SD-0 restored Small_Initial + creep configured; zones='+string(zone.num)+' gps='+string(gp.num))]
+
+; ----------------------------------------------------------------------------
+; 1) SWITCH ROCK TO BURGERS-MOHR (6 layers). Creep OFF until each stage turns it
+;    on. bulk=_bk(E), shear-maxwell=shear-kelvin=_gk(E) so static==creep
+;    instantaneous stiffness (parameter.f3dat L11-12). viscosity-maxwell/kelvin
+;    seeded eta_m/eta_k; do_threshold re-gates them per stage. ROCK ONLY (slot
+;    'mat' group 'rock'); lining/shell untouched.
+;    Pattern: prototype_small_creep.f3dat L18-24 (uses _bk/_gk form per task).
+; ----------------------------------------------------------------------------
+zone cmodel assign burgers-mohr range group 'rock' slot 'mat'
+zone property bulk [_bk(E_S_1)] shear-maxwell [_gk(E_S_1)] shear-kelvin [10.0*_gk(E_S_1)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property bulk [_bk(E_S_2)] shear-maxwell [_gk(E_S_2)] shear-kelvin [10.0*_gk(E_S_2)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property bulk [_bk(E_S_3)] shear-maxwell [_gk(E_S_3)] shear-kelvin [10.0*_gk(E_S_3)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property bulk [_bk(E_S_4)] shear-maxwell [_gk(E_S_4)] shear-kelvin [10.0*_gk(E_S_4)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+zone property bulk [_bk(E_S_5)] shear-maxwell [_gk(E_S_5)] shear-kelvin [10.0*_gk(E_S_5)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+zone property bulk [_bk(E_S_6)] shear-maxwell [_gk(E_S_6)] shear-kelvin [10.0*_gk(E_S_6)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+model creep active off
+[io.out('SD-1 burgers-mohr assigned on 6 rock layers (lining/shell stay elastic-RC)')]
+
+; ----------------------------------------------------------------------------
+; 1b) ENSURE the dkt-csth shell exists on the cavity wall.
+;     The task premise is that Small_Initial already carries the shell. If this
+;     restore is the SOLID-lining Small_Initial (run_small_init.f3dat builds the
+;     0.40 m lining as elastic ZONES, group 'lining' slot 'mat'), this block
+;     converts it once: null the solid lining -> mark exposed cavity faces ->
+;     create the shell. If a shell already exists, _need_shell stays 0 and the
+;     block is skipped. Grounding: diag_shell.f3dat APPROACH-B (null+skin+by-face)
+;     and SMALL_SHELL_script.md.  [VERIFY] which Small_Initial flavour is on disk;
+;     if the shell is already wished-in-place, this block no-ops correctly.
+; ----------------------------------------------------------------------------
+fish define _shell_count
+    local ns = 0
+    loop foreach local s struct.list
+        if struct.type(s) = 'shell' then
+            ns = ns + 1
+        end_if
+    end_loop
+    _shell_count = ns
+end
+fish define build_shell_if_needed
+    local n0 = _shell_count
+    if n0 = 0 then
+        command
+            zone cmodel assign null range group 'lining' slot 'type'   ; null lining (slot 'type', matches proven small_insitu_v3 / small_shell_create)
+            structure shell create by-face element-type=dkt-csth range group 'rock' slot 'mat' position-x 1251 1349 position-y 851 949 position-z 1701 1799   ; VERIFIED clean single-layer D-shape cavity-wall shell (qa_shells_thin.png)
+            structure shell property isotropic ([shot_E], [shot_v]) thickness [shot_t] density [shot_den]   ; 25 GPa / 0.2 / 0.40 m / 2400
+        endcommand
+        io.out('SD-1b created dkt-csth shell on cavity wall; shells='+string(_shell_count))
+    else
+        io.out('SD-1b shell already present in Small_Initial; shells='+string(n0)+' (no create)')
+    end_if
+end
+[build_shell_if_needed]
+
+; ----------------------------------------------------------------------------
+; 2) DIAGNOSTIC / REPORTING FISH ---------------------------------------------
+; ----------------------------------------------------------------------------
+fish define dmax_all
+    local dm = 0.0
+    loop foreach local gp gp.list
+        local d = gp.disp(gp)
+        local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+        if mm > dm then
+            dm = mm
+        end_if
+    end_loop
+    dmax_all = dm
+end
+
+; ----------------------------------------------------------------------------
+; 3) THRESHOLD-GATED CREEP (corrected MC envelope; rock only).
+;    q_th = 0.6*(c*cos(phi) + p'*sin(phi))  -- s4_rerun_convhist.f3dat L32-58.
+;    NOT the old tan form (~15.5% over-trigger). p' = effective mean (pore subtracted).
+; ----------------------------------------------------------------------------
+[global threhold = 0.6]
+fish define do_threshold
+    local na = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pmean = (s1 + s3)/2.0 - pore
+            local q = (s1 - s3)/2.0
+            local c = zone.prop(z,'cohesion')
+            local phi = zone.prop(z,'friction')
+            local q_th = threhold*(c*math.cos(phi*math.degrad) + pmean*math.sin(phi*math.degrad))   ; corrected MC envelope (parameter.f3dat L14)
+            if q >= q_th then
+                zone.prop(z,'viscosity-kelvin')  = eta_k
+                zone.prop(z,'viscosity-maxwell') = eta_m
+                zone.group(z,'creep') = 'CreepActive'
+                na = na + 1
+            else
+                zone.prop(z,'viscosity-kelvin')  = 1e100
+                zone.prop(z,'viscosity-maxwell') = 1e100
+                zone.group(z,'creep') = 'CreepOff'
+            end_if
+        end_if
+    end_loop
+    global n_active = na
+end
+
+; ----------------------------------------------------------------------------
+; 4) SHELL E-REDUCTION-ON-YIELD DAMAGE (two-cap, monotonic, stress-capped).
+;    demand = max(sigma_c/fc, sigma_t/ft); E_new = E_old/demand with floor 2.5 GPa,
+;    max 50% drop/event, eps 1% chatter guard, MONOTONIC. SHELL_LINING_recipe.md
+;    STEP 3 (verbatim). Caps fc=41.2 MPa / ft=4.12 MPa (parameter.f3dat L95-96).
+;    Called at creep-segment boundaries (NOT per-cycle on 1.4M zones).
+; ----------------------------------------------------------------------------
+[global sigCap_c = shot_fc]        ; 41.2e6 compression cap
+[global sigCap_t = shot_ft]        ; 4.12e6 tension cap
+[global E_floor  = 2.5e9]          ; residual cracked-RC modulus floor
+[global drop_max = 0.5]            ; <=50% E reduction per event
+[global dmg_eps  = 0.01]           ; 1% over-cap tolerance (anti-chatter)
+; RECORD-ONLY (E-reduction is force-controlled here -- cannot cap shell stress;
+; verified by test_shell_E_command/smoke_shell_damage: set-E drops stress only
+; pre-solve, the strain compensates on re-solve back to force/area. So the shell
+; stays E0 (bounds convergence; drive supplies the ~10-20cm magnitude) and we RECORD
+; the over-stressed (cracking) shells as the lining CRACK PATTERN. n_shell_red = the
+; count of shells over the tension cap (4.12MPa) or compression cap (41.2MPa).
+fish define shell_damage
+    command
+        structure shell recover surface (0,1,0)
+        structure shell recover stress depth-factor 0
+    endcommand
+    local ncrk_t = 0
+    local ncrk_c = 0
+    local maxt = 0.0
+    local maxc = 0.0
+    loop foreach local s struct.list
+        if struct.type(s) = 'shell' then
+            local sc = 0.0
+            local st = 0.0
+            loop local k (0,3)
+                local smin = struct.shell.stress.prin.x(s,k)   ; min principal (most compressive, signed)
+                if -smin > sc then
+                    sc = -smin
+                end_if
+                local smax = struct.shell.stress.prin.z(s,k)   ; max principal (most tensile, signed)
+                if smax > st then
+                    st = smax
+                end_if
+            end_loop
+            if st > sigCap_t then
+                ncrk_t = ncrk_t + 1
+            end_if
+            if sc > sigCap_c then
+                ncrk_c = ncrk_c + 1
+            end_if
+            if st > maxt then
+                maxt = st
+            end_if
+            if sc > maxc then
+                maxc = sc
+            end_if
+        end_if
+    end_loop
+    global n_shell_red = ncrk_t + ncrk_c     ; cracking-shell count (tension OR compression over cap)
+    global n_crk_tension = ncrk_t
+    global n_crk_compress = ncrk_c
+    global shell_maxt = maxt
+    global shell_maxc = maxc
+end
+
+; ----------------------------------------------------------------------------
+; 5) Y860-910 CROWN/SIDEWALL CONVERGENCE (diameter closure, in-situ day-0 datum).
+;    s4_rerun_convhist.f3dat L60-205 (verbatim). vclose/hclose = sentinel y885
+;    continuous histories; band_conv = y860-910 band average for J/C. NEGATIVE =
+;    closing. NOT zeroed at day 0 -- datum is the in-situ displacement.
+; ----------------------------------------------------------------------------
+fish define find_conv_gps
+    global g_crown = null
+    global g_invert = null
+    global g_sprR = null
+    global g_sprL = null
+    local bc = 1e20
+    local bi = 1e20
+    local br = 1e20
+    local bl = 1e20
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local yy = comp.y(p)
+        if yy > 884.0 then
+        if yy < 886.0 then
+            local dcr = (comp.x(p)-1297.0)*(comp.x(p)-1297.0)+(comp.z(p)-1752.0)*(comp.z(p)-1752.0)
+            if dcr < bc then
+                bc = dcr
+                g_crown = g
+            end_if
+            local din = (comp.x(p)-1297.0)*(comp.x(p)-1297.0)+(comp.z(p)-1743.0)*(comp.z(p)-1743.0)
+            if din < bi then
+                bi = din
+                g_invert = g
+            end_if
+            local dsr = (comp.x(p)-1303.0)*(comp.x(p)-1303.0)+(comp.z(p)-1747.0)*(comp.z(p)-1747.0)
+            if dsr < br then
+                br = dsr
+                g_sprR = g
+            end_if
+            local dsl = (comp.x(p)-1291.0)*(comp.x(p)-1291.0)+(comp.z(p)-1747.0)*(comp.z(p)-1747.0)
+            if dsl < bl then
+                bl = dsl
+                g_sprL = g
+            end_if
+        end_if
+        end_if
+    end_loop
+    io.out('CONV-GPS crown_dist='+string(math.sqrt(bc))+' invert_dist='+string(math.sqrt(bi))+' sprR_dist='+string(math.sqrt(br))+' sprL_dist='+string(math.sqrt(bl)))
+end
+fish define vclose
+    vclose = (comp.z(gp.disp(g_crown)) - comp.z(gp.disp(g_invert)))*1000.0
+end
+fish define hclose
+    hclose = (comp.x(gp.disp(g_sprR)) - comp.x(gp.disp(g_sprL)))*1000.0
+end
+fish define report_conv(tag)
+    io.out('CONV '+tag+' vert_closure='+string(vclose)+'mm horiz_closure='+string(hclose)+'mm | crown_dz='+string(comp.z(gp.disp(g_crown))*1000.0)+' invert_dz='+string(comp.z(gp.disp(g_invert))*1000.0)+' sprR_dx='+string(comp.x(gp.disp(g_sprR))*1000.0)+' sprL_dx='+string(comp.x(gp.disp(g_sprL))*1000.0))
+end
+fish define band_conv(tag)
+    local scr = 0.0
+    local ncr = 0
+    local mxcr = -1e20
+    local mncr = 1e20
+    local sin = 0.0
+    local nin = 0
+    local mxin = -1e20
+    local mnin = 1e20
+    local ssr = 0.0
+    local nsr = 0
+    local ssl = 0.0
+    local nsl = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local yy = comp.y(p)
+        if yy >= 860.0 then
+        if yy <= 910.0 then
+            local rx = comp.x(p)-1297.0
+            local rz = comp.z(p)-1747.5
+            local rr = math.sqrt(rx*rx+rz*rz)
+            if rr >= 4.5 then
+            if rr <= 5.5 then
+                local ang = math.atan2(rz,rx)/math.degrad
+                if ang < 0.0 then
+                    ang = 360.0+ang
+                end_if
+                local d = gp.disp(g)
+                local dzv = comp.z(d)
+                local dxv = comp.x(d)
+                if ang >= 75.0 then
+                if ang <= 105.0 then
+                    scr = scr + dzv
+                    ncr = ncr + 1
+                    if dzv > mxcr then
+                        mxcr = dzv
+                    end_if
+                    if dzv < mncr then
+                        mncr = dzv
+                    end_if
+                end_if
+                end_if
+                if ang >= 255.0 then
+                if ang <= 285.0 then
+                    sin = sin + dzv
+                    nin = nin + 1
+                    if dzv > mxin then
+                        mxin = dzv
+                    end_if
+                    if dzv < mnin then
+                        mnin = dzv
+                    end_if
+                end_if
+                end_if
+                if ang >= 345.0 then
+                    ssr = ssr + dxv
+                    nsr = nsr + 1
+                end_if
+                if ang <= 15.0 then
+                    ssr = ssr + dxv
+                    nsr = nsr + 1
+                end_if
+                if ang >= 165.0 then
+                if ang <= 195.0 then
+                    ssl = ssl + dxv
+                    nsl = nsl + 1
+                end_if
+                end_if
+            end_if
+            end_if
+        end_if
+        end_if
+    end_loop
+    local mcr = 0.0
+    if ncr > 0 then
+        mcr = scr/float(ncr)
+    end_if
+    local mvin = 0.0
+    if nin > 0 then
+        mvin = sin/float(nin)
+    end_if
+    local msr = 0.0
+    if nsr > 0 then
+        msr = ssr/float(nsr)
+    end_if
+    local msl = 0.0
+    if nsl > 0 then
+        msl = ssl/float(nsl)
+    end_if
+    local vert = (mcr - mvin)*1000.0
+    local horiz = (msr - msl)*1000.0
+    global band_vert = vert
+    global band_horiz = horiz
+    io.out('BAND-CONV '+tag+' vert_closure='+string(vert)+'mm horiz_closure='+string(horiz)+'mm | crown_dz mean='+string(mcr*1000.0)+' [min'+string(mncr*1000.0)+',max'+string(mxcr*1000.0)+'] invert_dz mean='+string(mvin*1000.0)+' [min'+string(mnin*1000.0)+',max'+string(mxin*1000.0)+'] | n(cr/in/sr/sl)='+string(ncr)+'/'+string(nin)+'/'+string(nsr)+'/'+string(nsl))
+end
+
+; ----------------------------------------------------------------------------
+; 6) LOAD THE LARGE-DRIVEN BOX-FACE TARGETS (small_drive.txt, from small_idw.py).
+;    Per-stage CUMULATIVE displacement -> gp.extra(g,1..4); tag 'driven' slot 'drive';
+;    FIX their velocity so the solver cannot overwrite the imposed motion.
+;    Pattern: couple_drive.f3dat load_targets L55-82 (here: 'id d1x..d4z').
+; ----------------------------------------------------------------------------
+fish define load_targets
+    local lines = array.create(60000)
+    local st = file.open('small_drive_residual.txt',0,1)   ; DEFORMATIONAL residual (rigid translation+rotation removed): the box's pure strain field = the true tunnel-squeezing drive (FULL field is ~99% rigid translation, which does not deform the tunnel)
+    local nn = file.read(lines, 60000)
+    st = file.close
+    global ndriven = 0
+    global nmiss = 0
+    local i = 2                                          ; skip header line 1
+    loop while i <= nn
+        local gid = int(string.token(lines(i),1))
+        local g = gp.find(gid)
+        if g = null then
+            nmiss = nmiss + 1
+        else
+            gp.extra(g,1) = vector(string.token(lines(i),2),string.token(lines(i),3),string.token(lines(i),4))
+            gp.extra(g,2) = vector(string.token(lines(i),5),string.token(lines(i),6),string.token(lines(i),7))
+            gp.extra(g,3) = vector(string.token(lines(i),8),string.token(lines(i),9),string.token(lines(i),10))
+            gp.extra(g,4) = vector(string.token(lines(i),11),string.token(lines(i),12),string.token(lines(i),13))
+            gp.group(g,'drive') = 'driven'
+            ndriven = ndriven + 1
+        end_if
+        i = i + 1
+    end_loop
+    io.out('SD-LT driven='+string(ndriven)+' miss='+string(nmiss))
+    load_targets = ndriven
+end
+[load_targets]
+zone gridpoint fix velocity range group 'driven' slot 'drive'   ; FIX so solver can't overwrite imposed motion (couple_drive.f3dat L82)
+[io.out('SD-2 box-face targets loaded + driven gp velocity fixed')]
+
+; ----------------------------------------------------------------------------
+; 7) DRIVE_AND_CREEP(stg, nsub, ncyc_sub, d0, d1, dd) -- one full stage.
+;    (1) per-gp increment to this stage's cumulative target gp.extra(g,stg)
+;    (2) sub-step velocity ramp + model calm (mechanical, creep off)
+;    (3) hold (vel=0), re-equilibrate in burgers-mohr stiffness (ratio-average,
+;        NOT elastic -- Wade rule #3); setKstrains; do_threshold; setKstrains;
+;        shell_damage (post-drive, pre-creep)
+;    (4) threshold-gated creep over the stage days (crp_dt fixed timestep),
+;        shell_damage at each dd-day creep-segment boundary
+;    Pattern: couple_drive.f3dat run_stage L84-116 + SHELL_LINING_recipe.md STEP 4b.
+;    NOTE: funcs called bare INSIDE a define (setKstrains/do_threshold/shell_damage)
+;    are plain FISH calls -- valid; only TOP-LEVEL invocation needs [..] (lesson #74).
+; ----------------------------------------------------------------------------
+fish define drive_and_creep(stg, nsub, ncyc_sub, d0, d1, dd)
+    ; (1) increment per driven gp = stage cumulative target - current disp
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            gp.extra(g,5) = gp.extra(g, stg) - gp.disp(g)
+        end_if
+    end_loop
+    local denom = float(nsub) * float(ncyc_sub) * mech.timestep
+    ; (2) sub-step ramp (mechanical cycles, creep already off here)
+    local j = 1
+    loop while j <= nsub
+        loop foreach local g2 gp.list
+            if gp.group(g2,'drive') = 'driven' then
+                gp.vel(g2) = gp.extra(g2,5) / denom
+            end_if
+        end_loop
+        command
+            model cycle [ncyc_sub]
+            model calm
+        endcommand
+        io.out('   SD-sub stg'+string(stg)+' j='+string(j)+'/'+string(nsub)+' dmax='+string(dmax_all))
+        j = j + 1
+    end_loop
+    ; (3) hold target, re-equilibrate rock in burgers-mohr stiffness
+    loop foreach local g3 gp.list
+        if gp.group(g3,'drive') = 'driven' then
+            gp.vel(g3) = vector(0,0,0)
+        end_if
+    end_loop
+    command
+        model solve ratio-average 1e-5 cycles 40000
+    endcommand
+    setKstrains                                  ; re-set Kelvin strain to NEW post-drive stress (FLAC creep gotcha; prototype L96)
+    do_threshold                                 ; gate creep on the boundary-squeezed stress state
+    setKstrains                                  ; re-set again after viscosity flip
+    shell_damage                                 ; update shell E post-drive, pre-creep
+    io.out('   SD-stg'+string(stg)+' post-drive eq: active='+string(n_active)+' shell_reduced='+string(n_shell_red)+' dmax='+string(dmax_all))
+    ; (4) threshold-gated creep over the stage days
+    command
+        model creep active on
+        model creep timestep fix [crp_dt]
+    endcommand
+    local d = d0 + dd
+    loop while d <= (d1 + 0.1)
+        do_threshold                             ; per-increment threshold (multi-thread safe; NOT per-cycle)
+        global cur_day = d
+        command
+            model solve time-total [d*86400.0]
+        endcommand
+        shell_damage                             ; recover shell stress + count cracking shells at the creep-segment boundary
+        io.out('   SD-creep stg'+string(stg)+' day='+string(d)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+'mm dmax='+string(dmax_all)+' active='+string(n_active)+' crk(t/c)='+string(n_crk_tension)+'/'+string(n_crk_compress)+' shellMaxT='+string(shell_maxt/1e6)+'MPa')
+        d = d + dd
+    end_loop
+    command
+        model creep active off
+        zone gridpoint initialize velocity 0 0 0   ; zero ONLY velocity between stages (Wade rule #2; disp stays cumulative)
+    endcommand
+end
+
+; ----------------------------------------------------------------------------
+; 8) HISTORIES (real physical time + continuous closure + markers).
+;    s4_rerun_convhist.f3dat L219-229.
+; ----------------------------------------------------------------------------
+[global cur_day = 0.0]
+[global n_active = 0]
+[global n_shell_red = 0]
+[find_conv_gps]
+model history name 'ctime'    creep time-total
+fish  history name 'vclose'   @vclose
+fish  history name 'hclose'   @hclose
+zone  history name 'crown_dz'  displacement-z position (1297, 885, 1752)
+zone  history name 'invert_dz' displacement-z position (1297, 885, 1743)
+zone  history name 'sprR_dx'   displacement-x position (1303, 885, 1747)
+zone  history name 'sprL_dx'   displacement-x position (1291, 885, 1747)
+fish  history name 'phys_day'  @cur_day
+fish  history name 'nactive'   @n_active
+fish  history name 'nshellred' @n_shell_red
+
+; --- DAY-0 IN-SITU DATUM (convergence curve must START here, NOT at 0) ---
+[report_conv('S0-INSITU-DATUM')]
+[band_conv('S0-INSITU-DATUM')]
+[io.out('SD-CHK STAGE0 day=0 dmax='+string(dmax_all)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+' band_vert='+string(band_vert)+'mm active='+string(n_active)+' shellred='+string(n_shell_red))]
+
+; ============================================================================
+; 9) FOUR STAGES, water LOW-HIGH-LOW-HIGH, CUMULATIVE displacement (Wade rule #2:
+;    NEVER zero disp; zero ONLY velocity between stages -- handled inside
+;    drive_and_creep). nsub=3 ncyc_sub=100 (couple_drive smoke ramp), dd=5 day step.
+; ============================================================================
+
+; === STAGE 1: drive->large s1, LOW water z1724 (0-30 days) ===
+zone water plane origin (1297, 885, 1724) normal (0,0,1)
+[global threhold = 0.8]                          ; STAGE1 門檻 (Wade 2026-07-02: 0.6->0.8 進一步壓平 S1)
+[drive_and_creep(1, 3, 100, 0.0, 30.0, 5.0)]
+[report_conv('S1-END')]
+[band_conv('S1-END')]
+model save 'sd_s1'
+[io.out('SD-CHK STAGE1 day=30 dmax='+string(dmax_all)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+' band_vert='+string(band_vert)+'mm active='+string(n_active)+' shellred='+string(n_shell_red))]
+
+; === STAGE 2: drive->large s2, HIGH water z1807 (30-60 days) ===
+zone water plane origin (1297, 885, 1807) normal (0,0,1)
+[global threhold = 0.5]                          ; STAGE2 門檻 (Wade 2026-07-02: 0.4->0.5)
+[drive_and_creep(2, 3, 100, 30.0, 60.0, 5.0)]
+[report_conv('S2-END')]
+[band_conv('S2-END')]
+model save 'sd_s2'
+[io.out('SD-CHK STAGE2 day=60 dmax='+string(dmax_all)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+' band_vert='+string(band_vert)+'mm active='+string(n_active)+' shellred='+string(n_shell_red))]
+
+; === STAGE 3: drive->large s3, LOW water z1724 (60-90 days) ===
+zone water plane origin (1297, 885, 1724) normal (0,0,1)
+[global threhold = 0.4]                          ; STAGE3 門檻 (Wade 2026-07-02: 0.3->0.4)
+[drive_and_creep(3, 3, 100, 60.0, 90.0, 5.0)]
+[report_conv('S3-END')]
+[band_conv('S3-END')]
+model save 'sd_s3'
+[io.out('SD-CHK STAGE3 day=90 dmax='+string(dmax_all)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+' band_vert='+string(band_vert)+'mm active='+string(n_active)+' shellred='+string(n_shell_red))]
+
+; === STAGE 4: drive->large s4, HIGH water z1807 (90-120 days) ===
+zone water plane origin (1297, 885, 1807) normal (0,0,1)
+[global threhold = 0.1]                          ; STAGE4 門檻 (最低, 激進)
+[drive_and_creep(4, 3, 100, 90.0, 120.0, 5.0)]
+[report_conv('S4-END')]
+[band_conv('S4-END')]
+model save 'sd_s4'
+[io.out('SD-CHK STAGE4 day=120 dmax='+string(dmax_all)+' vclose='+string(vclose)+'mm hclose='+string(hclose)+' band_vert='+string(band_vert)+'mm active='+string(n_active)+' shellred='+string(n_shell_red))]
+
+; ----------------------------------------------------------------------------
+; 10) EXPORT CONVERGENCE HISTORY -> sd_convhist.txt
+;     (vclose/hclose/ctime + sentinel point histories + phys_day + nactive +
+;      nshellred). s4_rerun_convhist.f3dat L315.
+; ----------------------------------------------------------------------------
+history export 'vclose' 'hclose' 'ctime' 'crown_dz' 'invert_dz' 'sprR_dx' 'sprL_dx' 'phys_day' 'nactive' 'nshellred' file 'sd_convhist.txt' truncate
+[io.out('SD-DONE 120-day large-driven 4-stage complete; final cumulative dmax='+string(dmax_all)+' m  vclose='+string(vclose)+'mm hclose='+string(hclose)+'mm')]
+program log off
+program quit

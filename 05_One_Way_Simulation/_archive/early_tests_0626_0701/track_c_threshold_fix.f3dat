@@ -1,0 +1,99 @@
+; track_c_threshold_fix.f3dat -- TEST the threshold-creep fix. Track A proved the ALL-ZONE
+;   creep is stable (3mm/30d); the THRESHOLD mechanism diverges. Hypothesis: the PER-INCREMENT
+;   re-evaluation (flipping eta between active/1e100 every increment, with stale Kelvin strains
+;   on re-activation) is the divergence source. FIX = evaluate the threshold ONCE per water
+;   stage (fixed active set), SetKStrains AFTER, then creep without re-flipping.
+;   restore small_ep (elastoplastic base w/ burgers-mohr already assigned). cwd = 05.
+program log-file 'track_c.log'
+program log on
+model restore 'small_ep'
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain off
+fish automatic-create on
+[io.out('TC0 restored small_ep; zones='+string(zone.num))]
+
+; --- monitors ---
+fish define dmax_all
+    local dm = 0.0
+    loop foreach local gp gp.list
+        local d = gp.disp(gp)
+        local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+        if mm > dm then
+            dm = mm
+        end_if
+    end_loop
+    dmax_all = dm
+end
+[global threhold = 0.6]
+fish define do_threshold
+    local na = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pmean = (s1 + s3)/2.0 - pore
+            local q = (s1 - s3)/2.0
+            local c = zone.prop(z,'cohesion')
+            local phi = zone.prop(z,'friction')
+            local q_th = threhold*c + pmean*threhold*math.tan(phi*math.degrad)
+            if q >= q_th then
+                zone.prop(z,'viscosity-kelvin')  = eta_k
+                zone.prop(z,'viscosity-maxwell') = eta_m
+                zone.group(z,'creep') = 'CreepActive'
+                na = na + 1
+            else
+                zone.prop(z,'viscosity-kelvin')  = 1e100
+                zone.prop(z,'viscosity-maxwell') = 1e100
+                zone.group(z,'creep') = 'CreepOff'
+            end_if
+        end_if
+    end_loop
+    global n_active = na
+end
+fish define run_stage(d0, d1, dd)
+    local d = d0 + dd
+    loop while d <= (d1 + 0.1)
+        command
+            model solve time-total [d*86400.0]
+        endcommand
+        io.out('   TCcreep day='+string(d)+' dmax='+string(dmax_all)+' m  (active fixed='+string(n_active)+')')
+        d = d + dd
+    endloop
+end
+model history creep time-total
+zone history name 'crown_dz' displacement-z position (1297, 885, 1752)
+
+; === STAGE 1: LOW water z1724 -> re-eq -> threshold ONCE -> creep 0-30 (NO re-flip) ===
+zone water plane origin (1297, 885, 1724) normal (0,0,1)
+model calm
+model solve ratio-average 1e-5 cycles 40000
+[setKstrains]
+[do_threshold]                 ; evaluate ONCE; active set now FIXED for the whole stage
+[setKstrains]                  ; re-set Kelvin strains AFTER eta set, consistent with current stress
+zone gridpoint initialize displacement 0 0 0
+zone gridpoint initialize velocity 0 0 0
+[io.out('TC-S1eq LOW-water re-eq + threshold ONCE; active='+string(n_active)+' dmax(reset~0)')]
+model creep active on
+model creep timestep fix [crp_dt]
+[run_stage(0.0, 30.0, 5.0)]
+model creep active off
+model save 'tc_s1'
+[io.out('TC-S1done dmax='+string(dmax_all))]
+
+; === STAGE 2: HIGH water z1807 -> re-eq -> threshold ONCE -> creep 30-60 ===
+zone water plane origin (1297, 885, 1807) normal (0,0,1)
+model calm
+model solve ratio-average 1e-5 cycles 40000
+[setKstrains]
+[do_threshold]
+[setKstrains]
+[io.out('TC-S2eq HIGH-water re-eq + threshold ONCE; active='+string(n_active))]
+model creep active on
+model creep timestep fix [crp_dt]
+[run_stage(30.0, 60.0, 5.0)]
+model creep active off
+model save 'tc_s2'
+[io.out('TC-DONE per-stage threshold; final dmax='+string(dmax_all))]
+program log off
+program quit

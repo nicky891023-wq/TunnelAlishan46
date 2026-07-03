@@ -1,0 +1,143 @@
+; large_creep_4stage.f3dat -- 05 LARGE-MODEL slope creep (邊坡潛移). Walking SOLVED by STL
+;   terrain-following water table (flat plane walked: 36% terrain below z1724). Recipe:
+;   geometry import watertable STL + zone water set (per stage) + ELASTIC re-eq (Wade rule) +
+;   per-stage threshold 0.6/0.4/0.3/0.1 creep (Wade 2026-07-01: 逐階段降門檻=長期漸進弱化).
+;   4 stages LOW-HIGH-LOW-HIGH (120d). Inline stages (proven).
+;   cwd = 05.
+program log-file 'large_creep_4stage.log'
+program log on
+model restore '../04_InitialBalance/Large_Initial'
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain off
+model configure creep
+fish automatic-create on
+[io.out('LG0 restored Large_Initial; zones='+string(zone.num))]
+
+zone cmodel assign burgers-mohr
+zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell [eta_m] viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+model creep active off
+zone water density [rho_w]
+geometry import 'watertable_lower.stl'
+geometry import 'watertable_higher.stl'
+[io.out('LG1 burgers-mohr 4-layer + both watertable STLs imported')]
+
+fish define dmax_all
+    local dm = 0.0
+    loop foreach local gp gp.list
+        local d = gp.disp(gp)
+        local mm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+        if mm > dm then
+            dm = mm
+        end_if
+    end_loop
+    dmax_all = dm
+end
+[global threhold = 0.6]
+fish define do_threshold
+    local na = 0
+    loop foreach local z zone.list
+        local s1 = -zone.stress.prin.x(z)
+        local s3 = -zone.stress.prin.z(z)
+        local pore = zone.pp(z)
+        local pmean = (s1 + s3)/2.0 - pore
+        local q = (s1 - s3)/2.0
+        local c = zone.prop(z,'cohesion')
+        local phi = zone.prop(z,'friction')
+        local q_th = threhold*(c*math.cos(phi*math.degrad) + pmean*math.sin(phi*math.degrad))   ; corrected MC envelope (was tan form = /cos, ~15.5% too high; Codex+parameter.f3dat:14)
+        if q >= q_th then
+            zone.prop(z,'viscosity-kelvin')  = eta_k
+            zone.prop(z,'viscosity-maxwell') = eta_m
+            zone.group(z,'creep') = 'CreepActive'
+            na = na + 1
+        else
+            zone.prop(z,'viscosity-kelvin')  = 1e100
+            zone.prop(z,'viscosity-maxwell') = 1e100
+            zone.group(z,'creep') = 'CreepOff'
+        end_if
+    end_loop
+    global n_active = na
+end
+fish define run_stage(d0, d1, dd)
+    local d = d0 + dd
+    loop while d <= (d1 + 0.1)
+        command
+            model solve time-total [d*86400.0]
+        endcommand
+        io.out('   LGcreep day='+string(d)+' dmax='+string(dmax_all)+' m  (active='+string(n_active)+')')
+        d = d + dd
+    endloop
+end
+
+; === STAGE 1: LOW water (watertable_lower) -- zero disp = slope-creep clock start ===
+zone water set 'watertable_lower'
+model calm
+model solve elastic ratio-local 1e-3 cycles 30000
+[global threhold = 0.6]                          ; STAGE1 門檻
+[setKstrains]
+[do_threshold]
+[setKstrains]
+zone gridpoint initialize displacement 0 0 0
+zone gridpoint initialize velocity 0 0 0
+[io.out('LG-S1eq LOW threhold=0.6 active='+string(n_active)+' reeq_dmax='+string(dmax_all))]
+model creep active on
+model creep timestep fix [crp_dt]
+[run_stage(0.0, 30.0, 10.0)]
+model creep active off
+model save 'lg_s1'
+[io.out('LG-S1done day30 dmax='+string(dmax_all))]
+
+; === STAGE 2: HIGH water (watertable_higher) ===
+zone water set 'watertable_higher'
+model calm
+model solve elastic ratio-local 1e-3 cycles 30000
+[global threhold = 0.4]                          ; STAGE2 門檻 (降)
+[setKstrains]
+[do_threshold]
+[setKstrains]
+zone gridpoint initialize velocity 0 0 0
+[io.out('LG-S2eq HIGH threhold=0.4 active='+string(n_active)+' reeq_dmax='+string(dmax_all))]
+model creep active on
+model creep timestep fix [crp_dt]
+[run_stage(30.0, 60.0, 10.0)]
+model creep active off
+model save 'lg_s2'
+[io.out('LG-S2done day60 dmax='+string(dmax_all))]
+
+; === STAGE 3: LOW water ===
+zone water set 'watertable_lower'
+model calm
+model solve elastic ratio-local 1e-3 cycles 30000
+[global threhold = 0.3]                          ; STAGE3 門檻 (再降)
+[setKstrains]
+[do_threshold]
+[setKstrains]
+zone gridpoint initialize velocity 0 0 0
+[io.out('LG-S3eq LOW threhold=0.3 active='+string(n_active)+' reeq_dmax='+string(dmax_all))]
+model creep active on
+model creep timestep fix [crp_dt]
+[run_stage(60.0, 90.0, 10.0)]
+model creep active off
+model save 'lg_s3'
+[io.out('LG-S3done day90 dmax='+string(dmax_all))]
+
+; === STAGE 4: HIGH water ===
+zone water set 'watertable_higher'
+model calm
+model solve elastic ratio-local 1e-3 cycles 30000
+[global threhold = 0.1]                          ; STAGE4 門檻 (最低, 激進)
+[setKstrains]
+[do_threshold]
+[setKstrains]
+zone gridpoint initialize velocity 0 0 0
+[io.out('LG-S4eq HIGH threhold=0.1 active='+string(n_active)+' reeq_dmax='+string(dmax_all))]
+model creep active on
+model creep timestep fix [crp_dt]
+[run_stage(90.0, 120.0, 10.0)]
+model creep active off
+model save 'lg_s4'
+[io.out('LG-DONE 120-day 4-stage large slope creep; final cumulative dmax='+string(dmax_all))]
+program log off
+program quit

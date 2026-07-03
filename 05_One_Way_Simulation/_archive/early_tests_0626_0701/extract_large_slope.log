@@ -1,0 +1,43 @@
+**********************************************
+* Logging started at 週日 六月 28 03:20:03 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore 'lg_s4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 03:17:58 2026
+Total Cycles: 30909  Super Cycles: 30909
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define _ex
+   Def>    local fo = file.open('large_slope_surface.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z dmag dz'
+   Def>    fo = file.write(a,1)
+   Def>    local nb = 0
+   Def>    loop foreach local gp gp.list
+   Def>        if gp.isgroup(gp,'Top1') then
+   Def>            local p = gp.pos(gp)
+   Def>            local d = gp.disp(gp)
+   Def>            local dm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(dm)+' '+string(comp.z(d))
+   Def>            fo = file.write(a,1)
+   Def>            nb = nb + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('EXL surface gps='+string(nb)+' exported')
+   Def>end
+flac3d>[_ex]
+EXL surface gps=10028 exported
+0 (integer)
+flac3d>[io.out('EXL-DONE')]
+EXL-DONE
+0 (integer)
+flac3d>program quit

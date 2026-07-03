@@ -1,0 +1,82 @@
+program log-file 'inspect_bc.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'cb_control0'
+fish automatic-create on
+fish define inspect
+    local cx = 1297.0
+    local cz = 1747.5
+    io.out('=== WALLS ===')
+    loop foreach local w wall.list
+        io.out('  wall name='+wall.name(w))
+    end_loop
+    io.out('=== BALLS fixed (ball.fix dof1/2/3) ===')
+    local nfx = 0
+    local nfy = 0
+    local nfz = 0
+    local nbot = 0
+    local zmin_fix = 1e20
+    local zmax_fix = -1e20
+    loop foreach local b ball.list
+        local anyfix = 0
+        if ball.fix(b,1) then
+            nfx = nfx + 1
+            anyfix = 1
+        end_if
+        if ball.fix(b,2) then
+            nfy = nfy + 1
+        end_if
+        if ball.fix(b,3) then
+            nfz = nfz + 1
+            anyfix = 1
+        end_if
+        if anyfix = 1 then
+            local p = ball.pos(b)
+            local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+            if ang < 0.0 then
+                ang = 360.0 + ang
+            end_if
+            if ang >= 200.0 then
+            if ang <= 340.0 then
+                nbot = nbot + 1
+            end_if
+            end_if
+            if comp.z(p) < zmin_fix then
+                zmin_fix = comp.z(p)
+            end_if
+            if comp.z(p) > zmax_fix then
+                zmax_fix = comp.z(p)
+            end_if
+        end_if
+    end_loop
+    io.out('  fixed balls: xdof='+string(nfx)+' ydof='+string(nfy)+' zdof='+string(nfz)+' | any-fix in ang200-340(bottom)='+string(nbot)+' | fixed-ball z-range['+string(zmin_fix)+','+string(zmax_fix)+']')
+    io.out('=== GP fixed (gp.fix.x/y/z) ===')
+    local gx = 0
+    local gy = 0
+    local gz = 0
+    loop foreach local g gp.list
+        if gp.fix.x(g) then
+            gx = gx + 1
+        end_if
+        if gp.fix.y(g) then
+            gy = gy + 1
+        end_if
+        if gp.fix.z(g) then
+            gz = gz + 1
+        end_if
+    end_loop
+    io.out('  fixed-vel gps: x='+string(gx)+' y='+string(gy)+' z='+string(gz))
+    io.out('=== driven group ===')
+    local nd = 0
+    loop foreach local g2 gp.list
+        if gp.group(g2,'drive') = 'driven' then
+            nd = nd + 1
+        end_if
+    end_loop
+    io.out('  driven group gps='+string(nd))
+    io.out('  COUNTS balls='+string(ball.num)+' zones='+string(zone.num)+' walls='+string(wall.num))
+end
+[inspect]
+[io.out('INSPECT-DONE')]
+program quit

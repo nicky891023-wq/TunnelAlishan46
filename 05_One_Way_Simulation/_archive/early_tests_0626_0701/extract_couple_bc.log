@@ -1,0 +1,176 @@
+**********************************************
+* Logging started at 週一 六月 29 09:45:09 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>fish automatic-create on
+flac3d>
+flac3d>model restore 's4_s1'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:30:08 2026
+Total Cycles: 15428  Super Cycles: 15428
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish define wbcs1
+   Def>    local fo = file.open('bc_s1.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z dx dy dz'
+   Def>    fo = file.write(a,1)
+   Def>    local cnt = 0
+   Def>    loop foreach local gp gp.list
+   Def>        local p = gp.pos(gp)
+   Def>        if comp.x(p)>=1272.0 then
+   Def>        if comp.x(p)<=1322.0 then
+   Def>        if comp.y(p)>=855.0 then
+   Def>        if comp.y(p)<=915.0 then
+   Def>        if comp.z(p)>=1723.0 then
+   Def>        if comp.z(p)<=1773.0 then
+   Def>            local d = gp.disp(gp)
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            fo = file.write(a,1)
+   Def>            cnt = cnt + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('EXP bc_s1.txt gps='+string(cnt))
+   Def>end
+flac3d>[wbcs1]
+EXP bc_s1.txt gps=140694
+0 (integer)
+flac3d>
+flac3d>model restore 's4_s2'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:39:48 2026
+Total Cycles: 20517  Super Cycles: 20517
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish define wbcs2
+   Def>    local fo = file.open('bc_s2.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z dx dy dz'
+   Def>    fo = file.write(a,1)
+   Def>    local cnt = 0
+   Def>    loop foreach local gp gp.list
+   Def>        local p = gp.pos(gp)
+   Def>        if comp.x(p)>=1272.0 then
+   Def>        if comp.x(p)<=1322.0 then
+   Def>        if comp.y(p)>=855.0 then
+   Def>        if comp.y(p)<=915.0 then
+   Def>        if comp.z(p)>=1723.0 then
+   Def>        if comp.z(p)<=1773.0 then
+   Def>            local d = gp.disp(gp)
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            fo = file.write(a,1)
+   Def>            cnt = cnt + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('EXP bc_s2.txt gps='+string(cnt))
+   Def>end
+flac3d>[wbcs2]
+EXP bc_s2.txt gps=140694
+0 (integer)
+flac3d>
+flac3d>model restore 's4_s3'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:48:09 2026
+Total Cycles: 24838  Super Cycles: 24838
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish define wbcs3
+   Def>    local fo = file.open('bc_s3.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z dx dy dz'
+   Def>    fo = file.write(a,1)
+   Def>    local cnt = 0
+   Def>    loop foreach local gp gp.list
+   Def>        local p = gp.pos(gp)
+   Def>        if comp.x(p)>=1272.0 then
+   Def>        if comp.x(p)<=1322.0 then
+   Def>        if comp.y(p)>=855.0 then
+   Def>        if comp.y(p)<=915.0 then
+   Def>        if comp.z(p)>=1723.0 then
+   Def>        if comp.z(p)<=1773.0 then
+   Def>            local d = gp.disp(gp)
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            fo = file.write(a,1)
+   Def>            cnt = cnt + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('EXP bc_s3.txt gps='+string(cnt))
+   Def>end
+flac3d>[wbcs3]
+EXP bc_s3.txt gps=140694
+0 (integer)
+flac3d>
+flac3d>model restore 's4_s4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:54:20 2026
+Total Cycles: 29159  Super Cycles: 29159
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish define wbcs4
+   Def>    local fo = file.open('bc_s4.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z dx dy dz'
+   Def>    fo = file.write(a,1)
+   Def>    local cnt = 0
+   Def>    loop foreach local gp gp.list
+   Def>        local p = gp.pos(gp)
+   Def>        if comp.x(p)>=1272.0 then
+   Def>        if comp.x(p)<=1322.0 then
+   Def>        if comp.y(p)>=855.0 then
+   Def>        if comp.y(p)<=915.0 then
+   Def>        if comp.z(p)>=1723.0 then
+   Def>        if comp.z(p)<=1773.0 then
+   Def>            local d = gp.disp(gp)
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>            fo = file.write(a,1)
+   Def>            cnt = cnt + 1
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('EXP bc_s4.txt gps='+string(cnt))
+   Def>end
+flac3d>[wbcs4]
+EXP bc_s4.txt gps=140694
+0 (integer)
+flac3d>[io.out('EXP-DONE all 4 stage BC files written')]
+EXP-DONE all 4 stage BC files written
+0 (integer)
+flac3d>program quit

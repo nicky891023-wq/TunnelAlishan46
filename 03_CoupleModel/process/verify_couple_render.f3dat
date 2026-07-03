@@ -1,0 +1,36 @@
+; export the ACTUAL Couple_Model balls + ALL wall facets (incl wz_outter coupling
+; surface) sampled across y, to independently verify rock<->lining alignment +
+; ball containment in the assembled model (not the raw STLs).
+program log-file 'verify_couple_render.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'Couple_Model'
+fish define _exp
+    local a = array.create(1)
+    local k = 0
+    local f1 = file.open('exp_balls.txt',1,1)
+    loop foreach local b ball.list
+        k = k + 1
+        if k >= 4 then
+            k = 0
+            local p = ball.pos(b)
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))
+            f1 = file.write(a,1)
+        end_if
+    end_loop
+    f1 = file.close
+    local f2 = file.open('exp_walls.txt',1,1)
+    loop foreach local w wall.list
+        loop foreach local fc wall.facetlist(w)
+            local q = wall.facet.pos(fc)
+            a(1) = wall.name(w)+' '+string(comp.x(q))+' '+string(comp.y(q))+' '+string(comp.z(q))
+            f2 = file.write(a,1)
+        end_loop
+    end_loop
+    f2 = file.close
+    io.out('VEXP balls(every4th) + all wall facets exported; balls='+string(ball.num))
+end
+[_exp]
+program log off
+program quit

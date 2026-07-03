@@ -1,0 +1,113 @@
+; ============================================================================
+; build_Couple_mb3.f3dat -- Alishan #46 FOCUSED COUPLED model (Wade 2026-06-23).
+; BUILD STAGE ONLY (no settle/bond/solve).
+;
+; Rock = couple_hex.inp : STRUCTURED all-hex (mb3 METHOD, not copied): O-grid tube
+;   around the REAL bore (wallzone_outter.stl, with invert) + regular structured
+;   bands on ALL FOUR sides; FOCUSED 40x40 box x[1277,1317] z[1728,1768] y[860,910];
+;   layers 2..6 geology-conformal.  Rock tunnel-hole coincides with wallzone_outter.
+; Lining = PFC balls using Wade's ORIGINAL STLs (the correct geometry):
+;   * wz_outter = wall-zone on the rock tunnel-WALL faces only (interior y; NO y-end
+;     XZ planes, no holes) -> coincides with wallzone_outter.stl, couples balls<->rock;
+;   * wall_inner / wall_860 / wall_910 = rigid PFC walls (clearance + end platens);
+;   * tunnel_860_910_closed.stl filled with balls, then any ball outside the closed
+;     wall region is deleted -> balls are FULLY contained.
+;
+; Host: flac3d600_console.exe (FLAC3D-6 + PFC).  cwd = 03_CoupleModel.
+; ============================================================================
+program log-file 'build_Couple_mb3.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model new
+model largestrain on
+model title 'Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining'
+
+; --- import the STRUCTURED hex rock (layers 2..6) -----------------------------
+zone import 'couple_hex.inp'
+zone group 'layer2' slot 'type' range group 'layer2'
+zone group 'layer3' slot 'type' range group 'layer3'
+zone group 'layer4' slot 'type' range group 'layer4'
+zone group 'layer5' slot 'type' range group 'layer5'
+zone group 'layer6' slot 'type' range group 'layer6'
+zone group 'rock' slot 'mat'
+[io.out('CHK0 rock imported: zones='+string(zone.num))]
+
+model domain extent 1276 1318 858 912 1727 1769 condition destroy
+
+; --- wz_outter = wall-zone on the rock tunnel-WALL faces ONLY -----------------
+;   position-y 860.05..909.95 wraps the bore wall ALL the way to BOTH mouths so the
+;   OUTER coupling ring closes at y=860/910 (the prior 860.5..909.5 left a ~0.73 m
+;   open break at each mouth = the gap Wade saw), while STILL excluding the y=860/910
+;   box-end XZ cap faces (their centroid is y=860/910 exactly < 860.05 / > 909.95).
+;   tunnel envelope in x,z so only the bore wall (O-grid inner ring = wallzone_outter)
+;   is wrapped, no box faces.
+zone face skin
+wall-zone create name 'wz_outter' skip-errors ...
+     range group 'rock' slot 'mat' position-x 1292 1303 position-y 860.05 909.95 position-z 1743 1752
+fish define _wzrep
+    io.out('CHK1 wz_outter total wall facets='+string(wall.facet.num))
+end
+[_wzrep]
+
+; --- rigid walls from Wade's ORIGINAL STL surfaces ----------------------------
+geometry import '../input/wall_inner.stl' format stl
+geometry import '../input/wall_860.stl'   format stl
+geometry import '../input/wall_910.stl'   format stl
+wall import name 'w_inner' geometry 'wall_inner'
+wall import name 'w_860'   geometry 'wall_860'
+wall import name 'w_910'   geometry 'wall_910'
+wall resolution full
+[io.out('CHK2 walls='+string(wall.num)+' facets_total='+string(wall.facet.num))]
+
+; --- fill Wade's closed band envelope with PFC balls --------------------------
+geometry import '../input/tunnel_860_910_closed.stl' format stl
+model random 10001
+ball distribute porosity 0.32 radius 0.036 0.044 ...
+              box 1292.3 1301.9 859.4 910.6 1743.2 1751.8 ...
+              group 'lining_pfc' ...
+              range geometry-space 'tunnel_860_910_closed' inside
+[io.out('CHK3 distributed balls='+string(ball.num))]
+ball delete range geometry-space 'tunnel_860_910_closed' outside
+[io.out('CHK4 balls inside closed envelope='+string(ball.num))]
+; INSET the ball region by ~1 max-radius (0.044) from the closed-band boundary so no
+; ball SURFACE pokes past the wall (wz_outter / rigid walls).  geometry-distance gap
+; deletes balls whose centre is < 0.044 m from the boundary -> kept centres are
+; >=0.044 m inside -> a max-radius (0.044) ball's surface sits AT/inside the wall
+; (no poke), while still within the 04 bond gap so the coupling contacts still form.
+ball delete range geometry-distance 'tunnel_860_910_closed' gap 0.040
+[io.out('CHK4b after 0.040 closed-band inset clip, balls='+string(ball.num))]
+; Wade 2026-06-24: inset by 0.040 = MEAN radius (not max), so balls sit TOUCHING the
+; wall (thicker lining, good coupling) with only a negligible <=0.004 m poke for the
+; few max-radius (0.044) balls.  Inset against the ACTUAL walls (wallzone_outter arch +
+; wall_inner clearance) directly, because the closed band is ~0.016 m OUTSIDE the true
+; bore wall in places.
+geometry import '../input/wallzone_outter.stl' format stl
+ball delete range geometry-distance 'wallzone_outter' gap 0.040
+ball delete range geometry-distance 'wall_inner' gap 0.040
+[io.out('CHK4c after precise wall inset (wallzone_outter+wall_inner @0.040), balls='+string(ball.num))]
+
+; --- verify FULL containment: any ball whose centre is outside the closed band -
+fish define _ballchk
+    local nesc = 0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        if comp.y(p) < 860.0 then
+            nesc = nesc + 1
+        end_if
+        if comp.y(p) > 910.0 then
+            nesc = nesc + 1
+        end_if
+    end_loop
+    io.out('CHK5 balls outside y[860,910]='+string(nesc)+' (radial escapees removed by geometry-space delete)')
+end
+[_ballchk]
+
+ball attribute density 2400 damp 0.7
+cmat default type 'ball-ball'  model linear method deformability emod 1e10 kratio 1.0 property fric 0.5
+cmat default type 'ball-facet' model linear method deformability emod 1e10 kratio 1.0 property fric 0.5
+
+model save '../output/Couple_Model'
+[io.out('==== Couple_Model (mb3 40x40) saved: zones='+string(zone.num)+' walls='+string(wall.num)+' balls='+string(ball.num)+' ====')]
+program log off
+program quit

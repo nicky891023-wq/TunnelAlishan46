@@ -1,0 +1,82 @@
+**********************************************
+* Logging started at 週三 七月 1 02:13:55 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../04_InitialBalance/Small_Initial'   ; undeformed-datum small model (in-situ kept)
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週三 七月 1 01:50:41 2026
+Total Cycles: 3202  Super Cycles: 3202
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('SMBN-0 restored Small_Initial; gps='+string(gp.num))]
+SMBN-0 restored Small_Initial; gps=269452
+flac3d>
+flac3d>fish define export_small_bnd
+   Def>    local fo = file.open('small_bnd.txt',1,1)        ; mode 1 = write, type 1 = text (couple_idw.py:22 style)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id x y z'
+   Def>    fo = file.write(a,1)
+   Def>    local cnt = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local px = comp.x(p)
+   Def>        local py = comp.y(p)
+   Def>        local pz = comp.z(p)
+   Def>        local onbox = 0
+   Def>        ; --- the 6 box faces, +-1 m bands (same bands run_small_init.f3dat L47-52 fixes) ---
+   Def>        if px >= 1249.0 then
+   Def>        if px <= 1251.0 then
+   Def>            onbox = 1
+   Def>        end_if
+   Def>        end_if
+   Def>        if px >= 1349.0 then
+   Def>        if px <= 1351.0 then
+   Def>            onbox = 1
+   Def>        end_if
+   Def>        end_if
+   Def>        if py >= 849.0 then
+   Def>        if py <= 851.0 then
+   Def>            onbox = 1
+   Def>        end_if
+   Def>        end_if
+   Def>        if py >= 949.0 then
+   Def>        if py <= 951.0 then
+   Def>            onbox = 1
+   Def>        end_if
+   Def>        end_if
+   Def>        if pz >= 1699.0 then
+   Def>        if pz <= 1701.0 then
+   Def>            onbox = 1
+   Def>        end_if
+   Def>        end_if
+   Def>        if pz >= 1799.0 then
+   Def>        if pz <= 1801.0 then
+   Def>            onbox = 1
+   Def>        end_if
+   Def>        end_if
+   Def>        if onbox = 1 then
+   Def>            a(1) = string(gp.id(g))+' '+string(px)+' '+string(py)+' '+string(pz)
+   Def>            fo = file.write(a,1)
+   Def>            cnt = cnt + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    fo = file.close
+   Def>    io.out('SMBN exported '+string(cnt)+' box-face gridpoints -> small_bnd.txt')
+   Def>end
+flac3d>[export_small_bnd]
+SMBN exported 14946 box-face gridpoints -> small_bnd.txt
+0 (integer)
+flac3d>[io.out('SMBN-DONE')]
+SMBN-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週三 七月 1 02:14:00 2026
+**********************************************

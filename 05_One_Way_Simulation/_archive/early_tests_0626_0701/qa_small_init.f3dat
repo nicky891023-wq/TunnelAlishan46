@@ -1,0 +1,127 @@
+program log-file 'qa_small_init.log'
+program log on
+model restore '../04_InitialBalance/Small_Initial'
+fish automatic-create on
+[io.out('QAS-0 restored Small_Initial zones='+string(zone.num)+' gps='+string(gp.num))]
+fish define qa_small
+    local nplas = 0
+    local szmn = 1e30
+    local szmx = -1e30
+    local bz = array.create(5)
+    local bx = array.create(5)
+    local bn = array.create(5)
+    local k = 1
+    loop while k <= 5
+        bz(k) = 0.0
+        bx(k) = 0.0
+        bn(k) = 0
+        k = k + 1
+    end_loop
+    local rock_sz = 0.0
+    local rock_n = 0
+    local lin_sz = 0.0
+    local lin_n = 0
+    loop foreach local z zone.list
+        if zone.state(z,1) # 0 then
+            nplas = nplas + 1
+        end_if
+        local s = zone.stress.zz(z)
+        if s < szmn then
+            szmn = s
+        end_if
+        if s > szmx then
+            szmx = s
+        end_if
+        local j = int((zone.pos.z(z)-1700.0)/20.0) + 1
+        if j < 1 then
+            j = 1
+        end_if
+        if j > 5 then
+            j = 5
+        end_if
+        bz(j) = bz(j) + s
+        bx(j) = bx(j) + zone.stress.xx(z)
+        bn(j) = bn(j) + 1
+        ; rock vs lining szz (interface continuity, focus near tunnel y860-910)
+        local yc = zone.pos.y(z)
+        if yc > 860.0 then
+        if yc < 910.0 then
+            if zone.group(z,'type') = 'lining' then
+                lin_sz = lin_sz + s
+                lin_n = lin_n + 1
+            else
+                local rx = zone.pos.x(z) - 1297.0
+                local rz = zone.pos.z(z) - 1747.5
+                if (rx*rx+rz*rz) < 64.0 then
+                    rock_sz = rock_sz + s
+                    rock_n = rock_n + 1
+                end_if
+            end_if
+        end_if
+        end_if
+    end_loop
+    local mv = 0.0
+    local fx = 0
+    local fy = 0
+    local fz = 0
+    loop foreach local g gp.list
+        local v = gp.vel(g)
+        local m = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+        if m > mv then
+            mv = m
+        end_if
+        if gp.fix.x(g) then
+            fx = fx + 1
+        end_if
+        if gp.fix.y(g) then
+            fy = fy + 1
+        end_if
+        if gp.fix.z(g) then
+            fz = fz + 1
+        end_if
+    end_loop
+    io.out('QAS-STATE plastic_zones='+string(nplas)+'/'+string(zone.num)+' max_gp_vel='+string(mv)+' szz[min='+string(szmn)+',max='+string(szmx)+']')
+    io.out('QAS-BC fixed_x='+string(fx)+' fixed_y='+string(fy)+' fixed_z='+string(fz))
+    local mr = 0.0
+    if rock_n > 0 then
+        mr = rock_sz/float(rock_n)
+    end_if
+    local ml = 0.0
+    if lin_n > 0 then
+        ml = lin_sz/float(lin_n)
+    end_if
+    io.out('QAS-INTERFACE near-tunnel szz: rock_mean='+string(mr)+'(n'+string(rock_n)+') lining_mean='+string(ml)+'(n'+string(lin_n)+') ratio='+string(ml/mr))
+    local jj = 1
+    loop while jj <= 5
+        if bn(jj) > 0 then
+            local mz = bz(jj)/float(bn(jj))
+            local mxx = bx(jj)/float(bn(jj))
+            io.out('QAS-PROFILE zbin'+string(jj)+' z['+string(1700+(jj-1)*20)+'-'+string(1700+jj*20)+'] szz='+string(mz)+' sxx='+string(mxx)+' K0='+string(mxx/mz)+' n='+string(bn(jj)))
+        end_if
+        jj = jj + 1
+    end_loop
+end
+[qa_small]
+fish define exp_slice
+    local st = file.open('qa_small_slice.txt',1,1)
+    local b = array.create(1)
+    b(1) = 'x z szz sxx state'
+    file.write(b,1)
+    local n = 0
+    loop foreach local z zone.list
+        local yc = zone.pos.y(z)
+        if yc > 883.0 then
+        if yc < 887.0 then
+            local p = zone.pos(z)
+            b(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.state(z,1))
+            file.write(b,1)
+            n = n + 1
+        end_if
+        end_if
+    end_loop
+    local cl = file.close
+    io.out('QAS-SLICE exported '+string(n)+' zones (y883-887) -> qa_small_slice.txt')
+end
+[exp_slice]
+[io.out('QAS-DONE')]
+program quit

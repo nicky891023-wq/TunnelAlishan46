@@ -1,0 +1,1683 @@
+**********************************************
+* Logging started at 週四 七月 2 21:29:16 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../04_InitialBalance/Large_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 12:48:52 2026
+Total Cycles: 6958  Super Cycles: 6958
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>call '../04_InitialBalance/parameter.f3dat'
+flac3d>; ============================================================================
+flac3d>; parameter.f3dat -- Alishan #46 UNIFIED material parameters (Wade-ruled, 2026-06-22)
+flac3d>; Large(4-layer) / Small(6-layer) rock + lining(D7) + coupled PFC(D7 calib).
+flac3d>;
+flac3d>; Unification rulings (Wade):
+flac3d>;   * nu = 0.25 single value (static MC + creep bulk same source).
+flac3d>;   * E is PER-LAYER (not uniform): lithology-based within Hoek-Diederichs
+flac3d>;     rock-mass range (sandstone 3-8, sandshale 1-3 GPa; colluvium/weathered soft).
+flac3d>;     -> GSI/E have NO field data: per-layer E are documented-range central
+flac3d>;        judgements, GSI-basis TODO (D3). c/phi are GSI-reduced placeholders.
+flac3d>;   * Burgers creep: shear-maxwell = shear-kelvin = the layer ELASTIC G,
+flac3d>;     bulk = the layer elastic K  (instantaneous static==creep, no spurious soften).
+flac3d>;   * viscosity-maxwell eta_m = 6.0e15 Pa.s ; viscosity-kelvin eta_k = 2.4e13 Pa.s.
+flac3d>;   * creep threshold ratio = 0.6 :  q_th = 0.6*(c*cos(phi)+p'*sin(phi)).
+flac3d>;   * creep timestep = 600 s (fixed).
+flac3d>;   * layer4 sandshale(WET): c = 100 kPa, phi = 30 deg (Wade).
+flac3d>; Units: SI (Pa, kg/m3, deg, m, Pa.s).  Sign: compression negative.
+flac3d>; ============================================================================
+flac3d>
+flac3d>; ---------- global / environment ----------
+flac3d>[global nu     = 0.25]            ; single Poisson, all rock layers
+flac3d>[global K0     = 0.7]             ; lateral stress ratio (placeholder, no field basis)
+flac3d>[global grav   = 9.81]            ; m/s2
+flac3d>[global poro   = 0.1]             ; porosity n
+flac3d>[global satr   = 0.1]             ; saturation S
+flac3d>[global rho_w  = 1000.0]          ; water density kg/m3
+flac3d>[global pmb    = 1.0e-5]          ; FLAC mobility coeff m2/(Pa.s); near-tunnel x100
+flac3d>[global ten_r  = 1.0e5]           ; rock tension cutoff 100 kPa (all layers)
+flac3d>
+flac3d>; ---------- elastic helpers (nu=0.25 -> G=E/2.5, K=E/1.5) ----------
+flac3d>fish define _gk(ee)
+   Def>    _gk = ee / (2.0*(1.0+nu))     ; shear  G
+   Def>end
+flac3d>fish define _bk(ee)
+   Def>    _bk = ee / (3.0*(1.0-2.0*nu)) ; bulk   K
+   Def>end
+flac3d>
+flac3d>; ====================== LARGE model : 4 layers ======================
+flac3d>; layer1 colluvium / layer2 ssh / layer3 bedrock / layer4 basement
+flac3d>[global E_L_1 = 0.5e9 ]
+flac3d>[global co_L_1 = 1.9e5]
+flac3d>[global fr_L_1 = 29.1]
+flac3d>[global den_L_1 = 2150.0]
+flac3d>[global E_L_2 = 2.0e9 ]
+flac3d>[global co_L_2 = 2.9e5]
+flac3d>[global fr_L_2 = 35.1]
+flac3d>[global den_L_2 = 2630.0]
+flac3d>[global E_L_3 = 5.0e9 ]
+flac3d>[global co_L_3 = 4.7e5]
+flac3d>[global fr_L_3 = 44.3]
+flac3d>[global den_L_3 = 2600.0]
+flac3d>[global E_L_4 = 7.0e9 ]
+flac3d>[global co_L_4 = 8.0e5]
+flac3d>[global fr_L_4 = 51.5]
+flac3d>[global den_L_4 = 2600.0]
+flac3d>
+flac3d>; ====================== SMALL model : 6 layers ======================
+flac3d>; l1 weathered-ss / l2 ss+sandshale / l3 ss+shale / l4 sandshale(WET) / l5 sandshale / l6 basement
+flac3d>[global E_S_1 = 1.0e9 ]
+flac3d>[global co_S_1 = 1.9e5 ]
+flac3d>[global fr_S_1 = 29.1]
+flac3d>[global den_S_1 = 2600.0]
+flac3d>[global E_S_2 = 2.0e9 ]
+flac3d>[global co_S_2 = 2.9e5 ]
+flac3d>[global fr_S_2 = 35.1]
+flac3d>[global den_S_2 = 2630.0]
+flac3d>[global E_S_3 = 3.5e9 ]
+flac3d>[global co_S_3 = 4.7e5 ]
+flac3d>[global fr_S_3 = 44.3]
+flac3d>[global den_S_3 = 2630.0]
+flac3d>[global E_S_4 = 1.5e9 ]
+flac3d>[global co_S_4 = 1.0e5 ]   ; WET, Wade c100/phi30
+flac3d>[global fr_S_4 = 30.0]
+flac3d>[global den_S_4 = 2630.0]
+flac3d>[global E_S_5 = 3.0e9 ]
+flac3d>[global co_S_5 = 8.0e5 ]
+flac3d>[global fr_S_5 = 51.5]
+flac3d>[global den_S_5 = 2630.0]
+flac3d>[global E_S_6 = 7.0e9 ]
+flac3d>[global co_S_6 = 20.6e5]
+flac3d>[global fr_S_6 = 56.3]
+flac3d>[global den_S_6 = 2600.0]
+flac3d>
+flac3d>; ---------- creep (Burgers-Mohr) : per-layer G_m=G_k=G(E,nu), bulk=K(E,nu) ----------
+flac3d>[global eta_m = 1.2e15]           ; viscosity-maxwell (Wade 2026-07-02: 6e15 -> 1.2e15 = 260529 n_m value)
+flac3d>[global eta_k = 2.4e13]           ; viscosity-kelvin (proven)
+flac3d>[global crp_threshold = 0.8]      ; q_th = T*(c*cosphi + p'*sinphi). Wade 2026-07-02: T=0.8 UNIFIED
+flac3d>                                  ; (all stages, large+small). 0.6 gave 77% active at DRY W-110 ->
+flac3d>                                  ; "low-water flat" physically impossible + interior creep runaway.
+flac3d>                                  ; 0.8 validated flat-then-onset (track E 06-27).
+flac3d>[global crp_dt = 600.0]           ; creep timestep (s) (Wade)
+flac3d>
+flac3d>; ---------- lining (R.C. continuum, D7 DECIDED) ----------
+flac3d>[global shot_E   = 25e9]
+flac3d>[global shot_v   = 0.2]
+flac3d>[global shot_t   = 0.40]
+flac3d>[global shot_den = 2400.0]
+flac3d>[global shot_fc  = 41.2e6]
+flac3d>[global shot_ft  = 4.12e6]
+flac3d>
+flac3d>; ---------- coupled PFC lining BPM micro (D7 FINAL_CALIB) ----------
+flac3d>[global pfc_emod    = 9.65e9]     ; linear deformability
+flac3d>[global pfc_kratio  = 1.0]
+flac3d>[global pfc_pb_emod = 5.88e9]     ; parallel-bond deformability
+flac3d>[global pfc_pb_krat = 0.6]
+flac3d>[global pfc_pb_ten  = 2.10e6]     ; Pa
+flac3d>[global pfc_pb_coh  = 2.30e7]     ; Pa
+flac3d>[global pfc_pb_fa   = 25.0]       ; deg
+flac3d>[global pfc_bondgap = 0.03]       ; m  (= cmat proximity)
+flac3d>[global pfc_ball_den  = 2400.0]
+flac3d>[global pfc_ball_damp = 0.7]
+flac3d>[global pfc_fric      = 0.5]
+flac3d>[global pfc_bf_strong = 1.0e20]   ; ball-facet pb (unbreakable coupling, NOT material)
+flac3d>
+flac3d>[io.out('=== parameter.f3dat loaded : nu='+string(nu)+' K0='+string(K0)+' eta_m='+string(eta_m)+' crp_dt='+string(crp_dt)+' ===')]
+=== parameter.f3dat loaded : nu=0.25 K0=0.7 eta_m=1.2e+15 crp_dt=600 ===
+flac3d>call 'C:/Program Files/Itasca/Flac3d600/datafiles/Creep/SetKStrains.f3fis'
+flac3d>fish define setKstrains
+   Def>    local p_z = zone.head
+   Def>    loop while p_z # null
+   Def>        local iflag = 0
+   Def>        if zone.model(p_z) = 'burgers' then
+   Def>            iflag = 1
+   Def>        endif
+   Def>        if zone.model(p_z) = 'burgers-mohr' then
+   Def>            iflag = 1
+   Def>        endif
+   Def>        if iflag = 1 then
+   Def>            local kg2 = 2.0 * zone.prop(p_z, 'shear-kelvin')
+   Def>            if kg2 > 0.0 then
+   Def>                local sig0 = (zone.stress.xx(p_z) + zone.stress.yy(p_z) + zone.stress.zz(p_z))/3.0
+   Def>                zone.prop(p_z,'strain-kelvin-xx') = (zone.stress.xx(p_z) - sig0) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-yy') = (zone.stress.yy(p_z) - sig0) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-zz') = (zone.stress.zz(p_z) - sig0) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-xy') = zone.stress.xy(p_z) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-xz') = zone.stress.xz(p_z) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-yz') = zone.stress.yz(p_z) / kg2
+   Def>            endif
+   Def>        endif
+   Def>        p_z = z.next(p_z)
+   Def>    endloop
+   Def>end
+flac3d>model configure creep
+--- Process creep configured
+flac3d>model largestrain off
+flac3d>fish automatic-create on
+flac3d>[global cum_days = 0.0]   ; FIX 2026-07-02: 'model solve creep time-total' is a CUMULATIVE clock;
+flac3d>                          ; passing per-stage days made stages 2-11 run one 600s step only.
+flac3d>; import all water tables W-110..W-10 (used across stages)
+flac3d>geometry import '../00_geometry_water/W-90.stl'
+--- 4549 nodes, 13434 edges, and 8886 polygons added to geometry set W-90.
+flac3d>geometry import '../00_geometry_water/W-70.stl'
+--- 4549 nodes, 13434 edges, and 8886 polygons added to geometry set W-70.
+flac3d>geometry import '../00_geometry_water/W-50.stl'
+--- 4549 nodes, 13434 edges, and 8886 polygons added to geometry set W-50.
+flac3d>geometry import '../00_geometry_water/W-30.stl'
+--- 4549 nodes, 13434 edges, and 8886 polygons added to geometry set W-30.
+flac3d>geometry import '../00_geometry_water/W-10.stl'
+--- 4549 nodes, 13434 edges, and 8886 polygons added to geometry set W-10.
+flac3d>[io.out('LS-0 restored Large_Initial + water tables imported; zones='+string(zone.num))]
+LS-0 restored Large_Initial + water tables imported; zones=511988
+flac3d>
+flac3d>; --- threshold: Maxwell-only gating (Kelvin always on), 260529 corrected MC envelope ---
+flac3d>fish define do_threshold
+   Def>    local na = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then          ; large model = all rock (no 'rock' group)
+   Def>            local s1 = -zone.stress.prin.x(z)
+   Def>            local s3 = -zone.stress.prin.z(z)
+   Def>            local pore = zone.pp(z)
+   Def>            local pmean = (s1 + s3)/2.0 - pore
+   Def>            local q = (s1 - s3)/2.0
+   Def>            local c = zone.prop(z,'cohesion')
+   Def>            local phi = zone.prop(z,'friction')
+   Def>            local q_th = crp_threshold*(c*math.cos(phi*math.degrad) + pmean*math.sin(phi*math.degrad))
+   Def>            if q >= q_th then
+   Def>                zone.prop(z,'viscosity-maxwell') = eta_m
+   Def>                na = na + 1
+   Def>            else
+   Def>                zone.prop(z,'viscosity-maxwell') = 1e100
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    global n_active = na
+   Def>end
+flac3d>fish define dmax_all
+   Def>    local dm = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    dmax_all = dm
+   Def>end
+flac3d>
+flac3d>; --- export small-model-box gridpoint displacement (x y z dx dy dz) ---
+flac3d>fish define export_box_disp(fname)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local fl = array.create(1)
+   Def>    fl(1) = 'x y z dx dy dz'
+   Def>    st = file.write(fl,1)
+   Def>    local nout = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local x = comp.x(p)
+   Def>        if x > 1245.0 then
+   Def>        if x < 1355.0 then
+   Def>            local y = comp.y(p)
+   Def>            if y > 845.0 then
+   Def>            if y < 955.0 then
+   Def>                local zz = comp.z(p)
+   Def>                if zz > 1695.0 then
+   Def>                if zz < 1805.0 then
+   Def>                    local d = gp.disp(g)
+   Def>                    fl(1) = string(x)+' '+string(y)+' '+string(zz)+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>                    st = file.write(fl,1)
+   Def>                    nout = nout + 1
+   Def>                end_if
+   Def>                end_if
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('   LS-export '+fname+' box gps='+string(nout))
+   Def>end
+flac3d>
+flac3d>; --- per-stage three-phase process (fluid steady-state -> MC ratio 1e-5 -> creep) ---
+flac3d>fish define crp_stage(stg, wtname, days)
+   Def>    command
+   Def>        ; (phase 1) set new water table + re-init saturation/pp, MC material (all rock)
+   Def>        zone cmodel assign mohr-coulomb
+   Def>        zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+   Def>        zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+   Def>        zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+   Def>        zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+   Def>        zone gridpoint initialize pore-pressure 0
+   Def>        zone water set [wtname]
+   Def>        zone gridpoint initialize saturation 1
+   Def>        zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+   Def>        zone gridpoint initialize pore-pressure 0 range group 'Top'
+   Def>        zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+   Def>        ; (phase 1 solve) fluid steady-state
+   Def>        model mechanical active off
+   Def>        model creep active off
+   Def>        model fluid active on
+   Def>        model solve ratio-flow 1e-4 or cycles 20000
+   Def>    endcommand
+   Def>    io.out('   LS-stg'+string(stg)+' '+wtname+' fluid steady-state done')
+   Def>    command
+   Def>        ; (phase 2) fluid off -> MC force balance (solve ratio 1e-5)
+   Def>        model fluid active off
+   Def>        model mechanical active on
+   Def>        model creep active off
+   Def>        zone gridpoint initialize fluid-modulus 0
+   Def>        zone gridpoint initialize velocity 0 0 0
+   Def>        model solve ratio 1e-5 or cycles 40000
+   Def>    endcommand
+   Def>    io.out('   LS-stg'+string(stg)+' MC balance done (ratio 1e-5)')
+   Def>    command
+   Def>        ; (phase 3) burgers-mohr creep : G_m=G_k=_gk(E), eta_m gated, eta_k always on (all rock)
+   Def>        zone cmodel assign burgers-mohr
+   Def>        zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+   Def>        zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+   Def>        zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+   Def>        zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+   Def>        model creep active on
+   Def>    endcommand
+   Def>    setKstrains
+   Def>    do_threshold
+   Def>    setKstrains
+   Def>    cum_days = cum_days + days
+   Def>    command
+   Def>        model creep timestep fix [crp_dt]
+   Def>        model solve creep time-total [cum_days*86400.0]
+   Def>    endcommand
+   Def>    io.out('   LS-stg'+string(stg)+' creep done: active='+string(n_active)+' dmax='+string(dmax_all))
+   Def>end
+flac3d>
+flac3d>; ============================================================================
+flac3d>; 11 stages : dry1 W-110(30) raise W-90/70/50/30(5) wet W-10(30) drop W-30/50/70/90(5) dry2 W-110(30)
+flac3d>; ============================================================================
+flac3d>[crp_stage(1,'W-110',30.0)]
+flac3d>;
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 95392 gridpoints.
+flac3d>zone water set [wtname]
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+--- saturation modified in 64940 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range group 'Top'
+--- pore-pressure modified in 11740 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 17261 gridpoints.
+flac3d>;
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-4 or cycles 20000
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+    20000      26958 8.00000E+19 7.6553e-01 00:00:09:58     20000                        1.0000e-04             
+--- Global cycle limit of 20000 met.
+--- Cycling ended at: 2026-07-02 21:39:38
+   LS-stg1 W-110 fluid steady-state done
+flac3d>;
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>model solve ratio 1e-5 or cycles 40000
+    Cycle      Total Mech Ratio       Clock
+--------- ---------- ---------- ----------- 
+      900      27858 9.9953e-06 00:00:01:21     40000            1.0000e-05             
+--- Limit ratio of 1.0000e-05 met in process(es): mech Zone Main (9.9953e-06),mech Struct Main (9.9953e-06).
+--- Cycling ended at: 2026-07-02 21:41:00
+   LS-stg1 MC balance done (ratio 1e-5)
+flac3d>;
+flac3d>zone cmodel assign burgers-mohr
+flac3d>zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 27379 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property cohesion set in 27379 zones using the burgers-mohr model.
+--- Property friction set in 27379 zones using the burgers-mohr model.
+--- Property tension set in 27379 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 59649 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property cohesion set in 59649 zones using the burgers-mohr model.
+--- Property friction set in 59649 zones using the burgers-mohr model.
+--- Property tension set in 59649 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 83804 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property cohesion set in 83804 zones using the burgers-mohr model.
+--- Property friction set in 83804 zones using the burgers-mohr model.
+--- Property tension set in 83804 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 341156 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property cohesion set in 341156 zones using the burgers-mohr model.
+--- Property friction set in 341156 zones using the burgers-mohr model.
+--- Property tension set in 341156 zones using the burgers-mohr model.
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+     4320      32178 6.00000E+02  2.592000e+06 00:00:06:36                                   2.592000e+06             
+--- Limit time-total of 2.592000e+06 met in process(es): creep (2.592000e+06).
+--- Cycling ended at: 2026-07-02 21:47:51
+   LS-stg1 creep done: active=117621 dmax=1.26654
+0 (integer)
+flac3d>[export_box_disp('lg_disp_s01.txt')]
+   LS-export lg_disp_s01.txt box gps=605
+0 (integer)
+flac3d>model save 'lgs_01'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/lgs_01.f3sav.
+flac3d>[crp_stage(2,'W-90',5.0)]
+flac3d>;
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 95392 gridpoints.
+flac3d>zone water set [wtname]
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+--- saturation modified in 61796 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range group 'Top'
+--- pore-pressure modified in 11740 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 17261 gridpoints.
+flac3d>;
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-4 or cycles 20000
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+    20000      52178 8.00000E+19 8.0156e-01 00:00:09:49     20000                        1.0000e-04             
+--- Global cycle limit of 20000 met.
+--- Cycling ended at: 2026-07-02 21:57:58
+   LS-stg2 W-90 fluid steady-state done
+flac3d>;
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>model solve ratio 1e-5 or cycles 40000
+    Cycle      Total Mech Ratio       Clock
+--------- ---------- ---------- ----------- 
+      448      52626 9.9893e-06 00:00:00:42     40000            1.0000e-05             
+--- Limit ratio of 1.0000e-05 met in process(es): mech Zone Main (9.9893e-06),mech Struct Main (9.9893e-06).
+--- Cycling ended at: 2026-07-02 21:58:40
+   LS-stg2 MC balance done (ratio 1e-5)
+flac3d>;
+flac3d>zone cmodel assign burgers-mohr
+flac3d>zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 27379 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property cohesion set in 27379 zones using the burgers-mohr model.
+--- Property friction set in 27379 zones using the burgers-mohr model.
+--- Property tension set in 27379 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 59649 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property cohesion set in 59649 zones using the burgers-mohr model.
+--- Property friction set in 59649 zones using the burgers-mohr model.
+--- Property tension set in 59649 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 83804 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property cohesion set in 83804 zones using the burgers-mohr model.
+--- Property friction set in 83804 zones using the burgers-mohr model.
+--- Property tension set in 83804 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 341156 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property cohesion set in 341156 zones using the burgers-mohr model.
+--- Property friction set in 341156 zones using the burgers-mohr model.
+--- Property tension set in 341156 zones using the burgers-mohr model.
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      53346 6.00000E+02  3.024000e+06 00:00:01:05                                   3.024000e+06             
+--- Limit time-total of 3.024000e+06 met in process(es): creep (3.024000e+06).
+--- Cycling ended at: 2026-07-02 21:59:59
+   LS-stg2 creep done: active=75262 dmax=1.37535
+0 (integer)
+flac3d>[export_box_disp('lg_disp_s02.txt')]
+   LS-export lg_disp_s02.txt box gps=605
+0 (integer)
+flac3d>model save 'lgs_02'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/lgs_02.f3sav.
+flac3d>[crp_stage(3,'W-70',5.0)]
+flac3d>;
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 95392 gridpoints.
+flac3d>zone water set [wtname]
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+--- saturation modified in 56541 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range group 'Top'
+--- pore-pressure modified in 11740 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 17261 gridpoints.
+flac3d>;
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-4 or cycles 20000
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+    20000      73346 8.00000E+19 8.4063e-01 00:00:09:58     20000                        1.0000e-04             
+--- Global cycle limit of 20000 met.
+--- Cycling ended at: 2026-07-02 22:10:14
+   LS-stg3 W-70 fluid steady-state done
+flac3d>;
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>model solve ratio 1e-5 or cycles 40000
+    Cycle      Total Mech Ratio       Clock
+--------- ---------- ---------- ----------- 
+      765      74111 9.9835e-06 00:00:01:11     40000            1.0000e-05             
+--- Limit ratio of 1.0000e-05 met in process(es): mech Zone Main (9.9835e-06),mech Struct Main (9.9835e-06).
+--- Cycling ended at: 2026-07-02 22:11:26
+   LS-stg3 MC balance done (ratio 1e-5)
+flac3d>;
+flac3d>zone cmodel assign burgers-mohr
+flac3d>zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 27379 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property cohesion set in 27379 zones using the burgers-mohr model.
+--- Property friction set in 27379 zones using the burgers-mohr model.
+--- Property tension set in 27379 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 59649 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property cohesion set in 59649 zones using the burgers-mohr model.
+--- Property friction set in 59649 zones using the burgers-mohr model.
+--- Property tension set in 59649 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 83804 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property cohesion set in 83804 zones using the burgers-mohr model.
+--- Property friction set in 83804 zones using the burgers-mohr model.
+--- Property tension set in 83804 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 341156 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property cohesion set in 341156 zones using the burgers-mohr model.
+--- Property friction set in 341156 zones using the burgers-mohr model.
+--- Property tension set in 341156 zones using the burgers-mohr model.
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      74831 6.00000E+02  3.456000e+06 00:00:01:06                                   3.456000e+06             
+--- Limit time-total of 3.456000e+06 met in process(es): creep (3.456000e+06).
+--- Cycling ended at: 2026-07-02 22:12:46
+   LS-stg3 creep done: active=42722 dmax=1.41513
+0 (integer)
+flac3d>[export_box_disp('lg_disp_s03.txt')]
+   LS-export lg_disp_s03.txt box gps=605
+0 (integer)
+flac3d>model save 'lgs_03'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/lgs_03.f3sav.
+flac3d>[crp_stage(4,'W-50',5.0)]
+flac3d>;
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 95392 gridpoints.
+flac3d>zone water set [wtname]
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+--- saturation modified in 46637 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range group 'Top'
+--- pore-pressure modified in 11740 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 17261 gridpoints.
+flac3d>;
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-4 or cycles 20000
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+    20000      94831 8.00000E+19 8.8007e-01 00:00:09:57     20000                        1.0000e-04             
+--- Global cycle limit of 20000 met.
+--- Cycling ended at: 2026-07-02 22:23:01
+   LS-stg4 W-50 fluid steady-state done
+flac3d>;
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>model solve ratio 1e-5 or cycles 40000
+    Cycle      Total Mech Ratio       Clock
+--------- ---------- ---------- ----------- 
+     1118      95949 9.9786e-06 00:00:01:42     40000            1.0000e-05             
+--- Limit ratio of 1.0000e-05 met in process(es): mech Zone Main (9.9786e-06),mech Struct Main (9.9786e-06).
+--- Cycling ended at: 2026-07-02 22:24:43
+   LS-stg4 MC balance done (ratio 1e-5)
+flac3d>;
+flac3d>zone cmodel assign burgers-mohr
+flac3d>zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 27379 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property cohesion set in 27379 zones using the burgers-mohr model.
+--- Property friction set in 27379 zones using the burgers-mohr model.
+--- Property tension set in 27379 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 59649 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property cohesion set in 59649 zones using the burgers-mohr model.
+--- Property friction set in 59649 zones using the burgers-mohr model.
+--- Property tension set in 59649 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 83804 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property cohesion set in 83804 zones using the burgers-mohr model.
+--- Property friction set in 83804 zones using the burgers-mohr model.
+--- Property tension set in 83804 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 341156 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property cohesion set in 341156 zones using the burgers-mohr model.
+--- Property friction set in 341156 zones using the burgers-mohr model.
+--- Property tension set in 341156 zones using the burgers-mohr model.
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720      96669 6.00000E+02  3.888000e+06 00:00:01:05                                   3.888000e+06             
+--- Limit time-total of 3.888000e+06 met in process(es): creep (3.888000e+06).
+--- Cycling ended at: 2026-07-02 22:26:02
+   LS-stg4 creep done: active=38374 dmax=1.45375
+0 (integer)
+flac3d>[export_box_disp('lg_disp_s04.txt')]
+   LS-export lg_disp_s04.txt box gps=605
+0 (integer)
+flac3d>model save 'lgs_04'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/lgs_04.f3sav.
+flac3d>[crp_stage(5,'W-30',5.0)]
+flac3d>;
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 95392 gridpoints.
+flac3d>zone water set [wtname]
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+--- saturation modified in 21741 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range group 'Top'
+--- pore-pressure modified in 11740 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 17261 gridpoints.
+flac3d>;
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-4 or cycles 20000
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+    20000     116669 8.00000E+19 9.6007e-01 00:00:09:50     20000                        1.0000e-04             
+--- Global cycle limit of 20000 met.
+--- Cycling ended at: 2026-07-02 22:36:10
+   LS-stg5 W-30 fluid steady-state done
+flac3d>;
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>model solve ratio 1e-5 or cycles 40000
+    Cycle      Total Mech Ratio       Clock
+--------- ---------- ---------- ----------- 
+      965     117634 9.9856e-06 00:00:01:28     40000            1.0000e-05             
+--- Limit ratio of 1.0000e-05 met in process(es): mech Zone Main (9.9856e-06),mech Struct Main (9.9856e-06).
+--- Cycling ended at: 2026-07-02 22:37:39
+   LS-stg5 MC balance done (ratio 1e-5)
+flac3d>;
+flac3d>zone cmodel assign burgers-mohr
+flac3d>zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 27379 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property cohesion set in 27379 zones using the burgers-mohr model.
+--- Property friction set in 27379 zones using the burgers-mohr model.
+--- Property tension set in 27379 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 59649 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property cohesion set in 59649 zones using the burgers-mohr model.
+--- Property friction set in 59649 zones using the burgers-mohr model.
+--- Property tension set in 59649 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 83804 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property cohesion set in 83804 zones using the burgers-mohr model.
+--- Property friction set in 83804 zones using the burgers-mohr model.
+--- Property tension set in 83804 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 341156 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property cohesion set in 341156 zones using the burgers-mohr model.
+--- Property friction set in 341156 zones using the burgers-mohr model.
+--- Property tension set in 341156 zones using the burgers-mohr model.
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720     118354 6.00000E+02  4.320000e+06 00:00:01:06                                   4.320000e+06             
+--- Limit time-total of 4.320000e+06 met in process(es): creep (4.320000e+06).
+--- Cycling ended at: 2026-07-02 22:38:59
+   LS-stg5 creep done: active=48463 dmax=1.54706
+0 (integer)
+flac3d>[export_box_disp('lg_disp_s05.txt')]
+   LS-export lg_disp_s05.txt box gps=605
+0 (integer)
+flac3d>model save 'lgs_05'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/lgs_05.f3sav.
+flac3d>[crp_stage(6,'W-10',30.0)]
+flac3d>;
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 95392 gridpoints.
+flac3d>zone water set [wtname]
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+--- saturation modified in 10190 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range group 'Top'
+--- pore-pressure modified in 11740 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 17261 gridpoints.
+flac3d>;
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-4 or cycles 20000
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+    20000     138354 8.00000E+19 1.4042e+00 00:00:09:50     20000                        1.0000e-04             
+--- Global cycle limit of 20000 met.
+--- Cycling ended at: 2026-07-02 22:49:06
+   LS-stg6 W-10 fluid steady-state done
+flac3d>;
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>model solve ratio 1e-5 or cycles 40000
+    Cycle      Total Mech Ratio       Clock
+--------- ---------- ---------- ----------- 
+      446     138800 9.9836e-06 00:00:00:41     40000            1.0000e-05             
+--- Limit ratio of 1.0000e-05 met in process(es): mech Zone Main (9.9836e-06),mech Struct Main (9.9836e-06).
+--- Cycling ended at: 2026-07-02 22:49:48
+   LS-stg6 MC balance done (ratio 1e-5)
+flac3d>;
+flac3d>zone cmodel assign burgers-mohr
+flac3d>zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 27379 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property cohesion set in 27379 zones using the burgers-mohr model.
+--- Property friction set in 27379 zones using the burgers-mohr model.
+--- Property tension set in 27379 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 59649 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property cohesion set in 59649 zones using the burgers-mohr model.
+--- Property friction set in 59649 zones using the burgers-mohr model.
+--- Property tension set in 59649 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 83804 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property cohesion set in 83804 zones using the burgers-mohr model.
+--- Property friction set in 83804 zones using the burgers-mohr model.
+--- Property tension set in 83804 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 341156 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property cohesion set in 341156 zones using the burgers-mohr model.
+--- Property friction set in 341156 zones using the burgers-mohr model.
+--- Property tension set in 341156 zones using the burgers-mohr model.
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+     4320     143120 6.00000E+02  6.912000e+06 00:00:06:30                                   6.912000e+06             
+--- Limit time-total of 6.912000e+06 met in process(es): creep (6.912000e+06).
+--- Cycling ended at: 2026-07-02 22:56:32
+   LS-stg6 creep done: active=80165 dmax=2.1002
+0 (integer)
+flac3d>[export_box_disp('lg_disp_s06.txt')]
+   LS-export lg_disp_s06.txt box gps=605
+0 (integer)
+flac3d>model save 'lgs_06'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/lgs_06.f3sav.
+flac3d>[crp_stage(7,'W-30',5.0)]
+flac3d>;
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 95392 gridpoints.
+flac3d>zone water set [wtname]
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+--- saturation modified in 21741 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range group 'Top'
+--- pore-pressure modified in 11740 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 17261 gridpoints.
+flac3d>;
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-4 or cycles 20000
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+    20000     163120 8.00000E+19 9.6007e-01 00:00:09:48     20000                        1.0000e-04             
+--- Global cycle limit of 20000 met.
+--- Cycling ended at: 2026-07-02 23:06:37
+   LS-stg7 W-30 fluid steady-state done
+flac3d>;
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>model solve ratio 1e-5 or cycles 40000
+    Cycle      Total Mech Ratio       Clock
+--------- ---------- ---------- ----------- 
+        1     163121 5.8185e-07 00:00:00:00     40000            1.0000e-05             
+--- Limit ratio of 1.0000e-05 met in process(es): mech Zone Main (5.8185e-07),mech Struct Main (5.8185e-07).
+--- Cycling ended at: 2026-07-02 23:06:38
+   LS-stg7 MC balance done (ratio 1e-5)
+flac3d>;
+flac3d>zone cmodel assign burgers-mohr
+flac3d>zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 27379 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property cohesion set in 27379 zones using the burgers-mohr model.
+--- Property friction set in 27379 zones using the burgers-mohr model.
+--- Property tension set in 27379 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 59649 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property cohesion set in 59649 zones using the burgers-mohr model.
+--- Property friction set in 59649 zones using the burgers-mohr model.
+--- Property tension set in 59649 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 83804 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property cohesion set in 83804 zones using the burgers-mohr model.
+--- Property friction set in 83804 zones using the burgers-mohr model.
+--- Property tension set in 83804 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 341156 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property cohesion set in 341156 zones using the burgers-mohr model.
+--- Property friction set in 341156 zones using the burgers-mohr model.
+--- Property tension set in 341156 zones using the burgers-mohr model.
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720     163841 6.00000E+02  7.344000e+06 00:00:01:06                                   7.344000e+06             
+--- Limit time-total of 7.344000e+06 met in process(es): creep (7.344000e+06).
+--- Cycling ended at: 2026-07-02 23:07:59
+   LS-stg7 creep done: active=64533 dmax=2.15853
+0 (integer)
+flac3d>[export_box_disp('lg_disp_s07.txt')]
+   LS-export lg_disp_s07.txt box gps=605
+0 (integer)
+flac3d>model save 'lgs_07'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/lgs_07.f3sav.
+flac3d>[crp_stage(8,'W-50',5.0)]
+flac3d>;
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 95392 gridpoints.
+flac3d>zone water set [wtname]
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+--- saturation modified in 46637 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range group 'Top'
+--- pore-pressure modified in 11740 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 17261 gridpoints.
+flac3d>;
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-4 or cycles 20000
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+    20000     183841 8.00000E+19 8.8007e-01 00:00:09:48     20000                        1.0000e-04             
+--- Global cycle limit of 20000 met.
+--- Cycling ended at: 2026-07-02 23:18:04
+   LS-stg8 W-50 fluid steady-state done
+flac3d>;
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>model solve ratio 1e-5 or cycles 40000
+    Cycle      Total Mech Ratio       Clock
+--------- ---------- ---------- ----------- 
+        1     183842 9.9889e-06 00:00:00:00     40000            1.0000e-05             
+--- Limit ratio of 1.0000e-05 met in process(es): mech Zone Main (9.9889e-06),mech Struct Main (9.9889e-06).
+--- Cycling ended at: 2026-07-02 23:18:04
+   LS-stg8 MC balance done (ratio 1e-5)
+flac3d>;
+flac3d>zone cmodel assign burgers-mohr
+flac3d>zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 27379 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property cohesion set in 27379 zones using the burgers-mohr model.
+--- Property friction set in 27379 zones using the burgers-mohr model.
+--- Property tension set in 27379 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 59649 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property cohesion set in 59649 zones using the burgers-mohr model.
+--- Property friction set in 59649 zones using the burgers-mohr model.
+--- Property tension set in 59649 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 83804 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property cohesion set in 83804 zones using the burgers-mohr model.
+--- Property friction set in 83804 zones using the burgers-mohr model.
+--- Property tension set in 83804 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 341156 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property cohesion set in 341156 zones using the burgers-mohr model.
+--- Property friction set in 341156 zones using the burgers-mohr model.
+--- Property tension set in 341156 zones using the burgers-mohr model.
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720     184562 6.00000E+02  7.776000e+06 00:00:01:05                                   7.776000e+06             
+--- Limit time-total of 7.776000e+06 met in process(es): creep (7.776000e+06).
+--- Cycling ended at: 2026-07-02 23:19:24
+   LS-stg8 creep done: active=16546 dmax=2.16426
+0 (integer)
+flac3d>[export_box_disp('lg_disp_s08.txt')]
+   LS-export lg_disp_s08.txt box gps=605
+0 (integer)
+flac3d>model save 'lgs_08'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/lgs_08.f3sav.
+flac3d>[crp_stage(9,'W-70',5.0)]
+flac3d>;
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 95392 gridpoints.
+flac3d>zone water set [wtname]
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+--- saturation modified in 56541 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range group 'Top'
+--- pore-pressure modified in 11740 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 17261 gridpoints.
+flac3d>;
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-4 or cycles 20000
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+    20000     204562 8.00000E+19 8.4063e-01 00:00:09:48     20000                        1.0000e-04             
+--- Global cycle limit of 20000 met.
+--- Cycling ended at: 2026-07-02 23:29:29
+   LS-stg9 W-70 fluid steady-state done
+flac3d>;
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>model solve ratio 1e-5 or cycles 40000
+    Cycle      Total Mech Ratio       Clock
+--------- ---------- ---------- ----------- 
+        1     204563 2.7798e-06 00:00:00:00     40000            1.0000e-05             
+--- Limit ratio of 1.0000e-05 met in process(es): mech Zone Main (2.7798e-06),mech Struct Main (2.7798e-06).
+--- Cycling ended at: 2026-07-02 23:29:30
+   LS-stg9 MC balance done (ratio 1e-5)
+flac3d>;
+flac3d>zone cmodel assign burgers-mohr
+flac3d>zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 27379 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property cohesion set in 27379 zones using the burgers-mohr model.
+--- Property friction set in 27379 zones using the burgers-mohr model.
+--- Property tension set in 27379 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 59649 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property cohesion set in 59649 zones using the burgers-mohr model.
+--- Property friction set in 59649 zones using the burgers-mohr model.
+--- Property tension set in 59649 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 83804 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property cohesion set in 83804 zones using the burgers-mohr model.
+--- Property friction set in 83804 zones using the burgers-mohr model.
+--- Property tension set in 83804 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 341156 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property cohesion set in 341156 zones using the burgers-mohr model.
+--- Property friction set in 341156 zones using the burgers-mohr model.
+--- Property tension set in 341156 zones using the burgers-mohr model.
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720     205283 6.00000E+02  8.208000e+06 00:00:01:07                                   8.208000e+06             
+--- Limit time-total of 8.208000e+06 met in process(es): creep (8.208000e+06).
+--- Cycling ended at: 2026-07-02 23:30:51
+   LS-stg9 creep done: active=8667 dmax=2.16526
+0 (integer)
+flac3d>[export_box_disp('lg_disp_s09.txt')]
+   LS-export lg_disp_s09.txt box gps=605
+0 (integer)
+flac3d>model save 'lgs_09'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/lgs_09.f3sav.
+flac3d>[crp_stage(10,'W-90',5.0)]
+flac3d>;
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 95392 gridpoints.
+flac3d>zone water set [wtname]
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+--- saturation modified in 61796 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range group 'Top'
+--- pore-pressure modified in 11740 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 17261 gridpoints.
+flac3d>;
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-4 or cycles 20000
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+    20000     225283 8.00000E+19 8.0156e-01 00:00:09:48     20000                        1.0000e-04             
+--- Global cycle limit of 20000 met.
+--- Cycling ended at: 2026-07-02 23:40:56
+   LS-stg10 W-90 fluid steady-state done
+flac3d>;
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>model solve ratio 1e-5 or cycles 40000
+    Cycle      Total Mech Ratio       Clock
+--------- ---------- ---------- ----------- 
+        1     225284 5.9361e-07 00:00:00:00     40000            1.0000e-05             
+--- Limit ratio of 1.0000e-05 met in process(es): mech Zone Main (5.9361e-07),mech Struct Main (5.9361e-07).
+--- Cycling ended at: 2026-07-02 23:40:57
+   LS-stg10 MC balance done (ratio 1e-5)
+flac3d>;
+flac3d>zone cmodel assign burgers-mohr
+flac3d>zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 27379 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property cohesion set in 27379 zones using the burgers-mohr model.
+--- Property friction set in 27379 zones using the burgers-mohr model.
+--- Property tension set in 27379 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 59649 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property cohesion set in 59649 zones using the burgers-mohr model.
+--- Property friction set in 59649 zones using the burgers-mohr model.
+--- Property tension set in 59649 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 83804 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property cohesion set in 83804 zones using the burgers-mohr model.
+--- Property friction set in 83804 zones using the burgers-mohr model.
+--- Property tension set in 83804 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 341156 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property cohesion set in 341156 zones using the burgers-mohr model.
+--- Property friction set in 341156 zones using the burgers-mohr model.
+--- Property tension set in 341156 zones using the burgers-mohr model.
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      720     226004 6.00000E+02  8.640000e+06 00:00:01:05                                   8.640000e+06             
+--- Limit time-total of 8.640000e+06 met in process(es): creep (8.640000e+06).
+--- Cycling ended at: 2026-07-02 23:42:16
+   LS-stg10 creep done: active=5303 dmax=2.16559
+0 (integer)
+flac3d>[export_box_disp('lg_disp_s10.txt')]
+   LS-export lg_disp_s10.txt box gps=605
+0 (integer)
+flac3d>model save 'lgs_10'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/lgs_10.f3sav.
+flac3d>[crp_stage(11,'W-110',30.0)]
+flac3d>;
+flac3d>zone cmodel assign mohr-coulomb
+flac3d>zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 27379 zones using the mohr-coulomb model.
+--- Property poisson set in 27379 zones using the mohr-coulomb model.
+--- Property cohesion set in 27379 zones using the mohr-coulomb model.
+--- Property friction set in 27379 zones using the mohr-coulomb model.
+--- Property tension set in 27379 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 59649 zones using the mohr-coulomb model.
+--- Property poisson set in 59649 zones using the mohr-coulomb model.
+--- Property cohesion set in 59649 zones using the mohr-coulomb model.
+--- Property friction set in 59649 zones using the mohr-coulomb model.
+--- Property tension set in 59649 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 83804 zones using the mohr-coulomb model.
+--- Property poisson set in 83804 zones using the mohr-coulomb model.
+--- Property cohesion set in 83804 zones using the mohr-coulomb model.
+--- Property friction set in 83804 zones using the mohr-coulomb model.
+--- Property tension set in 83804 zones using the mohr-coulomb model.
+flac3d>zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 341156 zones using the mohr-coulomb model.
+--- Property poisson set in 341156 zones using the mohr-coulomb model.
+--- Property cohesion set in 341156 zones using the mohr-coulomb model.
+--- Property friction set in 341156 zones using the mohr-coulomb model.
+--- Property tension set in 341156 zones using the mohr-coulomb model.
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 95392 gridpoints.
+flac3d>zone water set [wtname]
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+--- saturation modified in 64940 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range group 'Top'
+--- pore-pressure modified in 11740 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'North' or 'South' or 'East' or 'West' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 17261 gridpoints.
+flac3d>;
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-4 or cycles 20000
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+    20000     246004 8.00000E+19 7.6553e-01 00:00:09:48     20000                        1.0000e-04             
+--- Global cycle limit of 20000 met.
+--- Cycling ended at: 2026-07-02 23:52:22
+   LS-stg11 W-110 fluid steady-state done
+flac3d>;
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 95392 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 95392 gridpoints.
+flac3d>model solve ratio 1e-5 or cycles 40000
+    Cycle      Total Mech Ratio       Clock
+--------- ---------- ---------- ----------- 
+        1     246005 2.8214e-07 00:00:00:00     40000            1.0000e-05             
+--- Limit ratio of 1.0000e-05 met in process(es): mech Zone Main (2.8214e-07),mech Struct Main (2.8214e-07).
+--- Cycling ended at: 2026-07-02 23:52:22
+   LS-stg11 MC balance done (ratio 1e-5)
+flac3d>;
+flac3d>zone cmodel assign burgers-mohr
+flac3d>zone property bulk [_bk(E_L_1)] shear-maxwell [_gk(E_L_1)] shear-kelvin [_gk(E_L_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 27379 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 27379 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 27379 zones using the burgers-mohr model.
+--- Property cohesion set in 27379 zones using the burgers-mohr model.
+--- Property friction set in 27379 zones using the burgers-mohr model.
+--- Property tension set in 27379 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_2)] shear-maxwell [_gk(E_L_2)] shear-kelvin [_gk(E_L_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 59649 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 59649 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 59649 zones using the burgers-mohr model.
+--- Property cohesion set in 59649 zones using the burgers-mohr model.
+--- Property friction set in 59649 zones using the burgers-mohr model.
+--- Property tension set in 59649 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_3)] shear-maxwell [_gk(E_L_3)] shear-kelvin [_gk(E_L_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 83804 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 83804 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 83804 zones using the burgers-mohr model.
+--- Property cohesion set in 83804 zones using the burgers-mohr model.
+--- Property friction set in 83804 zones using the burgers-mohr model.
+--- Property tension set in 83804 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_L_4)] shear-maxwell [_gk(E_L_4)] shear-kelvin [_gk(E_L_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 341156 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 341156 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 341156 zones using the burgers-mohr model.
+--- Property cohesion set in 341156 zones using the burgers-mohr model.
+--- Property friction set in 341156 zones using the burgers-mohr model.
+--- Property tension set in 341156 zones using the burgers-mohr model.
+flac3d>model creep active on
+--- Process creep activated.
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+     4320     250325 6.00000E+02  1.123200e+07 00:00:06:36                                   1.123200e+07             
+--- Limit time-total of 1.123200e+07 met in process(es): creep (1.123200e+07).
+--- Cycling ended at: 2026-07-02 23:59:12
+   LS-stg11 creep done: active=3571 dmax=2.16641
+0 (integer)
+flac3d>[export_box_disp('lg_disp_s11.txt')]
+   LS-export lg_disp_s11.txt box gps=605
+0 (integer)
+flac3d>model save 'lgs_11'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/lgs_11.f3sav.
+flac3d>[io.out('LS-DONE 11-stage large staged creep complete; final dmax='+string(dmax_all))]
+LS-DONE 11-stage large staged creep complete; final dmax=2.16641
+flac3d>program log off
+**********************************************
+* Logging ended at 週四 七月 2 23:59:15 2026
+**********************************************

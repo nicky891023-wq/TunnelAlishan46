@@ -1,0 +1,41 @@
+program log-file 'diag_face.log'
+program log on
+fish automatic-create on
+model restore 's4_s1'
+fish define diag
+    local cx=1297.0
+    local cz=1747.5
+    local nlin=0
+    local rmn=1e20
+    local rmx=-1e20
+    local k=0
+    loop foreach local z zone.list
+        if zone.group(z,'type')='lining' then
+            nlin=nlin+1
+            local p=zone.pos(z)
+            local rr=math.sqrt((comp.x(p)-cx)*(comp.x(p)-cx)+(comp.z(p)-cz)*(comp.z(p)-cz))
+            if rr<rmn then
+                rmn=rr
+            end_if
+            if rr>rmx then
+                rmx=rr
+            end_if
+            if k<3 then
+                k=k+1
+                io.out('LZ'+string(k)+' pos=('+string(comp.x(p))+','+string(comp.y(p))+','+string(comp.z(p))+')')
+                local j=1
+                loop while j<=4
+                    local fa=zone.face.area(z,j)
+                    local fpx=zone.face.pos.x(z,j)
+                    local fpz=zone.face.pos.z(z,j)
+                    io.out('   face'+string(j)+' area='+string(fa)+' pos=('+string(fpx)+','+string(fpz)+')')
+                    j=j+1
+                end_loop
+            end_if
+        end_if
+    end_loop
+    io.out('LINING nlin='+string(nlin)+' radial_extent['+string(rmn)+','+string(rmx)+']m')
+end
+[diag]
+[io.out('DIAG-FACE-DONE')]
+program quit

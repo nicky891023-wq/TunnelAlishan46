@@ -1,0 +1,30 @@
+program log-file 'check_large_surface.log'
+program log on
+model restore '../04_InitialBalance/Large_Initial'
+fish automatic-create on
+fish define _chk
+    ; surface = the Top boundary gridpoints; report their z range
+    local zmin = 1e20
+    local zmax = -1e20
+    local nbelow = 0
+    local ntop = 0
+    loop foreach local gp gp.list
+        if gp.isgroup(gp,'Top1') then
+            ntop = ntop + 1
+            local z = gp.pos.z(gp)
+            if z < zmin then
+                zmin = z
+            end_if
+            if z > zmax then
+                zmax = z
+            end_if
+            if z < 1724.0 then
+                nbelow = nbelow + 1
+            end_if
+        end_if
+    end_loop
+    io.out('CHK surface(Top1) gps='+string(ntop)+' z=['+string(zmin)+','+string(zmax)+'] | BELOW water-plane z1724: '+string(nbelow)+' (water ABOVE ground there = bad pp)')
+end
+[_chk]
+[io.out('CHK-DONE')]
+program quit

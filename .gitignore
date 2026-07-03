@@ -1,0 +1,8 @@
+# FLAC3D/PFC 大型二進位存檔（數 GB 級，可由腳本重生；不進版控）
+*.f3sav
+*.p3sav
+# 未發表論文初稿：保護性排除，不上公開 repo（Wade 決定要放時移除本行）
+00_Document/*.docx
+__pycache__/
+*.pyc
+.claude/

@@ -1,0 +1,119 @@
+; couple_smoke_diag.f3dat -- DIAGNOSTIC for the stage-1 crack onset (SMOKE broke at j=2, 151 cracks).
+;   crack-track fix (entries(2)) now active -> crack_tension/crack_shear DFNs populate -> QA non-empty.
+;   Drive stage-1 ramp with RAISED breaker (stop cum>500) to see onset PATTERN + tension/shear split +
+;   evolution (cascade vs stabilize). On stop: dump QA + save + quit (NO long solve). NOT a production run.
+program log-file 'couple_smoke_diag.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'cb_control0'
+fish automatic-create on
+call '../04_InitialBalance/parameter.f3dat'
+model largestrain on
+model mechanical timestep scale
+call 'fracture_track.fis'
+[track_init]
+ball attribute damp 0.8
+call 'couple_qa_funcs.fis'
+model cycle 1
+[global dt_now = mech.timestep]
+[io.out('SMD-0 dt_now='+string(dt_now)+' base_cracks='+string(crack_num))]
+
+fish define maxbvel
+    local mv = 0.0
+    loop foreach local b ball.list
+        local v = ball.vel(b)
+        local mm = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+        if mm > mv then
+            mv = mv*0.0 + mm
+        end_if
+    end_loop
+    global mbv = mv
+end
+fish define ct_split
+    global nt = 0
+    global ns = 0
+    local dt2 = dfn.find('crack_tension')
+    if dt2 # null then
+        loop foreach local fr dfn.fracturelist(dt2)
+            nt = nt + 1
+        end_loop
+    end_if
+    local ds2 = dfn.find('crack_shear')
+    if ds2 # null then
+        loop foreach local fr2 dfn.fracturelist(ds2)
+            ns = ns + 1
+        end_loop
+    end_if
+end
+
+fish define load_targets
+    local lines = array.create(40000)
+    local st = file.open('couple_bnd_disp.txt',0,1)
+    local nn = file.read(lines, 40000)
+    st = file.close
+    global ndriven = 0
+    local i = 2
+    loop while i <= nn
+        local gid = int(string.token(lines(i),1))
+        local g = gp.find(gid)
+        if g # null then
+            gp.extra(g,1) = vector(string.token(lines(i),2),string.token(lines(i),3),string.token(lines(i),4))
+            gp.group(g,'drive') = 'driven'
+            ndriven = ndriven + 1
+        end_if
+        i = i + 1
+    end_loop
+    io.out('SMD-LT driven='+string(ndriven))
+end
+[load_targets]
+zone gridpoint fix velocity range group 'driven' slot 'drive'
+zone gridpoint initialize displacement 0 0 0
+zone gridpoint initialize velocity 0 0 0
+ball attribute displacement multiply 0.0
+[global guard_base = crack_num]
+model cycle 200
+[maxbvel]
+[io.out('SMD-GUARD new='+string(crack_num-guard_base)+' maxbvel='+string(mbv))]
+model calm
+[global base_cracks = crack_num]
+
+; --- diagnostic ramp: stop at cum>500, record per-substep tension/shear + maxbvel ---
+fish define diag_run(nsub, ncyc)
+    global diag_stop = 0
+    local j = 1
+    loop while j <= nsub
+        local subs_left = float(nsub-j+1)
+        loop foreach local g gp.list
+            if gp.group(g,'drive') = 'driven' then
+                local rem = gp.extra(g,1) - gp.disp(g)
+                gp.vel(g) = rem/(subs_left*float(ncyc)*dt_now)
+            end_if
+        end_loop
+        command
+            model cycle [ncyc]
+        endcommand
+        maxbvel
+        ct_split
+        local cum = crack_num - base_cracks
+        io.out('   SMD-sub j='+string(j)+'/'+string(nsub)+' cum='+string(cum)+' tension='+string(nt)+' shear='+string(ns)+' maxbvel='+string(mbv))
+        command
+            model calm
+        endcommand
+        if cum > 500 then
+            io.out('SMD-STOP cum='+string(cum)+'>500 at j='+string(j)+' (onset captured)')
+            diag_stop = 1
+            exit
+        end_if
+        j = j + 1
+    end_loop
+end
+[diag_run(30, 10)]
+[ct_split]
+[io.out('SMD-FINAL cum='+string(crack_num-base_cracks)+' tension='+string(nt)+' shear='+string(ns))]
+[dump_cracks('smdiag')]
+[qa_walls('smdiag',1)]
+[crack_sectors('smdiag')]
+model save 'cb_smoke_diag'
+[io.out('SMOKE-DIAG-DONE')]
+program quit

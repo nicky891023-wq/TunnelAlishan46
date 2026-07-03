@@ -1,0 +1,26 @@
+program log-file 'extract_large_slope.log'
+program log on
+model restore 'lg_s4'
+fish automatic-create on
+fish define _ex
+    local fo = file.open('large_slope_surface.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x y z dmag dz'
+    fo = file.write(a,1)
+    local nb = 0
+    loop foreach local gp gp.list
+        if gp.isgroup(gp,'Top1') then
+            local p = gp.pos(gp)
+            local d = gp.disp(gp)
+            local dm = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(dm)+' '+string(comp.z(d))
+            fo = file.write(a,1)
+            nb = nb + 1
+        end_if
+    end_loop
+    fo = file.close
+    io.out('EXL surface gps='+string(nb)+' exported')
+end
+[_ex]
+[io.out('EXL-DONE')]
+program quit

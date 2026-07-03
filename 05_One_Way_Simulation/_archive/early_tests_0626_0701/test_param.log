@@ -1,0 +1,27 @@
+**********************************************
+* Logging started at ¶g¤é ¤»¤ë 28 22:20:45 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model new
+flac3d>model deterministic on
+flac3d>model precision 1
+flac3d>model random 10000
+flac3d>zone create brick size 2 2 2
+flac3d>fish automatic-create on
+flac3d>fish define myf(stg)
+   Def>    io.out('MYF-RAN stg='+string(stg)+' g='+string(g_prefix))
+   Def>end
+flac3d>[global g_prefix = 's4']
+flac3d>[myf(1)]
+MYF-RAN stg=1 g=s4
+0 (integer)
+flac3d>[myf(2)]
+MYF-RAN stg=2 g=s4
+0 (integer)
+flac3d>[io.out('TEST-DONE')]
+TEST-DONE
+0 (integer)
+flac3d>program quit

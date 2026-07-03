@@ -1,0 +1,69 @@
+program log-file 'diag_large_bnd.log'
+program log on
+model configure creep
+model restore 'lg_s4'
+fish automatic-create on
+; measure large-model displacement at the small-model box-boundary faces (x1250/1350 y850/950 z1700/1800)
+; report per-face mean disp + the differential (box compression) -> can it drive 10+ cm tunnel?
+fish define face_disp(comp_idx, lo, hi, tag)
+    local s = 0.0
+    local n = 0
+    local mx = -1e20
+    local mn = 1e20
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local cc = comp.x(p)
+        if comp_idx = 2 then
+            cc = comp.y(p)
+        end_if
+        if comp_idx = 3 then
+            cc = comp.z(p)
+        end_if
+        if cc >= lo then
+        if cc <= hi then
+            local d = gp.disp(g)
+            local dv = comp.x(d)
+            if comp_idx = 2 then
+                dv = comp.y(d)
+            end_if
+            if comp_idx = 3 then
+                dv = comp.z(d)
+            end_if
+            s = s + dv
+            n = n + 1
+            if dv > mx then
+                mx = dv
+            end_if
+            if dv < mn then
+                mn = dv
+            end_if
+        end_if
+        end_if
+    end_loop
+    local m = 0.0
+    if n > 0 then
+        m = s/float(n)
+    end_if
+    io.out('LBND '+tag+' n='+string(n)+' mean_disp='+string(m*1000.0)+'mm [min'+string(mn*1000.0)+',max'+string(mx*1000.0)+']')
+    global lastmean = m
+end
+; x-faces (measure x-disp)
+[face_disp(1, 1248.0, 1252.0, 'x=1250 (xdisp)')]
+[global xm_lo = lastmean]
+[face_disp(1, 1348.0, 1352.0, 'x=1350 (xdisp)')]
+[global xm_hi = lastmean]
+[io.out('LBND-DIFF x-compression(box) = '+string((xm_lo-xm_hi)*1000.0)+'mm (x1250 moves +, x1350 moves - => box compresses)')]
+; y-faces (measure y-disp)
+[face_disp(2, 848.0, 852.0, 'y=850 (ydisp)')]
+[global ym_lo = lastmean]
+[face_disp(2, 948.0, 952.0, 'y=950 (ydisp)')]
+[global ym_hi = lastmean]
+[io.out('LBND-DIFF y-compression(box) = '+string((ym_lo-ym_hi)*1000.0)+'mm')]
+; z-faces (measure z-disp)
+[face_disp(3, 1698.0, 1702.0, 'z=1700 (zdisp)')]
+[global zm_lo = lastmean]
+[face_disp(3, 1798.0, 1802.0, 'z=1800 (zdisp)')]
+[global zm_hi = lastmean]
+[io.out('LBND-DIFF z-compression(box) = '+string((zm_lo-zm_hi)*1000.0)+'mm')]
+[io.out('LBND-DONE')]
+program quit

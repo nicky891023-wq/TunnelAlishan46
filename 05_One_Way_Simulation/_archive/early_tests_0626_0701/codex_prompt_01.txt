@@ -1,0 +1,29 @@
+You are Codex, the INDEPENDENT REVIEWER in a two-agent engineering governance set up by the user (Wade). The other agent (Claude) is the executor/proposer. Wade's rule: before ANY long FLAC3D run, model change, parameter change, or research-direction change, Claude must submit a REVIEW_PACKET and STOP; you return exactly one verdict — APPROVED, APPROVED WITH CONDITIONS, or BLOCKED — plus specific actionable conditions. Claude may not self-declare "validated" and may not skip your conditions. You and Claude now communicate directly via files in the repo.
+
+PROJECT: Alishan #46 railway tunnel, FLAC3D 6.00 (Itasca, Windows console). Three-scale groundwater-driven creep study: large slope model (slope creep), small tunnel model (continuum rock + 0.4m elastic lining, tunnel time-dependent convergence), coupled model (FLAC3D rock zones + PFC bonded-ball lining ring coupled by a wall-zone, for detailed rock-lining interaction and lining CRACK patterns). Water scenario: 4 stages LOW-HIGH-LOW-HIGH over 120 days. Creep = Burgers-Mohr + Mohr-Coulomb + a deviatoric-stress threshold (0.6), evaluated per stage.
+
+THIS PACKET proposes the coupled-model step: the coupled model does NOT run creep (PFC timestep ~2.5e-6 s vs creep dt 600 s is unsolvable). Instead it RECEIVES the small model's per-stage cumulative displacement field as a boundary condition on its OUTER ROCK gridpoints, solves force equilibrium, and the bonded PFC lining force-shares through the wall-zone contact (wz_outter) and cracks (bond breaks tracked as a DFN). A prior attempt that imposed displacement DIRECTLY on the lining balls over-cracked/shattered it (214k cracks); this approach drives only the outer rock.
+
+YOUR TASK: rigorously and adversarially review the proposal. This is a model the user has had many prior errors with — assume nothing, verify against the files, flag anything physically wrong, numerically unstable, or capable of producing a misleading result.
+
+READ (in this directory, C:\Users\Wade\Desktop\Tunnel_TX\05_One_Way_Simulation\):
+1. REVIEW_PACKET_01_couple_drive.md   <-- the full proposal; read this first
+2. couple_drive.f3dat                 <-- the FLAC3D script proposed for the SMOKE run
+3. couple_recon.log                   <-- recon: per-wall contact forces, ball radius, dt
+4. couple_idw.py                      <-- the small->coupled IDW boundary mapping
+5. couple_bnd_disp.txt                <-- first ~5 lines: the per-gp IDW targets (id + 4 stages x 3 comps)
+(Parameter sources: ../04_InitialBalance/parameter.f3dat ; the design basis is summarized in packet section 4.2, derived from the official Itasca examples PunchIndentation.f3dat and SleevedTriaxialTest.f3dat.)
+
+ADDRESS the 6 confirmation items in packet section 7:
+  (a) geometry (coupled domain, boundary band, submodeling cut) reasonable?
+  (b) stress path (in-situ -> drive -> force-share) reasonable?
+  (c) deformation location (near-tunnel convergence vs outer-boundary drive) reasonable?
+  (d) failure zone / crack mechanism under RIGID w_inner reasonable, or must the BC change? (w_inner is a rigid inner wall carrying 1.38 MN; the lining is fully confined "no free face"; Wade chose to keep it rigid against the proposer's recommendation. Geometric squeeze strain ~ delta_convergence/0.4m ~ 0.25% may exceed lining yield strain ~0.16%.)
+  (e) is the control group (zero-increment drive -> ~0 cracks) sufficient, or what else is needed?
+  (f) permit the SMOKE run [run_stage(1, Nsub=3, Ncyc_sub=100, solvecap=1500)] as proposed?
+
+OUTPUT FORMAT (write nothing to disk; print to stdout):
+Line 1: VERDICT: APPROVED  |  APPROVED WITH CONDITIONS  |  BLOCKED
+Then: a numbered list of findings/conditions, each specific and actionable, keyed to items (a)-(f).
+Then: any required changes to couple_drive.f3dat or the plan before the SMOKE may run.
+Be concise but complete. If BLOCKED or CONDITIONS, state exactly what Claude must change or add.

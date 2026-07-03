@@ -1,0 +1,39 @@
+﻿OVERTURN-VERDICT: Yes. I agree the new diameter-closure diagnostic overturns the prior accept-and-document verdict.
+
+The previous `0.034 mm` parent convergence was not a valid structural-demand metric for this deformation mode. It was a radial-inward mean, so the crown/right outward movement canceled the invert/left inward movement. For lining demand, the controlling quantities are relative wall deformation and shape change: `0.75 mm` vertical closure, `1.07 mm` horizontal closure, plus a strong shear/skew component. Compared with coupled inner-wall max convergence of only `0.0079 mm`, the coupled model is transferring about 1% of the parent tunnel deformation. That is a coupling failure, not a defensible low-load result.
+
+Using the FLAC3D 6.00 skill context here because this is a tunnel/liner submodeling review; relevant official example families are under `C:\Program Files\Itasca\Flac3d600\datafiles\Structure\Liner\...`, `Structure\Shell\...`, and `ExampleApplications\ExcavationAndSupportOfShallowTunnel\...`.
+
+1. **Verdict**
+Yes: the diameter metric is the right correction. The parent tunnel deforms on the order of `1 mm` in ovalization/shear. The earlier conclusion that the parent tunnel convergence was negligible is no longer supportable. The “~0 cracks defensible” conclusion must be withdrawn unless a corrected coupling still shows low lining demand.
+
+2. **Mechanism And Coupling Fix**
+I agree with your mechanism. A far boundary at roughly `r16-28 m`, especially if summarized as a residual radial-inward mean, cannot faithfully reconstruct a local `r5 m` tunnel-wall ovalization mode. The higher-order/asymmetric deformation components attenuate and redistribute through the rock before reaching the lining submodel.
+
+The more faithful fix for capturing ovalization plus shear is to prescribe the parent tunnel-wall displacement field directly at the lining-rock interface, or on the rock-side interface gridpoints immediately outside the liner. It must be the full vector field, not radial-only and not mean convergence.
+
+A closer `r8-10 m` boundary is defensible as a sensitivity model, but only if it receives the full parent vector displacement field around the boundary. I would treat direct interface displacement as the primary loaded-lining case, and `r8-10 m` boundary coupling as a check on sensitivity to rock compliance.
+
+3. **Geometry / BC Mismatch**
+Yes, there is also a geometry and boundary-condition mismatch. If the coupled model has no invert and fixed bottom corners, it cannot represent the dominant parent mode: invert heave `+1.09 mm` and spring-left inward movement `+1.15 mm`. Fixed lower corners will artificially suppress heave, skew, and ring ovalization, then underload or misload the lining.
+
+Redefine the coupled model as follows:
+
+- Include the full tunnel structural contour if the real lining has an invert or invert slab.
+- If the real tunnel is open-bottom/no structural invert, model realistic footings/contact/foundation stiffness instead of fixed bottom corners.
+- Apply parent-derived displacement to surrounding rock/interface support points, not as fixed constraints directly on the liner.
+- Leave the liner free to deform and develop bending/shear; use only minimal constraints to remove rigid-body drift.
+- Load incrementally from the correct installation/reference stage, not blindly from total cumulative displacement unless the lining existed for the whole deformation history.
+
+4. **Recommended Path**
+Produce a corrected loaded-lining deliverable:
+
+1. Extract full parent tunnel-wall displacement vectors around the lining contour, along the relevant tunnel length near `y~885`.
+2. Subtract rigid-body translation/rotation and installation-stage baseline; keep ovalization, shear, and relative closure.
+3. Rebuild the coupled model with compatible geometry: full ring or realistic open-bottom support, no artificial fixed bottom corners suppressing invert heave.
+4. Run primary direct-interface displacement loading.
+5. Run one sensitivity case with closer `r8-10 m` boundary and full vector displacement.
+6. Validate transfer: corrected coupled model should reproduce crown-invert and springline closures within a defined tolerance before using crack results.
+7. Report lining axial force, bending moment, shear, tensile stress/strain, crack initiation locations, and crack pattern. If it still predicts no cracking, that conclusion must come from the corrected loaded model, not from the old far-boundary diluted coupling.
+
+Bottom line: the previous low-demand conclusion is invalid. The next defensible deliverable is a displacement-controlled lining analysis driven by the parent’s actual local ovalization/shear field.

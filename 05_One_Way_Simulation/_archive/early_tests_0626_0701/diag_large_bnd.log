@@ -1,0 +1,94 @@
+**********************************************
+* Logging started at 週二 六月 30 19:06:32 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model configure creep
+--- Process creep configured
+flac3d>model restore 'lg_s4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 六月 28 21:48:11 2026
+Total Cycles: 28982  Super Cycles: 28982
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>; measure large-model displacement at the small-model box-boundary faces (x1250/1350 y850/950 z1700/1800)
+flac3d>; report per-face mean disp + the differential (box compression) -> can it drive 10+ cm tunnel?
+flac3d>fish define face_disp(comp_idx, lo, hi, tag)
+   Def>    local s = 0.0
+   Def>    local n = 0
+   Def>    local mx = -1e20
+   Def>    local mn = 1e20
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local cc = comp.x(p)
+   Def>        if comp_idx = 2 then
+   Def>            cc = comp.y(p)
+   Def>        end_if
+   Def>        if comp_idx = 3 then
+   Def>            cc = comp.z(p)
+   Def>        end_if
+   Def>        if cc >= lo then
+   Def>        if cc <= hi then
+   Def>            local d = gp.disp(g)
+   Def>            local dv = comp.x(d)
+   Def>            if comp_idx = 2 then
+   Def>                dv = comp.y(d)
+   Def>            end_if
+   Def>            if comp_idx = 3 then
+   Def>                dv = comp.z(d)
+   Def>            end_if
+   Def>            s = s + dv
+   Def>            n = n + 1
+   Def>            if dv > mx then
+   Def>                mx = dv
+   Def>            end_if
+   Def>            if dv < mn then
+   Def>                mn = dv
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local m = 0.0
+   Def>    if n > 0 then
+   Def>        m = s/float(n)
+   Def>    end_if
+   Def>    io.out('LBND '+tag+' n='+string(n)+' mean_disp='+string(m*1000.0)+'mm [min'+string(mn*1000.0)+',max'+string(mx*1000.0)+']')
+   Def>    global lastmean = m
+   Def>end
+flac3d>; x-faces (measure x-disp)
+flac3d>[face_disp(1, 1248.0, 1252.0, 'x=1250 (xdisp)')]
+LBND x=1250 (xdisp) n=235 mean_disp=-282.389mm [min-454.463,max0]
+flac3d>[global xm_lo = lastmean]
+flac3d>[face_disp(1, 1348.0, 1352.0, 'x=1350 (xdisp)')]
+LBND x=1350 (xdisp) n=291 mean_disp=-248.183mm [min-441.349,max0]
+flac3d>[global xm_hi = lastmean]
+flac3d>[io.out('LBND-DIFF x-compression(box) = '+string((xm_lo-xm_hi)*1000.0)+'mm (x1250 moves +, x1350 moves - => box compresses)')]
+LBND-DIFF x-compression(box) = -34.2061mm (x1250 moves +, x1350 moves - => box compresses)
+flac3d>; y-faces (measure y-disp)
+flac3d>[face_disp(2, 848.0, 852.0, 'y=850 (ydisp)')]
+LBND y=850 (ydisp) n=319 mean_disp=317.409mm [min0,max633.73]
+flac3d>[global ym_lo = lastmean]
+flac3d>[face_disp(2, 948.0, 952.0, 'y=950 (ydisp)')]
+LBND y=950 (ydisp) n=327 mean_disp=314.35mm [min0,max643.484]
+flac3d>[global ym_hi = lastmean]
+flac3d>[io.out('LBND-DIFF y-compression(box) = '+string((ym_lo-ym_hi)*1000.0)+'mm')]
+LBND-DIFF y-compression(box) = 3.05961mm
+flac3d>; z-faces (measure z-disp)
+flac3d>[face_disp(3, 1698.0, 1702.0, 'z=1700 (zdisp)')]
+LBND z=1700 (zdisp) n=614 mean_disp=-73.8022mm [min-800.101,max33.2454]
+flac3d>[global zm_lo = lastmean]
+flac3d>[face_disp(3, 1798.0, 1802.0, 'z=1800 (zdisp)')]
+LBND z=1800 (zdisp) n=551 mean_disp=-215.473mm [min-993.733,max-5.05038]
+flac3d>[global zm_hi = lastmean]
+flac3d>[io.out('LBND-DIFF z-compression(box) = '+string((zm_lo-zm_hi)*1000.0)+'mm')]
+LBND-DIFF z-compression(box) = 141.671mm
+flac3d>[io.out('LBND-DONE')]
+LBND-DONE
+0 (integer)
+flac3d>program quit

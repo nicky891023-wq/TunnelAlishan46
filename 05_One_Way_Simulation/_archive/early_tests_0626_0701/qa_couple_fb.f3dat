@@ -1,0 +1,50 @@
+program log-file 'qa_couple_fb.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../04_InitialBalance/Couple_Initial'
+fish automatic-create on
+call 'fracture_track.fis'
+[track_init]
+model largestrain on
+model mechanical timestep scale
+ball attribute damp 0.8
+model cycle 1
+[global base_cracks = crack_num]
+[io.out('FB-0 base_cracks='+string(crack_num)+' dt='+string(mech.timestep)+' balls='+string(ball.num))]
+fish define fb_report(tag)
+    local mvd = 0.0
+    local sumd = 0.0
+    loop foreach local b ball.list
+        local d = ball.disp(b)
+        local m = math.sqrt(comp.x(d)*comp.x(d)+comp.y(d)*comp.y(d)+comp.z(d)*comp.z(d))
+        sumd = sumd + m
+        if m > mvd then
+            mvd = m
+        end_if
+    end_loop
+    local mvz = 0.0
+    local mvel = 0.0
+    loop foreach local g gp.list
+        local dz = gp.disp(g)
+        local mz = math.sqrt(comp.x(dz)*comp.x(dz)+comp.y(dz)*comp.y(dz)+comp.z(dz)*comp.z(dz))
+        if mz > mvz then
+            mvz = mz
+        end_if
+    end_loop
+    loop foreach local b2 ball.list
+        local v = ball.vel(b2)
+        local mv = math.sqrt(comp.x(v)*comp.x(v)+comp.y(v)*comp.y(v)+comp.z(v)*comp.z(v))
+        if mv > mvel then
+            mvel = mv
+        end_if
+    end_loop
+    io.out('FB-DISP '+tag+' max_ball_disp='+string(mvd*1000.0)+'mm mean_ball_disp='+string(sumd/float(ball.num)*1000.0)+'mm max_zone_gp_disp='+string(mvz*1000.0)+'mm max_ball_vel='+string(mvel)+' new_cracks='+string(crack_num-base_cracks))
+end
+[fb_report('PRE-SOLVE')]
+; --- force balance: settle to equilibrium, NO disp zeroing, NO drive ---
+model solve ratio-average 1e-4 cycles 12000
+[fb_report('POST-SOLVE')]
+model save 'cb_initbal'
+[io.out('FB-DONE saved cb_initbal (force-balanced, displacement NOT zeroed)')]
+program quit

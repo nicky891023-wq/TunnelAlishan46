@@ -1,0 +1,29 @@
+**********************************************
+* Logging started at 週六 六月 27 10:51:57 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore 'proto_s2'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 六月 27 10:51:04 2026
+Total Cycles: 21319  Super Cycles: 21319
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>history list
+       Name Label                           Position
+ ---------- ------------------------------ ----------------------------
+          1 creep total time               
+   crown_dz Z Displacement at (1297,885... ( 1.3e+03, 8.8e+02, 1.8e+03)
+    side_dx X Displacement at (1303,885... ( 1.3e+03, 8.8e+02, 1.7e+03)
+    nactive n_active (FISH)                
+flac3d>history export 'crown_dz' 'side_dx' 'nactive' file 'proto_disp_vsstep.txt' truncate
+--- History contents written to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/proto_disp_vsstep.txt.
+flac3d>[io.out('DISP-EXPORT-DONE')]
+DISP-EXPORT-DONE
+0 (integer)
+flac3d>program quit

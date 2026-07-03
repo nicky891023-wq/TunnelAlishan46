@@ -1,0 +1,26 @@
+program log-file 'query_couple.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../04_InitialBalance/Couple_Initial'
+fish automatic-create on
+[io.out('QC zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num))]
+fish define _q
+    local nrock=0
+    local nlin=0
+    loop foreach local z zone.list
+        if zone.group(z,'mat')='rock' then
+            nrock=nrock+1
+        end_if
+        if zone.isgroup(z,'lining','type') then
+            nlin=nlin+1
+        end_if
+    end_loop
+    io.out('QC zone groups: mat=rock '+string(nrock)+' | type=lining '+string(nlin))
+    loop foreach local w wall.list
+        io.out('QC wall: '+wall.name(w))
+    end_loop
+end
+[_q]
+[io.out('QC-DONE')]
+program quit

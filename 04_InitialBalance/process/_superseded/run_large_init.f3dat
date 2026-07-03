@@ -1,0 +1,92 @@
+; ============================================================================
+; run_large_init.f3dat -- Alishan #46 LARGE model INITIAL force balance.
+; gravity + K0 + Mohr-Coulomb 4-layer + model solve elastic (avoids spurious
+; plastic zones during the initial settle). Exports near-field zone stresses
+; for the small-model submodeling (IDW MapStress). cwd = 04_InitialBalance.
+; ============================================================================
+program log-file 'run_large_init.log'
+program log on
+model restore '../01_LargeModel/Large_Model'
+call 'parameter.f3dat'
+model largestrain off
+
+; --- 4-layer Mohr-Coulomb (per-layer E, nu=0.25, c/phi/tension) ---
+zone cmodel assign mohr-coulomb
+zone property young [E_L_1] poisson [nu] cohesion [co_L_1] friction [fr_L_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property young [E_L_2] poisson [nu] cohesion [co_L_2] friction [fr_L_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property young [E_L_3] poisson [nu] cohesion [co_L_3] friction [fr_L_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property young [E_L_4] poisson [nu] cohesion [co_L_4] friction [fr_L_4] tension [ten_r] range group 'layer4' slot 'type'
+zone initialize density [den_L_1] range group 'layer1' slot 'type'
+zone initialize density [den_L_2] range group 'layer2' slot 'type'
+zone initialize density [den_L_3] range group 'layer3' slot 'type'
+zone initialize density [den_L_4] range group 'layer4' slot 'type'
+[io.out('CHK1 materials assigned: zones='+string(zone.num))]
+
+; --- gravity, K0 initial stress, boundary conditions ---
+model gravity 0 0 [-grav]
+zone initialize-stresses ratio [K0]
+zone gridpoint fix velocity-x range position-x -1 1
+zone gridpoint fix velocity-x range position-x 1999 2001
+zone gridpoint fix velocity-y range position-y -101 -99
+zone gridpoint fix velocity-y range position-y 1999 2001
+zone gridpoint fix velocity   range position-z 799 801
+
+fish define _stress_report(tag)
+    local zmin = 1e30
+    local zmax = -1e30
+    loop foreach local z zone.list
+        local s = zone.stress.zz(z)
+        if s < zmin then
+            zmin = s
+        end_if
+        if s > zmax then
+            zmax = s
+        end_if
+    end_loop
+    io.out('CHK2 '+tag+' szz[min='+string(zmin)+' max='+string(zmax)+'] (compression negative)')
+end
+[_stress_report('after-init')]
+
+; --- elastic balance (two-step: elastic then real strength) ---
+model solve elastic ratio-local 1e-3
+[_stress_report('after-solve')]
+[io.out('CHK3 solved; max unbal-ratio target 1e-3 reached')]
+
+model save 'Large_Initial'
+[io.out('CHK4 saved Large_Initial')]
+
+; --- export near-field zone stresses for the small model (IDW source) ---
+fish define export_large_stress
+    local fn = 'large_stress_for_small.dat'
+    local st = file.open(fn,1,1)
+    local fl = array.create(1)
+    fl(1) = 'zid x y z sxx syy szz sxy sxz syz'
+    st = file.write(fl,1)
+    local nout = 0
+    loop foreach local iz zone.list
+        local x = zone.pos.x(iz)
+        if x > 1150.0 then
+        if x < 1450.0 then
+        local y = zone.pos.y(iz)
+        if y > 750.0 then
+        if y < 1050.0 then
+        local z = zone.pos.z(iz)
+        if z > 1600.0 then
+        if z < 1900.0 then
+            fl(1) = string(zone.id(iz))+' '+string(x)+' '+string(y)+' '+string(z)+' '+string(zone.stress.xx(iz))+' '+string(zone.stress.yy(iz))+' '+string(zone.stress.zz(iz))+' '+string(zone.stress.xy(iz))+' '+string(zone.stress.xz(iz))+' '+string(zone.stress.yz(iz))
+            st = file.write(fl,1)
+            nout = nout + 1
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('CHK5 exported '+string(nout)+' near-field zone stresses to '+fn)
+end
+[export_large_stress]
+
+program log off
+program quit

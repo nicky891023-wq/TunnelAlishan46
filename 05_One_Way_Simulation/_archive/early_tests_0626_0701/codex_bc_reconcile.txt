@@ -1,0 +1,20 @@
+﻿BC-RECONCILE-VERDICT: Yes, I agree with the revised interpretation.
+
+The correct BC is **drive all 28,304 box-boundary gridpoints**, matching the small model’s six fixed-velocity faces. Option A was wrong because it changed a boundary-condition exclusion into a physical release: excluded y-cap gridpoints became free cut-face rock, so the zero-increment guard correctly exposed relaxation damage. That is not a safer BC; it is a different model.
+
+I would not require a fix-y-cap rerun unless you need a sensitivity case. “Fix y-cap at in-situ” is a third, defensible artificial cap treatment, but it is less consistent with the original one-way submodel transfer than simply prescribing the full parent/submodel boundary. It may reduce end overstress, but it also creates a mixed BC that was not present in the source small model.
+
+So the deliverable path is:
+
+1. Use the intact v1 saves `cb_full_s1-4`.
+2. Treat the 28,304 driven boundary as the intended/valid BC.
+3. Recompute metrics correctly:
+   - inner-wall convergence at `r = 1.35-2 m`
+   - mid blue-line only
+   - `y870-900`
+   - exclude angle `250-320`
+   - exclude y-end and fixed-corner artifact regions from interpretation
+   - reaction increments relative to `control0`
+4. Clearly disclose that y-end damage/overstress is a boundary artifact outside the reported region.
+
+The key reconciliation is: **exclude y-cap artifacts from interpretation, not from boundary control**. The pre-drive guard result is strong evidence for that distinction.

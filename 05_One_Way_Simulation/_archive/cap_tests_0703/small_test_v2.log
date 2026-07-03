@@ -1,0 +1,808 @@
+**********************************************
+* Logging started at 週五 七月 3 08:18:08 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../04_InitialBalance/Small_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 15:44:02 2026
+Total Cycles: 23278  Super Cycles: 23278
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>call '../04_InitialBalance/parameter.f3dat'
+flac3d>; ============================================================================
+flac3d>; parameter.f3dat -- Alishan #46 UNIFIED material parameters (Wade-ruled, 2026-06-22)
+flac3d>; Large(4-layer) / Small(6-layer) rock + lining(D7) + coupled PFC(D7 calib).
+flac3d>;
+flac3d>; Unification rulings (Wade):
+flac3d>;   * nu = 0.25 single value (static MC + creep bulk same source).
+flac3d>;   * E is PER-LAYER (not uniform): lithology-based within Hoek-Diederichs
+flac3d>;     rock-mass range (sandstone 3-8, sandshale 1-3 GPa; colluvium/weathered soft).
+flac3d>;     -> GSI/E have NO field data: per-layer E are documented-range central
+flac3d>;        judgements, GSI-basis TODO (D3). c/phi are GSI-reduced placeholders.
+flac3d>;   * Burgers creep: shear-maxwell = shear-kelvin = the layer ELASTIC G,
+flac3d>;     bulk = the layer elastic K  (instantaneous static==creep, no spurious soften).
+flac3d>;   * viscosity-maxwell eta_m = 6.0e15 Pa.s ; viscosity-kelvin eta_k = 2.4e13 Pa.s.
+flac3d>;   * creep threshold ratio = 0.6 :  q_th = 0.6*(c*cos(phi)+p'*sin(phi)).
+flac3d>;   * creep timestep = 600 s (fixed).
+flac3d>;   * layer4 sandshale(WET): c = 100 kPa, phi = 30 deg (Wade).
+flac3d>; Units: SI (Pa, kg/m3, deg, m, Pa.s).  Sign: compression negative.
+flac3d>; ============================================================================
+flac3d>
+flac3d>; ---------- global / environment ----------
+flac3d>[global nu     = 0.25]            ; single Poisson, all rock layers
+flac3d>[global K0     = 0.7]             ; lateral stress ratio (placeholder, no field basis)
+flac3d>[global grav   = 9.81]            ; m/s2
+flac3d>[global poro   = 0.1]             ; porosity n
+flac3d>[global satr   = 0.1]             ; saturation S
+flac3d>[global rho_w  = 1000.0]          ; water density kg/m3
+flac3d>[global pmb    = 1.0e-5]          ; FLAC mobility coeff m2/(Pa.s); near-tunnel x100
+flac3d>[global ten_r  = 1.0e5]           ; rock tension cutoff 100 kPa (all layers)
+flac3d>
+flac3d>; ---------- elastic helpers (nu=0.25 -> G=E/2.5, K=E/1.5) ----------
+flac3d>fish define _gk(ee)
+   Def>    _gk = ee / (2.0*(1.0+nu))     ; shear  G
+   Def>end
+flac3d>fish define _bk(ee)
+   Def>    _bk = ee / (3.0*(1.0-2.0*nu)) ; bulk   K
+   Def>end
+flac3d>
+flac3d>; ====================== LARGE model : 4 layers ======================
+flac3d>; layer1 colluvium / layer2 ssh / layer3 bedrock / layer4 basement
+flac3d>[global E_L_1 = 0.5e9 ]
+flac3d>[global co_L_1 = 1.9e5]
+flac3d>[global fr_L_1 = 29.1]
+flac3d>[global den_L_1 = 2150.0]
+flac3d>[global E_L_2 = 2.0e9 ]
+flac3d>[global co_L_2 = 2.9e5]
+flac3d>[global fr_L_2 = 35.1]
+flac3d>[global den_L_2 = 2630.0]
+flac3d>[global E_L_3 = 5.0e9 ]
+flac3d>[global co_L_3 = 4.7e5]
+flac3d>[global fr_L_3 = 44.3]
+flac3d>[global den_L_3 = 2600.0]
+flac3d>[global E_L_4 = 7.0e9 ]
+flac3d>[global co_L_4 = 8.0e5]
+flac3d>[global fr_L_4 = 51.5]
+flac3d>[global den_L_4 = 2600.0]
+flac3d>
+flac3d>; ====================== SMALL model : 6 layers ======================
+flac3d>; l1 weathered-ss / l2 ss+sandshale / l3 ss+shale / l4 sandshale(WET) / l5 sandshale / l6 basement
+flac3d>[global E_S_1 = 1.0e9 ]
+flac3d>[global co_S_1 = 1.9e5 ]
+flac3d>[global fr_S_1 = 29.1]
+flac3d>[global den_S_1 = 2600.0]
+flac3d>[global E_S_2 = 2.0e9 ]
+flac3d>[global co_S_2 = 2.9e5 ]
+flac3d>[global fr_S_2 = 35.1]
+flac3d>[global den_S_2 = 2630.0]
+flac3d>[global E_S_3 = 3.5e9 ]
+flac3d>[global co_S_3 = 4.7e5 ]
+flac3d>[global fr_S_3 = 44.3]
+flac3d>[global den_S_3 = 2630.0]
+flac3d>[global E_S_4 = 1.5e9 ]
+flac3d>[global co_S_4 = 1.0e5 ]   ; WET, Wade c100/phi30
+flac3d>[global fr_S_4 = 30.0]
+flac3d>[global den_S_4 = 2630.0]
+flac3d>[global E_S_5 = 3.0e9 ]
+flac3d>[global co_S_5 = 8.0e5 ]
+flac3d>[global fr_S_5 = 51.5]
+flac3d>[global den_S_5 = 2630.0]
+flac3d>[global E_S_6 = 7.0e9 ]
+flac3d>[global co_S_6 = 20.6e5]
+flac3d>[global fr_S_6 = 56.3]
+flac3d>[global den_S_6 = 2600.0]
+flac3d>
+flac3d>; ---------- creep (Burgers-Mohr) : per-layer G_m=G_k=G(E,nu), bulk=K(E,nu) ----------
+flac3d>[global eta_m = 1.2e15]           ; viscosity-maxwell (Wade 2026-07-02: 6e15 -> 1.2e15 = 260529 n_m value)
+flac3d>[global eta_k = 2.4e13]           ; viscosity-kelvin (proven)
+flac3d>[global crp_threshold = 0.8]      ; q_th = T*(c*cosphi + p'*sinphi). Wade 2026-07-02: T=0.8 UNIFIED
+flac3d>                                  ; (all stages, large+small). 0.6 gave 77% active at DRY W-110 ->
+flac3d>                                  ; "low-water flat" physically impossible + interior creep runaway.
+flac3d>                                  ; 0.8 validated flat-then-onset (track E 06-27).
+flac3d>[global crp_dt = 600.0]           ; creep timestep (s) (Wade)
+flac3d>
+flac3d>; ---------- lining (R.C. continuum, D7 DECIDED) ----------
+flac3d>[global shot_E   = 25e9]
+flac3d>[global shot_v   = 0.2]
+flac3d>[global shot_t   = 0.40]
+flac3d>[global shot_den = 2400.0]
+flac3d>[global shot_fc  = 41.2e6]
+flac3d>[global shot_ft  = 4.12e6]
+flac3d>
+flac3d>; ---------- coupled PFC lining BPM micro (D7 FINAL_CALIB) ----------
+flac3d>[global pfc_emod    = 9.65e9]     ; linear deformability
+flac3d>[global pfc_kratio  = 1.0]
+flac3d>[global pfc_pb_emod = 5.88e9]     ; parallel-bond deformability
+flac3d>[global pfc_pb_krat = 0.6]
+flac3d>[global pfc_pb_ten  = 2.10e6]     ; Pa
+flac3d>[global pfc_pb_coh  = 2.30e7]     ; Pa
+flac3d>[global pfc_pb_fa   = 25.0]       ; deg
+flac3d>[global pfc_bondgap = 0.03]       ; m  (= cmat proximity)
+flac3d>[global pfc_ball_den  = 2400.0]
+flac3d>[global pfc_ball_damp = 0.7]
+flac3d>[global pfc_fric      = 0.5]
+flac3d>[global pfc_bf_strong = 1.0e20]   ; ball-facet pb (unbreakable coupling, NOT material)
+flac3d>
+flac3d>[io.out('=== parameter.f3dat loaded : nu='+string(nu)+' K0='+string(K0)+' eta_m='+string(eta_m)+' crp_dt='+string(crp_dt)+' ===')]
+=== parameter.f3dat loaded : nu=0.25 K0=0.7 eta_m=1.2e+15 crp_dt=600 ===
+flac3d>call 'C:/Program Files/Itasca/Flac3d600/datafiles/Creep/SetKStrains.f3fis'
+flac3d>fish define setKstrains
+   Def>    local p_z = zone.head
+   Def>    loop while p_z # null
+   Def>        local iflag = 0
+   Def>        if zone.model(p_z) = 'burgers' then
+   Def>            iflag = 1
+   Def>        endif
+   Def>        if zone.model(p_z) = 'burgers-mohr' then
+   Def>            iflag = 1
+   Def>        endif
+   Def>        if iflag = 1 then
+   Def>            local kg2 = 2.0 * zone.prop(p_z, 'shear-kelvin')
+   Def>            if kg2 > 0.0 then
+   Def>                local sig0 = (zone.stress.xx(p_z) + zone.stress.yy(p_z) + zone.stress.zz(p_z))/3.0
+   Def>                zone.prop(p_z,'strain-kelvin-xx') = (zone.stress.xx(p_z) - sig0) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-yy') = (zone.stress.yy(p_z) - sig0) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-zz') = (zone.stress.zz(p_z) - sig0) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-xy') = zone.stress.xy(p_z) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-xz') = zone.stress.xz(p_z) / kg2
+   Def>                zone.prop(p_z,'strain-kelvin-yz') = zone.stress.yz(p_z) / kg2
+   Def>            endif
+   Def>        endif
+   Def>        p_z = z.next(p_z)
+   Def>    endloop
+   Def>end
+flac3d>model configure creep
+--- Process creep configured
+flac3d>model largestrain off
+flac3d>fish automatic-create on
+flac3d>[global cum_days = 0.0]
+flac3d>[global abort_flag = 0]
+flac3d>[global capfail_run = 0]
+flac3d>geometry import '../00_geometry_water/W-90.stl'
+--- 4549 nodes, 13434 edges, and 8886 polygons added to geometry set W-90.
+flac3d>geometry import '../00_geometry_water/W-70.stl'
+--- 4549 nodes, 13434 edges, and 8886 polygons added to geometry set W-70.
+flac3d>geometry import '../00_geometry_water/W-50.stl'
+--- 4549 nodes, 13434 edges, and 8886 polygons added to geometry set W-50.
+flac3d>geometry import '../00_geometry_water/W-30.stl'
+--- 4549 nodes, 13434 edges, and 8886 polygons added to geometry set W-30.
+flac3d>geometry import '../00_geometry_water/W-10.stl'
+--- 4549 nodes, 13434 edges, and 8886 polygons added to geometry set W-10.
+flac3d>zone water density [rho_w]
+flac3d>[io.out('SSv2-0 restored Small_Initial; zones='+string(zone.num)+' gps='+string(gp.num)+' shells='+string(struct.num)+' T='+string(crp_threshold))]
+SSv2-0 restored Small_Initial; zones=1433466 gps=269452 shells=69828 T=0.8
+flac3d>
+flac3d>; --- free ALL stale velocity fixes, then tag driven band (+-1.0 m, 6 box faces) ---
+flac3d>zone gridpoint free velocity
+--- Free velocity         specified in 206341 gridpoints.
+flac3d>fish define tag_driven
+   Def>    global ndriven = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local x = comp.x(p)
+   Def>        local y = comp.y(p)
+   Def>        local z = comp.z(p)
+   Def>        local onb = 0
+   Def>        if math.abs(x-1250.0) < 1.0 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(x-1350.0) < 1.0 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(y-850.0) < 1.0 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(y-950.0) < 1.0 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(z-1700.0) < 1.0 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(z-1800.0) < 1.0 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if onb = 1 then
+   Def>            gp.group(g,'drive') = 'driven'
+   Def>            gp.vel(g) = vector(0.0,0.0,0.0)
+   Def>            gp.fix(g) = vector(1,1,1)      ; fix AT TAG TIME: phase-2 MC balance must never
+   Def>            ndriven = ndriven + 1          ; run on an unconstrained floating box (07-03 bug)
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('SSv2-driven band gps tagged+fixed='+string(ndriven))
+   Def>end
+flac3d>[tag_driven]
+SSv2-driven band gps tagged+fixed=14946
+0 (integer)
+flac3d>
+flac3d>; --- read stage drive file: header + rows 'x y z dx dy dz' ---
+flac3d>fish define read_drive(fname)
+   Def>    local arr = array.create(1)
+   Def>    local st = file.open(fname,0,1)
+   Def>    ndata = 0
+   Def>    st = file.read(arr,1)
+   Def>    st = file.read(arr,1)
+   Def>    loop while st = 0
+   Def>        ndata = ndata + 1
+   Def>        st = file.read(arr,1)
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    xdat  = array.create(ndata)
+   Def>    ydat  = array.create(ndata)
+   Def>    zdat  = array.create(ndata)
+   Def>    uxdat = array.create(ndata)
+   Def>    uydat = array.create(ndata)
+   Def>    uzdat = array.create(ndata)
+   Def>    st = file.open(fname,0,1)
+   Def>    st = file.read(arr,1)
+   Def>    local i = 0
+   Def>    st = file.read(arr,1)
+   Def>    loop while st = 0
+   Def>        i = i + 1
+   Def>        local ln = arr(1)
+   Def>        xdat(i)  = string.token(ln,1)
+   Def>        ydat(i)  = string.token(ln,2)
+   Def>        zdat(i)  = string.token(ln,3)
+   Def>        uxdat(i) = string.token(ln,4)
+   Def>        uydat(i) = string.token(ln,5)
+   Def>        uzdat(i) = string.token(ln,6)
+   Def>        st = file.read(arr,1)
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('   SSv2-read '+fname+' ndata='+string(ndata))
+   Def>end
+flac3d>
+flac3d>; --- gradual velocity drive of 'driven' gps toward stage target over creep_time ---
+flac3d>fish define apply_vel_idw(creep_time, radius)
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            local p = gp.pos(g)
+   Def>            local x = comp.x(p)
+   Def>            local y = comp.y(p)
+   Def>            local z = comp.z(p)
+   Def>            local sw = 0.0
+   Def>            local sux = 0.0
+   Def>            local suy = 0.0
+   Def>            local suz = 0.0
+   Def>            local dmin = 1e30
+   Def>            local i = 1
+   Def>            loop while i <= ndata
+   Def>                local dx = x - xdat(i)
+   Def>                local dy = y - ydat(i)
+   Def>                local dz = z - zdat(i)
+   Def>                local d2 = dx*dx + dy*dy + dz*dz
+   Def>                if d2 <= radius*radius then
+   Def>                    local w = 1.0/math.max(d2,1e-10)
+   Def>                    sw = sw + w
+   Def>                    sux = sux + uxdat(i)*w
+   Def>                    suy = suy + uydat(i)*w
+   Def>                    suz = suz + uzdat(i)*w
+   Def>                end_if
+   Def>                if d2 < dmin then
+   Def>                    dmin = d2
+   Def>                    global inear = i
+   Def>                end_if
+   Def>                i = i + 1
+   Def>            end_loop
+   Def>            local tx = 0.0
+   Def>            local ty = 0.0
+   Def>            local tz = 0.0
+   Def>            if sw > 0.0 then
+   Def>                tx = sux/sw
+   Def>                ty = suy/sw
+   Def>                tz = suz/sw
+   Def>            else
+   Def>                tx = uxdat(inear)
+   Def>                ty = uydat(inear)
+   Def>                tz = uzdat(inear)
+   Def>            end_if
+   Def>            local d = gp.disp(g)
+   Def>            gp.vel(g) = vector((tx-comp.x(d))/creep_time, (ty-comp.y(d))/creep_time, (tz-comp.z(d))/creep_time)
+   Def>            gp.fix(g) = vector(1,1,1)
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>
+flac3d>; --- Maxwell-only threshold gating (Kelvin always on), corrected MC envelope, ONCE per stage ---
+flac3d>fish define do_threshold
+   Def>    local na = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.group(z,'mat') = 'rock' then
+   Def>            local s1 = -zone.stress.prin.x(z)
+   Def>            local s3 = -zone.stress.prin.z(z)
+   Def>            local pore = zone.pp(z)
+   Def>            local pmean = (s1 + s3)/2.0 - pore
+   Def>            local q = (s1 - s3)/2.0
+   Def>            local c = zone.prop(z,'cohesion')
+   Def>            local phi = zone.prop(z,'friction')
+   Def>            local q_th = crp_threshold*(c*math.cos(phi*math.degrad) + pmean*math.sin(phi*math.degrad))
+   Def>            if q >= q_th then
+   Def>                zone.prop(z,'viscosity-maxwell') = eta_m
+   Def>                na = na + 1
+   Def>            else
+   Def>                zone.prop(z,'viscosity-maxwell') = 1e100
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    global n_active = na
+   Def>end
+flac3d>
+flac3d>; --- WadeCreepSupport shell cap (segment-boundary): secant E-reduction, comp+tension, floored ---
+flac3d>[global sig_capC = shot_fc]
+flac3d>[global sig_capT = shot_ft]
+flac3d>[global sig_eps  = 0.01]
+flac3d>[global e_floor  = 2.5e9]
+flac3d>fish define shell_cap
+   Def>    command
+   Def>        structure shell recover surface (0,1,0)
+   Def>        structure shell recover stress depth-factor 0
+   Def>    endcommand
+   Def>    global n_capped = 0
+   Def>    global n_overfloor = 0
+   Def>    global sh_maxc = 0.0
+   Def>    global sh_maxt = 0.0
+   Def>    loop foreach local s struct.list
+   Def>        if struct.type(s) = 'shell' then
+   Def>            local smn = 1e30
+   Def>            local smx = -1e30
+   Def>            loop local k (0,3)
+   Def>                local sx = struct.shell.stress.prin.x(s,k)
+   Def>                local sz = struct.shell.stress.prin.z(s,k)
+   Def>                if sx < smn then
+   Def>                    smn = sx
+   Def>                end_if
+   Def>                if sz > smx then
+   Def>                    smx = sz
+   Def>                end_if
+   Def>            end_loop
+   Def>            local sc = 0.0
+   Def>            if smn < 0.0 then
+   Def>                sc = -smn
+   Def>            end_if
+   Def>            local stn = 0.0
+   Def>            if smx > 0.0 then
+   Def>                stn = smx
+   Def>            end_if
+   Def>            if sc > sh_maxc then
+   Def>                sh_maxc = sc
+   Def>            end_if
+   Def>            if stn > sh_maxt then
+   Def>                sh_maxt = stn
+   Def>            end_if
+   Def>            local scale = 1.0
+   Def>            if sc > (1.0+sig_eps)*sig_capC then
+   Def>                scale = sig_capC/sc
+   Def>            end_if
+   Def>            if stn > (1.0+sig_eps)*sig_capT then
+   Def>                if sig_capT/stn < scale then
+   Def>                    scale = sig_capT/stn
+   Def>                end_if
+   Def>            end_if
+   Def>            if scale < 1.0 then
+   Def>                local en = struct.shell.young(s)
+   Def>                local et = en*scale
+   Def>                if et < e_floor then
+   Def>                    et = e_floor
+   Def>                end_if
+   Def>                if et < en then
+   Def>                    struct.shell.young(s) = et
+   Def>                    n_capped = n_capped + 1
+   Def>                end_if
+   Def>                ; gross overshoot on a shell that still had reducible stiffness =
+   Def>                ; the cap mechanism itself is lagging (floor-bound residual ~2x ft is
+   Def>                ; accepted physics: fully-cracked RC at E_floor under imposed strain)
+   Def>                if en > 1.05*e_floor then
+   Def>                    local gross = 0
+   Def>                    if sc > 2.0*sig_capC then
+   Def>                        gross = 1
+   Def>                    end_if
+   Def>                    if stn > 2.0*sig_capT then
+   Def>                        gross = 1
+   Def>                    end_if
+   Def>                    n_overfloor = n_overfloor + gross
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local uu = struct.force.update()
+   Def>end
+flac3d>; NOTE (07-03 autopsy): an iterative variant (cap -> creep-off 'model cycle 200' -> re-cap,
+flac3d>; up to 5 rounds) INJECTED ENERGY and blew the model up (dmax 7.8mm -> 290mm during the
+flac3d>; toggle rounds, tunnel EXPANDING). Repeated struct.force.update + process toggling under
+flac3d>; fixed-dt creep hits the documented SEL instability case. Single cap per segment (this
+flac3d>; version) was proven stable. Shell stress is INCREMENTAL-accumulative: the cap arrests
+flac3d>; future growth (Wade's goal: no unreasonable suppression of creep) but does not relieve
+flac3d>; already-accumulated stress -- capped-shell stress values are fictitious records; lining
+flac3d>; force deliverables come from the coupled PFC model.
+flac3d>
+flac3d>; --- convergence sentinels (y885) + dmax ---
+flac3d>fish define find_conv
+   Def>    global g_cr = null
+   Def>    global g_iv = null
+   Def>    global g_sr = null
+   Def>    global g_sl = null
+   Def>    local bc=1e20
+   Def>    local bi=1e20
+   Def>    local br=1e20
+   Def>    local bl=1e20
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        if comp.y(p) > 884.0 then
+   Def>        if comp.y(p) < 886.0 then
+   Def>            local dc=(comp.x(p)-1297.0)^2+(comp.z(p)-1752.0)^2
+   Def>            if dc<bc then
+   Def>                bc=dc
+   Def>                g_cr=g
+   Def>            end_if
+   Def>            local di=(comp.x(p)-1297.0)^2+(comp.z(p)-1743.0)^2
+   Def>            if di<bi then
+   Def>                bi=di
+   Def>                g_iv=g
+   Def>            end_if
+   Def>            local dr=(comp.x(p)-1303.0)^2+(comp.z(p)-1747.0)^2
+   Def>            if dr<br then
+   Def>                br=dr
+   Def>                g_sr=g
+   Def>            end_if
+   Def>            local dl=(comp.x(p)-1291.0)^2+(comp.z(p)-1747.0)^2
+   Def>            if dl<bl then
+   Def>                bl=dl
+   Def>                g_sl=g
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>[find_conv]
+0 (integer)
+flac3d>fish define vclose
+   Def>    vclose = (comp.z(gp.disp(g_cr))-comp.z(gp.disp(g_iv)))*1000.0
+   Def>end
+flac3d>fish define hclose
+   Def>    hclose = (comp.x(gp.disp(g_sr))-comp.x(gp.disp(g_sl)))*1000.0
+   Def>end
+flac3d>fish define dmax_all
+   Def>    local dm=0.0
+   Def>    loop foreach local g gp.list
+   Def>        local d=gp.disp(g)
+   Def>        local m=math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m>dm then
+   Def>            dm=m
+   Def>        end_if
+   Def>    end_loop
+   Def>    dmax_all=dm
+   Def>end
+flac3d>
+flac3d>; --- initial burgers-mohr assignment (eta_m gated later; eta_k always on) ---
+flac3d>zone cmodel assign burgers-mohr range group 'rock' slot 'mat'
+flac3d>zone property bulk [_bk(E_S_1)] shear-maxwell [_gk(E_S_1)] shear-kelvin [_gk(E_S_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 20346 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 20346 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 20346 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 20346 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 20346 zones using the burgers-mohr model.
+--- Property cohesion set in 20346 zones using the burgers-mohr model.
+--- Property friction set in 20346 zones using the burgers-mohr model.
+--- Property tension set in 20346 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_2)] shear-maxwell [_gk(E_S_2)] shear-kelvin [_gk(E_S_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 23503 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 23503 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 23503 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 23503 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 23503 zones using the burgers-mohr model.
+--- Property cohesion set in 23503 zones using the burgers-mohr model.
+--- Property friction set in 23503 zones using the burgers-mohr model.
+--- Property tension set in 23503 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_3)] shear-maxwell [_gk(E_S_3)] shear-kelvin [_gk(E_S_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 151327 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 151327 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 151327 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 151327 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 151327 zones using the burgers-mohr model.
+--- Property cohesion set in 151327 zones using the burgers-mohr model.
+--- Property friction set in 151327 zones using the burgers-mohr model.
+--- Property tension set in 151327 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_4)] shear-maxwell [_gk(E_S_4)] shear-kelvin [_gk(E_S_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 618771 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 618771 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 618771 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 618771 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 618771 zones using the burgers-mohr model.
+--- Property cohesion set in 618771 zones using the burgers-mohr model.
+--- Property friction set in 618771 zones using the burgers-mohr model.
+--- Property tension set in 618771 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_5)] shear-maxwell [_gk(E_S_5)] shear-kelvin [_gk(E_S_5)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+--- Property bulk set in 255448 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 255448 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 255448 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 255448 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 255448 zones using the burgers-mohr model.
+--- Property cohesion set in 255448 zones using the burgers-mohr model.
+--- Property friction set in 255448 zones using the burgers-mohr model.
+--- Property tension set in 255448 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_6)] shear-maxwell [_gk(E_S_6)] shear-kelvin [_gk(E_S_6)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+--- Property bulk set in 29060 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 29060 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 29060 zones using the burgers-mohr model.
+--- Property viscosity-maxwell set in 29060 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 29060 zones using the burgers-mohr model.
+--- Property cohesion set in 29060 zones using the burgers-mohr model.
+--- Property friction set in 29060 zones using the burgers-mohr model.
+--- Property tension set in 29060 zones using the burgers-mohr model.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>[io.out('SSv2-1 rock -> burgers-mohr (G_m=G_k, eta_k on, eta_m gated at T='+string(crp_threshold)+')')]
+SSv2-1 rock -> burgers-mohr (G_m=G_k, eta_k on, eta_m gated at T=0.8)
+flac3d>
+flac3d>; --- per-stage: fluid(500cyc) -> MC 1e-5 -> creep in 2.5-day segments + shell cap between ---
+flac3d>fish define crp_stage(stg, wtname, fname, days)
+   Def>    if abort_flag = 1 then
+   Def>        io.out('SSv2-SKIP stage '+string(stg)+' (abort flag set)')
+   Def>    else
+   Def>    command
+   Def>        zone cmodel assign mohr-coulomb range group 'rock' slot 'mat'
+   Def>        zone property young [E_S_1] poisson [nu] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+   Def>        zone property young [E_S_2] poisson [nu] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+   Def>        zone property young [E_S_3] poisson [nu] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+   Def>        zone property young [E_S_4] poisson [nu] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+   Def>        zone property young [E_S_5] poisson [nu] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+   Def>        zone property young [E_S_6] poisson [nu] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+   Def>        zone gridpoint initialize pore-pressure 0
+   Def>        zone water set [wtname]
+   Def>        zone gridpoint initialize saturation 1
+   Def>        zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+   Def>        zone gridpoint initialize pore-pressure 0 range geometry-distance 'tunnel_inner' gap 1.0
+   Def>        zone gridpoint fix pore-pressure range group 'East' or 'West' or 'North' or 'South' or 'Top' or 'Bottom'
+   Def>        model mechanical active off
+   Def>        model creep active off
+   Def>        model fluid active on
+   Def>        model solve ratio-flow 1e-4 or cycles 500
+   Def>    endcommand
+   Def>    io.out('   SSv2-stg'+string(stg)+' '+wtname+' fluid phase done (500cyc budget)')
+   Def>    command
+   Def>        model fluid active off
+   Def>        model mechanical active on
+   Def>        model creep active off
+   Def>        zone gridpoint initialize fluid-modulus 0
+   Def>        zone gridpoint initialize velocity 0 0 0
+   Def>        model solve ratio 1e-5 or cycles 40000
+   Def>    endcommand
+   Def>    io.out('   SSv2-stg'+string(stg)+' MC balance done')
+   Def>    command
+   Def>        zone cmodel assign burgers-mohr range group 'rock' slot 'mat'
+   Def>        ; NOTE: cmodel assign RESETS all properties -> strength MUST be re-set here
+   Def>        ; (OPUS port dropped cohesion/friction/tension -> c=phi=0 -> q_th=0 -> 100% active
+   Def>        ;  + zero-strength plastic collapse = the real 07-02 runaway root cause).
+   Def>        zone property bulk [_bk(E_S_1)] shear-maxwell [_gk(E_S_1)] shear-kelvin [_gk(E_S_1)] viscosity-kelvin [eta_k] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+   Def>        zone property bulk [_bk(E_S_2)] shear-maxwell [_gk(E_S_2)] shear-kelvin [_gk(E_S_2)] viscosity-kelvin [eta_k] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+   Def>        zone property bulk [_bk(E_S_3)] shear-maxwell [_gk(E_S_3)] shear-kelvin [_gk(E_S_3)] viscosity-kelvin [eta_k] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+   Def>        zone property bulk [_bk(E_S_4)] shear-maxwell [_gk(E_S_4)] shear-kelvin [_gk(E_S_4)] viscosity-kelvin [eta_k] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+   Def>        zone property bulk [_bk(E_S_5)] shear-maxwell [_gk(E_S_5)] shear-kelvin [_gk(E_S_5)] viscosity-kelvin [eta_k] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+   Def>        zone property bulk [_bk(E_S_6)] shear-maxwell [_gk(E_S_6)] shear-kelvin [_gk(E_S_6)] viscosity-kelvin [eta_k] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+   Def>        model creep active on
+   Def>    endcommand
+   Def>    read_drive(fname)
+   Def>    setKstrains
+   Def>    do_threshold
+   Def>    setKstrains
+   Def>    apply_vel_idw(days*86400.0, 60.0)
+   Def>    io.out('   SSv2-stg'+string(stg)+' creep start: active='+string(n_active))
+   Def>    local nch = math.ceiling(days/1.25)
+   Def>    local dch = days/nch
+   Def>    local ich = 0
+   Def>    loop while ich < nch
+   Def>        ich = ich + 1
+   Def>        cum_days = cum_days + dch
+   Def>        command
+   Def>            model creep timestep fix [crp_dt]
+   Def>            model solve creep time-total [cum_days*86400.0]
+   Def>        endcommand
+   Def>        shell_cap
+   Def>        io.out('SSv2-HIST stg='+string(stg)+' day='+string(cum_days)+' vclose='+string(vclose)+' hclose='+string(hclose)+' dmax='+string(dmax_all)+' active='+string(n_active)+' ncap='+string(n_capped)+' novf='+string(n_overfloor)+' maxC='+string(sh_maxc/1e6)+'MPa maxT='+string(sh_maxt/1e6)+'MPa')
+   Def>        if dmax_all > 0.20 then
+   Def>            abort_flag = 1
+   Def>            ich = nch
+   Def>            io.out('SSv2-ABORT kinematic runaway dmax>0.2m (stg '+string(stg)+')')
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('SSv2-CHK stg'+string(stg)+' END vclose='+string(vclose)+'mm hclose='+string(hclose)+'mm dmax='+string(dmax_all)+' active='+string(n_active)+' maxC='+string(sh_maxc/1e6)+' maxT='+string(sh_maxt/1e6))
+   Def>    end_if
+   Def>end
+flac3d>
+flac3d>; ============================================================================
+flac3d>; SHORT TEST: stage 1 only, 5 days (4 x 1.25d segments), 6x drive rate (harsher cap test)
+flac3d>; ============================================================================
+flac3d>[crp_stage(1,'W-110','lg_disp_resid_s01.txt',5.0)]
+flac3d>zone cmodel assign mohr-coulomb range group 'rock' slot 'mat'
+flac3d>zone property young [E_S_1] poisson [nu] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property young set in 20346 zones using the mohr-coulomb model.
+--- Property poisson set in 20346 zones using the mohr-coulomb model.
+--- Property cohesion set in 20346 zones using the mohr-coulomb model.
+--- Property friction set in 20346 zones using the mohr-coulomb model.
+--- Property tension set in 20346 zones using the mohr-coulomb model.
+flac3d>zone property young [E_S_2] poisson [nu] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property young set in 23503 zones using the mohr-coulomb model.
+--- Property poisson set in 23503 zones using the mohr-coulomb model.
+--- Property cohesion set in 23503 zones using the mohr-coulomb model.
+--- Property friction set in 23503 zones using the mohr-coulomb model.
+--- Property tension set in 23503 zones using the mohr-coulomb model.
+flac3d>zone property young [E_S_3] poisson [nu] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property young set in 151327 zones using the mohr-coulomb model.
+--- Property poisson set in 151327 zones using the mohr-coulomb model.
+--- Property cohesion set in 151327 zones using the mohr-coulomb model.
+--- Property friction set in 151327 zones using the mohr-coulomb model.
+--- Property tension set in 151327 zones using the mohr-coulomb model.
+flac3d>zone property young [E_S_4] poisson [nu] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property young set in 618771 zones using the mohr-coulomb model.
+--- Property poisson set in 618771 zones using the mohr-coulomb model.
+--- Property cohesion set in 618771 zones using the mohr-coulomb model.
+--- Property friction set in 618771 zones using the mohr-coulomb model.
+--- Property tension set in 618771 zones using the mohr-coulomb model.
+flac3d>zone property young [E_S_5] poisson [nu] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+--- Property young set in 255448 zones using the mohr-coulomb model.
+--- Property poisson set in 255448 zones using the mohr-coulomb model.
+--- Property cohesion set in 255448 zones using the mohr-coulomb model.
+--- Property friction set in 255448 zones using the mohr-coulomb model.
+--- Property tension set in 255448 zones using the mohr-coulomb model.
+flac3d>zone property young [E_S_6] poisson [nu] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+--- Property young set in 29060 zones using the mohr-coulomb model.
+--- Property poisson set in 29060 zones using the mohr-coulomb model.
+--- Property cohesion set in 29060 zones using the mohr-coulomb model.
+--- Property friction set in 29060 zones using the mohr-coulomb model.
+--- Property tension set in 29060 zones using the mohr-coulomb model.
+flac3d>zone gridpoint initialize pore-pressure 0
+--- pore-pressure modified in 206341 gridpoints.
+flac3d>zone water set [wtname]
+flac3d>zone gridpoint initialize saturation 1
+--- saturation modified in 206341 gridpoints.
+flac3d>zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+--- saturation modified in 204199 gridpoints.
+flac3d>zone gridpoint initialize pore-pressure 0 range geometry-distance 'tunnel_inner' gap 1.0
+--- pore-pressure modified in 68483 gridpoints.
+flac3d>zone gridpoint fix pore-pressure range group 'East' or 'West' or 'North' or 'South' or 'Top' or 'Bottom'
+--- Fix pore-pressure -ppressure specified in 7278 gridpoints.
+flac3d>model mechanical active off
+--- Process mechanical deactivated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>model fluid active on
+--- Process fluid activated.
+flac3d>model solve ratio-flow 1e-4 or cycles 500
+    Cycle      Total    Timestep Ratio-flow       Clock
+--------- ---------- ----------- ---------- ----------- 
+      500      23778 8.00000E+19 2.6358e-01 00:00:00:42       500                        1.0000e-04             
+--- Global cycle limit of 500 met.
+--- Cycling ended at: 2026-07-03 08:19:58
+   SSv2-stg1 W-110 fluid phase done (500cyc budget)
+flac3d>model fluid active off
+--- Process fluid deactivated.
+flac3d>model mechanical active on
+--- Process mechanical activated.
+flac3d>model creep active off
+--- Process creep deactivated.
+flac3d>zone gridpoint initialize fluid-modulus 0
+--- fluid-modulus modified in 206341 gridpoints.
+flac3d>zone gridpoint initialize velocity 0 0 0
+--- velocity modified in 206341 gridpoints.
+flac3d>model solve ratio 1e-5 or cycles 40000
+    Cycle      Total Mech Ratio       Clock
+--------- ---------- ---------- ----------- 
+     4338      28116 9.9920e-06 00:00:22:31     40000            1.0000e-05             
+--- Limit ratio of 1.0000e-05 met in process(es): mech Zone Main (9.9920e-06),mech Struct Main (9.9920e-06).
+--- Cycling ended at: 2026-07-03 08:42:29
+   SSv2-stg1 MC balance done
+flac3d>zone cmodel assign burgers-mohr range group 'rock' slot 'mat'
+flac3d>;
+flac3d>;
+flac3d>;
+flac3d>zone property bulk [_bk(E_S_1)] shear-maxwell [_gk(E_S_1)] shear-kelvin [_gk(E_S_1)] viscosity-kelvin [eta_k] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+--- Property bulk set in 20346 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 20346 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 20346 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 20346 zones using the burgers-mohr model.
+--- Property cohesion set in 20346 zones using the burgers-mohr model.
+--- Property friction set in 20346 zones using the burgers-mohr model.
+--- Property tension set in 20346 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_2)] shear-maxwell [_gk(E_S_2)] shear-kelvin [_gk(E_S_2)] viscosity-kelvin [eta_k] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+--- Property bulk set in 23503 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 23503 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 23503 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 23503 zones using the burgers-mohr model.
+--- Property cohesion set in 23503 zones using the burgers-mohr model.
+--- Property friction set in 23503 zones using the burgers-mohr model.
+--- Property tension set in 23503 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_3)] shear-maxwell [_gk(E_S_3)] shear-kelvin [_gk(E_S_3)] viscosity-kelvin [eta_k] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+--- Property bulk set in 151327 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 151327 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 151327 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 151327 zones using the burgers-mohr model.
+--- Property cohesion set in 151327 zones using the burgers-mohr model.
+--- Property friction set in 151327 zones using the burgers-mohr model.
+--- Property tension set in 151327 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_4)] shear-maxwell [_gk(E_S_4)] shear-kelvin [_gk(E_S_4)] viscosity-kelvin [eta_k] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+--- Property bulk set in 618771 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 618771 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 618771 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 618771 zones using the burgers-mohr model.
+--- Property cohesion set in 618771 zones using the burgers-mohr model.
+--- Property friction set in 618771 zones using the burgers-mohr model.
+--- Property tension set in 618771 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_5)] shear-maxwell [_gk(E_S_5)] shear-kelvin [_gk(E_S_5)] viscosity-kelvin [eta_k] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+--- Property bulk set in 255448 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 255448 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 255448 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 255448 zones using the burgers-mohr model.
+--- Property cohesion set in 255448 zones using the burgers-mohr model.
+--- Property friction set in 255448 zones using the burgers-mohr model.
+--- Property tension set in 255448 zones using the burgers-mohr model.
+flac3d>zone property bulk [_bk(E_S_6)] shear-maxwell [_gk(E_S_6)] shear-kelvin [_gk(E_S_6)] viscosity-kelvin [eta_k] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+--- Property bulk set in 29060 zones using the burgers-mohr model.
+--- Property shear-maxwell set in 29060 zones using the burgers-mohr model.
+--- Property shear-kelvin set in 29060 zones using the burgers-mohr model.
+--- Property viscosity-kelvin set in 29060 zones using the burgers-mohr model.
+--- Property cohesion set in 29060 zones using the burgers-mohr model.
+--- Property friction set in 29060 zones using the burgers-mohr model.
+--- Property tension set in 29060 zones using the burgers-mohr model.
+flac3d>model creep active on
+--- Process creep activated.
+   SSv2-read lg_disp_resid_s01.txt ndata=605
+   SSv2-stg1 creep start: active=488135
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      180      28296 6.00000E+02  1.080000e+05 00:00:00:56                                   1.080000e+05             
+--- Limit time-total of 1.080000e+05 met in process(es): creep (1.080000e+05).
+--- Cycling ended at: 2026-07-03 08:44:14
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+SSv2-HIST stg=1 day=1.25 vclose=-0.874417 hclose=0.119686 dmax=0.00772627 active=488135 ncap=3282 novf=483 maxC=94.5088MPa maxT=81.035MPa
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      180      28476 6.00000E+02  2.160000e+05 00:00:00:57                                   2.160000e+05             
+--- Limit time-total of 2.160000e+05 met in process(es): creep (2.160000e+05).
+--- Cycling ended at: 2026-07-03 08:45:11
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+SSv2-HIST stg=1 day=2.5 vclose=-0.992185 hclose=-0.881057 dmax=0.0154525 active=488135 ncap=4034 novf=792 maxC=94.5098MPa maxT=79.4906MPa
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      180      28656 6.00000E+02  3.240000e+05 00:00:00:57                                   3.240000e+05             
+--- Limit time-total of 3.240000e+05 met in process(es): creep (3.240000e+05).
+--- Cycling ended at: 2026-07-03 08:46:09
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+SSv2-HIST stg=1 day=3.75 vclose=-0.442727 hclose=-2.29826 dmax=0.0231788 active=488135 ncap=8032 novf=1149 maxC=94.9569MPa maxT=73.646MPa
+flac3d>model creep timestep fix [crp_dt]
+--- timestep fixed to 600 in creep process (timestep calculation deactivated).
+flac3d>model solve creep time-total [cum_days*86400.0]
+    Cycle      Total    Timestep Cr Time-total       Clock
+--------- ---------- ----------- ------------- ----------- 
+      180      28836 6.00000E+02  4.320000e+05 00:00:00:57                                   4.320000e+05             
+--- Limit time-total of 4.320000e+05 met in process(es): creep (4.320000e+05).
+--- Cycling ended at: 2026-07-03 08:47:07
+flac3d>structure shell recover surface (0,1,0)
+flac3d>structure shell recover stress depth-factor 0
+SSv2-HIST stg=1 day=5 vclose=0.0344635 hclose=-3.54676 dmax=0.0309051 active=488135 ncap=10351 novf=810 maxC=94.4866MPa maxT=69.3711MPa
+SSv2-CHK stg1 END vclose=0.0344635mm hclose=-3.54676mm dmax=0.0309051 active=488135 maxC=94.4866 maxT=69.3711
+0 (integer)
+flac3d>model save 'ss_test'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/ss_test.f3sav.
+flac3d>[io.out('SSv2-TEST-DONE vclose='+string(vclose)+'mm hclose='+string(hclose)+'mm dmax='+string(dmax_all)+' active='+string(n_active)+' abort='+string(abort_flag))]
+SSv2-TEST-DONE vclose=0.0344635mm hclose=-3.54676mm dmax=0.0309051 active=488135 abort=0
+flac3d>program log off
+**********************************************
+* Logging ended at 週五 七月 3 08:47:16 2026
+**********************************************
