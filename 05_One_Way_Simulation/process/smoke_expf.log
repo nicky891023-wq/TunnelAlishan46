@@ -1,0 +1,48 @@
+**********************************************
+* Logging started at 週三 七月 8 09:12:27 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>fish automatic-create on
+flac3d>model restore '../output/lgs_01'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 21:47:51 2026
+Total Cycles: 32178  Super Cycles: 32178
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>[global CUR = '01']
+flac3d>[global MODL = 'lg']
+flac3d>call 'exp_fields_body.f3dat'
+flac3d>; exp_fields_body.f3dat -- per-stage FIELD exporters for thesis figures (07-07).
+flac3d>;   Call AFTER each `model restore` (restore wipes FISH). Uses global CUR ('01'..'11')
+flac3d>;   and global MODL ('lg' or 'sm') set by the driver before the call.
+flac3d>;   Dumps (thesis Ch.5 spatial figures: threshold active set / plastic state / disp):
+flac3d>;     <MODL>_zfield_v_s<CUR>.txt : vertical section slab, zones: x z state etaflag ux uz
+flac3d>;     lg only: lg_zfield_p_s<CUR>.txt : plan slab at tunnel elevation, zones: x y state etaflag ux uy
+flac3d>;   etaflag: 1 = Maxwell dashpot ON (viscosity-maxwell < 1e50 = threshold active), 0 = off
+flac3d>;   state: zone.state(z) bitmask (python decodes plastic now/past)
+flac3d>fish define exp_zv(fname, y0, y1)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x z state etaflag'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        local p = zone.pos(z)
+   Def>        local yy = comp.y(p)
+   Def>        if yy > y0 then
+   Def>        if yy < y1 then
+   Def>            local ef = 0
+   Def>            if zone.prop(z,'viscosity-maxwell') < 1e50 then
+   Def>                ef = 1
+   Def>            end_if
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.state(z))+' '+string(ef)
+                                                                 ^
+*** Fish: Incorrect number of arguments.
+    From line 24 of source C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/process/exp_fields_body.f3dat.
+    While processing line 9 of file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/process/exp_fields_body.f3dat.

@@ -1,0 +1,26 @@
+; dump_ring3d_G4.f3dat -- read-only full 3D lining ball positions from G4 (GIF backdrop).
+;   v2: dump ALL balls (no math.mod subsample -> subsample in python). ~456k lines.
+program log-file 'dump_ring3d_G4.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial_G4'
+fish automatic-create on
+fish define dumpr
+    local f = file.open('ring3d_G4.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x y z'
+    local st = file.write(a,1)
+    local n = 0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))
+        st = file.write(a,1)
+        n = n + 1
+    end_loop
+    st = file.close
+    io.out('RING3D-DONE n='+string(n))
+end
+[dumpr]
+program log off
+program quit

@@ -1,0 +1,65 @@
+; export_fields_lg_11 -- 11-stage field export driver (lg model), thesis Ch.5 spatial figures.
+;   Pattern: restore wipes FISH -> set globals -> call exp_fields_body.f3dat each stage.
+;   cwd = process/, bare filename. Run AFTER staged/console free.
+program log-file 'export_fields_lg_11.log'
+program log on
+fish automatic-create on
+
+model restore '../output/lgs_01'
+[global CUR = '01']
+[global MODL = 'lg']
+call 'exp_fields_body.f3dat'
+
+model restore '../output/lgs_02'
+[global CUR = '02']
+[global MODL = 'lg']
+call 'exp_fields_body.f3dat'
+
+model restore '../output/lgs_03'
+[global CUR = '03']
+[global MODL = 'lg']
+call 'exp_fields_body.f3dat'
+
+model restore '../output/lgs_04'
+[global CUR = '04']
+[global MODL = 'lg']
+call 'exp_fields_body.f3dat'
+
+model restore '../output/lgs_05'
+[global CUR = '05']
+[global MODL = 'lg']
+call 'exp_fields_body.f3dat'
+
+model restore '../output/lgs_06'
+[global CUR = '06']
+[global MODL = 'lg']
+call 'exp_fields_body.f3dat'
+
+model restore '../output/lgs_07'
+[global CUR = '07']
+[global MODL = 'lg']
+call 'exp_fields_body.f3dat'
+
+model restore '../output/lgs_08'
+[global CUR = '08']
+[global MODL = 'lg']
+call 'exp_fields_body.f3dat'
+
+model restore '../output/lgs_09'
+[global CUR = '09']
+[global MODL = 'lg']
+call 'exp_fields_body.f3dat'
+
+model restore '../output/lgs_10'
+[global CUR = '10']
+[global MODL = 'lg']
+call 'exp_fields_body.f3dat'
+
+model restore '../output/lgs_11'
+[global CUR = '11']
+[global MODL = 'lg']
+call 'exp_fields_body.f3dat'
+
+[io.out('EXPF-DONE lg 11 stages')]
+program log off
+program quit

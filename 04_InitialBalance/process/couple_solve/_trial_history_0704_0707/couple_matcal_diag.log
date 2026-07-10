@@ -1,0 +1,432 @@
+**********************************************
+* Logging started at 週一 七月 6 16:07:29 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../output/Couple_Initial_G3'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 七月 5 23:51:18 2026
+Total Cycles: 48405  Super Cycles: 48405
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>model largestrain on
+flac3d>model mechanical timestep scale
+--- density scaling activated in mechanical process with a target timestep of 1.
+flac3d>fish automatic-create on
+flac3d>[global LIN_MULT = 2.0]
+flac3d>[global E_ROCK  = 4.62e9]
+flac3d>[global E_IFACE = 4.62e9]
+flac3d>[global NSUB = 5]
+flac3d>[global NCYC = 150]
+flac3d>
+flac3d>; ---- apply trial material params (no equilibrium redo; state is zero-force) ----
+flac3d>[global pb_ten_new = 2.10e6 * LIN_MULT]
+flac3d>[global pb_coh_new = 2.30e7 * LIN_MULT]
+flac3d>contact property pb_ten [pb_ten_new] pb_coh [pb_coh_new] range contact type 'ball-ball'
+--- Property pb_coh set in 4357869 contacts in range.
+--- Property pb_ten set in 4357869 contacts in range.
+flac3d>contact property pb_ten 1.0e100 pb_coh 1.0e100 range contact type 'ball-ball' position-z 1740.0 1745.30
+--- Property pb_coh set in 350225 contacts in range.
+--- Property pb_ten set in 350225 contacts in range.
+flac3d>zone property young [E_ROCK]
+--- Property young set in 424908 zones using the elastic model.
+flac3d>contact method deformability emod [E_IFACE] kratio 1.0 range contact type 'ball-facet'
+--- Method deformability applied to 377610 contacts in range.
+flac3d>contact method pb_deform emod [E_IFACE] kratio 1.0 range contact type 'ball-facet'
+--- Method pb_deformability applied to 377610 contacts in range.
+flac3d>[io.out('MCAL params: lining x'+string(LIN_MULT)+' (pb_ten='+string(pb_ten_new)+' pb_coh='+string(pb_coh_new)+') E_rock='+string(E_ROCK)+' E_iface='+string(E_IFACE))]
+MCAL params: lining x2 (pb_ten=4.2e+06 pb_coh=4.6e+07) E_rock=4.62e+09 E_iface=4.62e+09
+flac3d>[io.out('MCAL-0 restored G3: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num))]
+MCAL-0 restored G3: zones=424908 balls=456218 walls=1
+flac3d>
+flac3d>; datum
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456218 ball(s).
+flac3d>zone gridpoint initialize displacement (0,0,0)
+--- displacement modified in 441728 gridpoints.
+flac3d>zone gridpoint initialize velocity (0,0,0)
+--- velocity modified in 441728 gridpoints.
+flac3d>model calm
+flac3d>
+flac3d>; ---- driven-gp tag + drive infrastructure (same as load_diag) ----
+flac3d>fish define tag_driven
+   Def>    global ndriven = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local x = comp.x(p)
+   Def>        local y = comp.y(p)
+   Def>        local z = comp.z(p)
+   Def>        local onb = 0
+   Def>        if math.abs(x-1277.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(x-1317.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(y-860.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(y-910.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(z-1728.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(z-1768.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if onb = 1 then
+   Def>            gp.group(g,'drive') = 'driven'
+   Def>            gp.vel(g) = vector(0.0,0.0,0.0)
+   Def>            gp.fix(g) = vector(1,1,1)
+   Def>            ndriven = ndriven + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('MCAL driven gps='+string(ndriven))
+   Def>end
+flac3d>[tag_driven]
+MCAL driven gps=20648
+0 (integer)
+flac3d>fish define read_drive(fname)
+   Def>    local arr = array.create(1)
+   Def>    local st = file.open(fname,0,1)
+   Def>    ndata = 0
+   Def>    st = file.read(arr,1)
+   Def>    st = file.read(arr,1)
+   Def>    loop while st = 0
+   Def>        ndata = ndata + 1
+   Def>        st = file.read(arr,1)
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    xdat  = array.create(ndata)
+   Def>    ydat  = array.create(ndata)
+   Def>    zdat  = array.create(ndata)
+   Def>    uxdat = array.create(ndata)
+   Def>    uydat = array.create(ndata)
+   Def>    uzdat = array.create(ndata)
+   Def>    st = file.open(fname,0,1)
+   Def>    st = file.read(arr,1)
+   Def>    local i = 0
+   Def>    st = file.read(arr,1)
+   Def>    loop while st = 0
+   Def>        i = i + 1
+   Def>        local ln = arr(1)
+   Def>        xdat(i)  = string.token(ln,1)
+   Def>        ydat(i)  = string.token(ln,2)
+   Def>        zdat(i)  = string.token(ln,3)
+   Def>        uxdat(i) = string.token(ln,4)
+   Def>        uydat(i) = string.token(ln,5)
+   Def>        uzdat(i) = string.token(ln,6)
+   Def>        st = file.read(arr,1)
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('MCAL read '+fname+' ndata='+string(ndata))
+   Def>end
+flac3d>fish define set_full_targets(radius)
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            local p = gp.pos(g)
+   Def>            local x = comp.x(p)
+   Def>            local y = comp.y(p)
+   Def>            local z = comp.z(p)
+   Def>            local sw = 0.0
+   Def>            local sux = 0.0
+   Def>            local suy = 0.0
+   Def>            local suz = 0.0
+   Def>            local dmin = 1e30
+   Def>            local i = 1
+   Def>            loop while i <= ndata
+   Def>                local dx = x - xdat(i)
+   Def>                local dy = y - ydat(i)
+   Def>                local dz = z - zdat(i)
+   Def>                local d2 = dx*dx + dy*dy + dz*dz
+   Def>                if d2 <= radius*radius then
+   Def>                    local w = 1.0/math.max(d2,1e-10)
+   Def>                    sw = sw + w
+   Def>                    sux = sux + uxdat(i)*w
+   Def>                    suy = suy + uydat(i)*w
+   Def>                    suz = suz + uzdat(i)*w
+   Def>                end_if
+   Def>                if d2 < dmin then
+   Def>                    dmin = d2
+   Def>                    global inear = i
+   Def>                end_if
+   Def>                i = i + 1
+   Def>            end_loop
+   Def>            if sw > 0.0 then
+   Def>                gp.extra(g,4) = sux/sw
+   Def>                gp.extra(g,5) = suy/sw
+   Def>                gp.extra(g,6) = suz/sw
+   Def>            else
+   Def>                gp.extra(g,4) = uxdat(inear)
+   Def>                gp.extra(g,5) = uydat(inear)
+   Def>                gp.extra(g,6) = uzdat(inear)
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('MCAL full targets set')
+   Def>end
+flac3d>fish define set_frac(frac)
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            gp.extra(g,1) = frac*gp.extra(g,4)
+   Def>            gp.extra(g,2) = frac*gp.extra(g,5)
+   Def>            gp.extra(g,3) = frac*gp.extra(g,6)
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>fish define set_sub_vel(subs_left)
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            local d = gp.disp(g)
+   Def>            local den = float(subs_left)*float(NCYC)
+   Def>            gp.vel(g) = vector((gp.extra(g,1)-comp.x(d))/den, (gp.extra(g,2)-comp.y(d))/den, (gp.extra(g,3)-comp.z(d))/den)
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>fish define hold_driven
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            gp.vel(g) = vector(0.0,0.0,0.0)
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>fish define ramp_to(frac)
+   Def>    set_frac(frac)
+   Def>    local isub = 0
+   Def>    loop while isub < NSUB
+   Def>        isub = isub + 1
+   Def>        set_sub_vel(NSUB - isub + 1)
+   Def>        command
+   Def>            model cycle [NCYC]
+   Def>            model calm
+   Def>        endcommand
+   Def>    end_loop
+   Def>    hold_driven
+   Def>end
+flac3d>fish define census(tag, frac)
+   Def>    local nbt = 0
+   Def>    local nbs = 0
+   Def>    local ncrown = 0
+   Def>    local nlegs = 0
+   Def>    loop foreach local c contact.list('ball-ball')
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            local ps = contact.prop(c,'pb_state')
+   Def>            if ps = 1 then
+   Def>                nbt = nbt + 1
+   Def>            end_if
+   Def>            if ps = 2 then
+   Def>                nbs = nbs + 1
+   Def>            end_if
+   Def>            if ps < 3 then
+   Def>            if ps > 0 then
+   Def>                local zz = comp.z(contact.pos(c))
+   Def>                if zz > 1749.0 then
+   Def>                    ncrown = ncrown + 1
+   Def>                else
+   Def>                    if zz > 1745.3 then
+   Def>                        nlegs = nlegs + 1
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local dmb = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local db = ball.disp(b)
+   Def>        local mb = math.sqrt(comp.x(db)^2+comp.y(db)^2+comp.z(db)^2)
+   Def>        if mb > dmb then
+   Def>            dmb = mb
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('MCAL-CENSUS '+tag+' frac='+string(frac)+' broken_t='+string(nbt)+' broken_s='+string(nbs)+' | crown='+string(ncrown)+' legs='+string(nlegs)+' | ball_dmax='+string(dmb*1000.0)+'mm')
+   Def>end
+flac3d>
+flac3d>[read_drive('../../../05_One_Way_Simulation/process/cpl_resid_s01.txt')]
+MCAL read ../../../05_One_Way_Simulation/process/cpl_resid_s01.txt ndata=10109
+0 (integer)
+flac3d>[set_full_targets(6.0)]
+MCAL full targets set
+0 (integer)
+flac3d>[census('baseline', 0.0)]
+MCAL-CENSUS baseline frac=0 broken_t=411 broken_s=7 | crown=86 legs=332 | ball_dmax=0mm
+0 (integer)
+flac3d>[ramp_to(0.25)]
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      48555 00:00:03:06       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:14:08
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      48705 00:00:02:54       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:17:03
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      48855 00:00:02:55       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:20:00
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      49005 00:00:02:57       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:22:59
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      49155 00:00:02:58       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:25:59
+flac3d>model calm
+0 (integer)
+flac3d>[census('f25', 0.25)]
+MCAL-CENSUS f25 frac=0.25 broken_t=628 broken_s=13 | crown=95 legs=546 | ball_dmax=12.8073mm
+0 (integer)
+flac3d>[ramp_to(0.50)]
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      49305 00:00:02:54       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:29:12
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      49455 00:00:02:59       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:32:13
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      49605 00:00:03:07       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:35:22
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      49755 00:00:03:03       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:38:26
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      49905 00:00:03:07       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:41:35
+flac3d>model calm
+0 (integer)
+flac3d>[census('f50', 0.50)]
+MCAL-CENSUS f50 frac=0.5 broken_t=2861 broken_s=47 | crown=544 legs=2364 | ball_dmax=20.3712mm
+0 (integer)
+flac3d>[ramp_to(0.75)]
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      50055 00:00:03:05       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:45:00
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      50205 00:00:03:09       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:48:11
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      50355 00:00:03:09       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:51:21
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      50505 00:00:03:16       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:54:39
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      50655 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 16:58:00
+flac3d>model calm
+0 (integer)
+flac3d>[census('f75', 0.75)]
+MCAL-CENSUS f75 frac=0.75 broken_t=11680 broken_s=78 | crown=1173 legs=10581 | ball_dmax=20.37mm
+0 (integer)
+flac3d>[ramp_to(1.00)]
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      50805 00:00:03:25       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 17:01:45
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      50955 00:00:03:28       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 17:05:14
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      51105 00:00:03:35       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 17:08:51
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      51255 00:00:03:42       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 17:12:35
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      51405 00:00:03:37       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-06 17:16:13
+flac3d>model calm
+0 (integer)
+flac3d>[census('f100', 1.00)]
+MCAL-CENSUS f100 frac=1 broken_t=24679 broken_s=102 | crown=2394 legs=22381 | ball_dmax=20.3688mm
+0 (integer)
+flac3d>[io.out('MCAL-DONE (no save)')]
+MCAL-DONE (no save)
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週一 七月 6 17:16:31 2026
+**********************************************

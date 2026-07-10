@@ -20,3 +20,4 @@
 6. **門檻 T 與初始態耦合**：無拉裸岩鬆弛後大片 zone 貼在包絡線上，T=0.6 乾態即 44–77% active、「低水位平」不可能；T=0.8（統一、大小模同值）才有 flat-then-onset。逐階段調 T=數值作弊（Wade 判定），遇水軟化是唯一可接受的解釋彈性。
 7. **耦合 solve**：一次性釋放 in-situ 會剪退化 wall-zone facet（solveForX 系列崩潰 8+ 次）→ 必須 servo/漸進；`model mechanical timestep scale` 在 zone 側是官方 no-op；耦合短測要跑過 ~1500 cycles 驗 ratio 單調下降。
 8. **驅動場**：剛體必須扣（Kabsch）且用「應變恆等 gate」證明無損；「殘差只佔位移 4%」不是傳遞失敗，是坡地平移本來就無應變貢獻。
+- 07-07 新增隔離：fracture_track_v2.fis（fragment register/compute 在 456k 球模型=28min 卡死+每階段爬行，被 v3 無 fragment 版取代）

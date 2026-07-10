@@ -1,0 +1,296 @@
+; ============================================================================
+; couple_load_diag.f3dat -- FRACTIONAL-LOAD diagnosis of stage-1 lining failure.
+;   (2026-07-06) Stage 1 shattered the ring into 2573 fragments during the
+;   CALMED ramp+settle (physical, not numerical). Drive is clean (median 4.8mm,
+;   no IDW spikes). Question: strength-calibration vs soft-rock vs interface-
+;   softening side effect. This run applies stage-1 drive in 4 fractions
+;   (25/50/75/100%) with calm-cadenced ramp (NO terminal solve = avoid the
+;   numerical tip-over; we want the LOADING response), and at each fraction
+;   reports broken-bond count + spatial dump (feet/springline/crown/other) +
+;   ball_dmax + mid-band convergence. Reads G3 (the valid initial equilibrium).
+;   NO SAVE, NO state kept. cwd = this dir, bare filename.
+;   Diagnostic logic:
+;     * cracks ~linear in load & concentrated at feet/springline -> structural,
+;       physics is right, maybe just sub-step more or examine E_eq.
+;     * cracks explode even at 25% or spread uniformly -> strength/soft-rock.
+; ============================================================================
+program log-file 'couple_load_diag.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial_G3'
+model largestrain on
+model mechanical timestep scale
+fish automatic-create on
+[global NSUB = 5]
+[global NCYC = 150]
+[io.out('CLD-0 restored G3: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num))]
+
+; datum
+ball attribute displacement multiply 0.0
+zone gridpoint initialize displacement (0,0,0)
+zone gridpoint initialize velocity (0,0,0)
+model calm
+
+; ---- tag+fix driven boundary gps (same as staged) ----
+fish define tag_driven
+    global ndriven = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local x = comp.x(p)
+        local y = comp.y(p)
+        local z = comp.z(p)
+        local onb = 0
+        if math.abs(x-1277.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(x-1317.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(y-860.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(y-910.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(z-1728.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(z-1768.0) < 0.3 then
+            onb = 1
+        end_if
+        if onb = 1 then
+            gp.group(g,'drive') = 'driven'
+            gp.vel(g) = vector(0.0,0.0,0.0)
+            gp.fix(g) = vector(1,1,1)
+            ndriven = ndriven + 1
+        end_if
+    end_loop
+    io.out('CLD driven gps='+string(ndriven))
+end
+[tag_driven]
+
+; ---- drive reader ----
+fish define read_drive(fname)
+    local arr = array.create(1)
+    local st = file.open(fname,0,1)
+    ndata = 0
+    st = file.read(arr,1)
+    st = file.read(arr,1)
+    loop while st = 0
+        ndata = ndata + 1
+        st = file.read(arr,1)
+    end_loop
+    st = file.close
+    xdat  = array.create(ndata)
+    ydat  = array.create(ndata)
+    zdat  = array.create(ndata)
+    uxdat = array.create(ndata)
+    uydat = array.create(ndata)
+    uzdat = array.create(ndata)
+    st = file.open(fname,0,1)
+    st = file.read(arr,1)
+    local i = 0
+    st = file.read(arr,1)
+    loop while st = 0
+        i = i + 1
+        local ln = arr(1)
+        xdat(i)  = string.token(ln,1)
+        ydat(i)  = string.token(ln,2)
+        zdat(i)  = string.token(ln,3)
+        uxdat(i) = string.token(ln,4)
+        uydat(i) = string.token(ln,5)
+        uzdat(i) = string.token(ln,6)
+        st = file.read(arr,1)
+    end_loop
+    st = file.close
+    io.out('CLD read '+fname+' ndata='+string(ndata))
+end
+; ---- IDW full targets -> gp.extra(4,5,6) ----
+fish define set_full_targets(radius)
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            local p = gp.pos(g)
+            local x = comp.x(p)
+            local y = comp.y(p)
+            local z = comp.z(p)
+            local sw = 0.0
+            local sux = 0.0
+            local suy = 0.0
+            local suz = 0.0
+            local dmin = 1e30
+            local i = 1
+            loop while i <= ndata
+                local dx = x - xdat(i)
+                local dy = y - ydat(i)
+                local dz = z - zdat(i)
+                local d2 = dx*dx + dy*dy + dz*dz
+                if d2 <= radius*radius then
+                    local w = 1.0/math.max(d2,1e-10)
+                    sw = sw + w
+                    sux = sux + uxdat(i)*w
+                    suy = suy + uydat(i)*w
+                    suz = suz + uzdat(i)*w
+                end_if
+                if d2 < dmin then
+                    dmin = d2
+                    global inear = i
+                end_if
+                i = i + 1
+            end_loop
+            if sw > 0.0 then
+                gp.extra(g,4) = sux/sw
+                gp.extra(g,5) = suy/sw
+                gp.extra(g,6) = suz/sw
+            else
+                gp.extra(g,4) = uxdat(inear)
+                gp.extra(g,5) = uydat(inear)
+                gp.extra(g,6) = uzdat(inear)
+            end_if
+        end_if
+    end_loop
+    io.out('CLD full targets set')
+end
+fish define set_frac(frac)
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            gp.extra(g,1) = frac*gp.extra(g,4)
+            gp.extra(g,2) = frac*gp.extra(g,5)
+            gp.extra(g,3) = frac*gp.extra(g,6)
+        end_if
+    end_loop
+end
+fish define set_sub_vel(subs_left)
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            local d = gp.disp(g)
+            local den = float(subs_left)*float(NCYC)
+            gp.vel(g) = vector((gp.extra(g,1)-comp.x(d))/den, (gp.extra(g,2)-comp.y(d))/den, (gp.extra(g,3)-comp.z(d))/den)
+        end_if
+    end_loop
+end
+fish define hold_driven
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            gp.vel(g) = vector(0.0,0.0,0.0)
+        end_if
+    end_loop
+end
+fish define ramp_to(frac)
+    set_frac(frac)
+    local isub = 0
+    loop while isub < NSUB
+        isub = isub + 1
+        set_sub_vel(NSUB - isub + 1)
+        command
+            model cycle [NCYC]
+            model calm
+        endcommand
+    end_loop
+    hold_driven
+end
+
+; ---- broken-bond census + spatial dump (feet/spring/crown) ----
+fish define census(tag, frac)
+    local nbt = 0
+    local nbs = 0
+    local nfeet = 0
+    local nspring = 0
+    local ncrown = 0
+    local nother = 0
+    local fn = 'cld_cracks_f'+string(math.round(frac*100))+'.txt'
+    local fp = file.open(fn,1,1)
+    local a = array.create(1)
+    a(1) = 'x y z state theta'
+    local st = file.write(a,1)
+    loop foreach local c contact.list('ball-ball')
+        if contact.model(c) = 'linearpbond' then
+            local ps = contact.prop(c,'pb_state')
+            if ps = 1 then
+                nbt = nbt + 1
+            end_if
+            if ps = 2 then
+                nbs = nbs + 1
+            end_if
+            if ps < 3 then
+            if ps > 0 then
+                local p = contact.pos(c)
+                local zz = comp.z(p)
+                local th = math.atan2(zz-1747.5, comp.x(p)-1297.0)*180.0/math.pi
+                if th < 0.0 then
+                    th = th + 360.0
+                end_if
+                a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(zz)+' '+string(ps)+' '+string(th)
+                st = file.write(a,1)
+                if zz <= 1745.30 then
+                    nfeet = nfeet + 1
+                else
+                    local ath = th
+                    if ath > 180.0 then
+                        ath = 360.0 - ath
+                    end_if
+                    if math.abs(ath-90.0) < 35.0 then
+                        ncrown = ncrown + 1
+                    else
+                        if ath < 35.0 then
+                            nspring = nspring + 1
+                        else
+                            nother = nother + 1
+                        end_if
+                    end_if
+                end_if
+            end_if
+            end_if
+        end_if
+    end_loop
+    st = file.close
+    ; ball_dmax + mid-band convergence
+    local dmb = 0.0
+    loop foreach local b ball.list
+        local db = ball.disp(b)
+        local mb = math.sqrt(comp.x(db)^2+comp.y(db)^2+comp.z(db)^2)
+        if mb > dmb then
+            dmb = mb
+        end_if
+    end_loop
+    local s = 0.0
+    local nn = 0
+    loop foreach local b2 ball.list
+        local p2 = ball.pos(b2)
+        local yy = comp.y(p2)
+        if yy > 870.0 then
+        if yy < 900.0 then
+            local rx = comp.x(p2) - 1297.0
+            local rz = comp.z(p2) - 1747.5
+            local rr = math.sqrt(rx*rx + rz*rz)
+            if rr > 1.35 then
+            if rr < 2.05 then
+                local d2 = ball.disp(b2)
+                s = s + (comp.x(d2)*rx + comp.z(d2)*rz)/rr
+                nn = nn + 1
+            end_if
+            end_if
+        end_if
+        end_if
+    end_loop
+    local cvmean = 0.0
+    if nn > 0 then
+        cvmean = s/float(nn)
+    end_if
+    io.out('CLD-CENSUS '+tag+' frac='+string(frac)+' broken_t='+string(nbt)+' broken_s='+string(nbs)+' | feet='+string(nfeet)+' spring='+string(nspring)+' crown='+string(ncrown)+' other='+string(nother)+' | ball_dmax='+string(dmb*1000.0)+'mm midconv='+string(cvmean*1000.0)+'mm')
+end
+
+[read_drive('../../../05_One_Way_Simulation/process/cpl_resid_s01.txt')]
+[set_full_targets(6.0)]
+[census('baseline', 0.0)]
+[ramp_to(0.25)]
+[census('f25', 0.25)]
+[ramp_to(0.50)]
+[census('f50', 0.50)]
+[ramp_to(0.75)]
+[census('f75', 0.75)]
+[ramp_to(1.00)]
+[census('f100', 1.00)]
+[io.out('CLD-DONE (no save)')]
+program log off
+program quit

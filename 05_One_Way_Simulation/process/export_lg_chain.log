@@ -1,0 +1,331 @@
+**********************************************
+* Logging started at 週五 七月 10 13:08:44 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>
+flac3d>model restore '../output/lgs_01'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 21:47:51 2026
+Total Cycles: 32178  Super Cycles: 32178
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('LGC restored lgs_01 zones='+string(zone.num))]
+LGC restored lgs_01 zones=511988
+flac3d>zone export 'lg_geom.f3grid'
+--- 95392 gridpoints exported.
+--- 511988 zones exported.
+--- 10 zone groups assigned.
+--- 34518 faces assigned to 11 face collections/groups.
+--- Exporting grid completed.
+flac3d>[io.out('LGC geom exported')]
+LGC geom exported
+0 (integer)
+flac3d>[global CUR = '01']
+flac3d>[global MODL = 'lg']
+flac3d>call 'field_dump_body.f3dat'
+flac3d>; field_dump_body.f3dat -- per-stage full-model field dump (07-10, thesis Ch5 figures).
+flac3d>;   Call AFTER each `model restore` (restore wipes FISH). Driver sets globals CUR/MODL first.
+flac3d>;   Outputs (keyed by id; geometry comes from <MODL>_geom.f3grid dumped once per model):
+flac3d>;     <MODL>_zf_s<CUR>.txt : id state pp visc      (zone: plastic state bitmask, pore pressure,
+flac3d>;                            maxwell viscosity -> Python: creep zone if visc>0, ACTIVE if <1e50)
+flac3d>;     <MODL>_gf_s<CUR>.txt : id ux uy uz           (gridpoint displacement)
+flac3d>;   Proven intrinsics only: zone.id/state(z,1)/pp/prop, gp.id/disp (smoke_export_probe 07-10).
+flac3d>fish define dump_zf
+   Def>    local f = MODL+'_zf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id state pp visc'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        a(1) = string(zone.id(z))+' '+string(zone.state(z,1))+' '+string(zone.pp(z))+' '+string(zone.prop(z,'viscosity-maxwell'))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-Z '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_gf
+   Def>    local f = MODL+'_gf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id ux uy uz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        a(1) = string(gp.id(g))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-G '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_zf]
+DUMP-Z lg_zf_s01.txt n=511988
+0 (integer)
+flac3d>[dump_gf]
+DUMP-G lg_gf_s01.txt n=95392
+0 (integer)
+flac3d>[io.out('EXPF-DONE '+MODL+' s'+CUR)]
+EXPF-DONE lg s01
+0 (integer)
+flac3d>
+flac3d>model restore '../output/lgs_04'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 22:26:03 2026
+Total Cycles: 96669  Super Cycles: 96669
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '04']
+flac3d>[global MODL = 'lg']
+flac3d>call 'field_dump_body.f3dat'
+flac3d>; field_dump_body.f3dat -- per-stage full-model field dump (07-10, thesis Ch5 figures).
+flac3d>;   Call AFTER each `model restore` (restore wipes FISH). Driver sets globals CUR/MODL first.
+flac3d>;   Outputs (keyed by id; geometry comes from <MODL>_geom.f3grid dumped once per model):
+flac3d>;     <MODL>_zf_s<CUR>.txt : id state pp visc      (zone: plastic state bitmask, pore pressure,
+flac3d>;                            maxwell viscosity -> Python: creep zone if visc>0, ACTIVE if <1e50)
+flac3d>;     <MODL>_gf_s<CUR>.txt : id ux uy uz           (gridpoint displacement)
+flac3d>;   Proven intrinsics only: zone.id/state(z,1)/pp/prop, gp.id/disp (smoke_export_probe 07-10).
+flac3d>fish define dump_zf
+   Def>    local f = MODL+'_zf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id state pp visc'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        a(1) = string(zone.id(z))+' '+string(zone.state(z,1))+' '+string(zone.pp(z))+' '+string(zone.prop(z,'viscosity-maxwell'))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-Z '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_gf
+   Def>    local f = MODL+'_gf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id ux uy uz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        a(1) = string(gp.id(g))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-G '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_zf]
+DUMP-Z lg_zf_s04.txt n=511988
+0 (integer)
+flac3d>[dump_gf]
+DUMP-G lg_gf_s04.txt n=95392
+0 (integer)
+flac3d>[io.out('EXPF-DONE '+MODL+' s'+CUR)]
+EXPF-DONE lg s04
+0 (integer)
+flac3d>
+flac3d>model restore '../output/lgs_06'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 22:56:32 2026
+Total Cycles: 143120  Super Cycles: 143120
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '06']
+flac3d>[global MODL = 'lg']
+flac3d>call 'field_dump_body.f3dat'
+flac3d>; field_dump_body.f3dat -- per-stage full-model field dump (07-10, thesis Ch5 figures).
+flac3d>;   Call AFTER each `model restore` (restore wipes FISH). Driver sets globals CUR/MODL first.
+flac3d>;   Outputs (keyed by id; geometry comes from <MODL>_geom.f3grid dumped once per model):
+flac3d>;     <MODL>_zf_s<CUR>.txt : id state pp visc      (zone: plastic state bitmask, pore pressure,
+flac3d>;                            maxwell viscosity -> Python: creep zone if visc>0, ACTIVE if <1e50)
+flac3d>;     <MODL>_gf_s<CUR>.txt : id ux uy uz           (gridpoint displacement)
+flac3d>;   Proven intrinsics only: zone.id/state(z,1)/pp/prop, gp.id/disp (smoke_export_probe 07-10).
+flac3d>fish define dump_zf
+   Def>    local f = MODL+'_zf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id state pp visc'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        a(1) = string(zone.id(z))+' '+string(zone.state(z,1))+' '+string(zone.pp(z))+' '+string(zone.prop(z,'viscosity-maxwell'))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-Z '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_gf
+   Def>    local f = MODL+'_gf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id ux uy uz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        a(1) = string(gp.id(g))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-G '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_zf]
+DUMP-Z lg_zf_s06.txt n=511988
+0 (integer)
+flac3d>[dump_gf]
+DUMP-G lg_gf_s06.txt n=95392
+0 (integer)
+flac3d>[io.out('EXPF-DONE '+MODL+' s'+CUR)]
+EXPF-DONE lg s06
+0 (integer)
+flac3d>
+flac3d>model restore '../output/lgs_09'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 23:30:51 2026
+Total Cycles: 205283  Super Cycles: 205283
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '09']
+flac3d>[global MODL = 'lg']
+flac3d>call 'field_dump_body.f3dat'
+flac3d>; field_dump_body.f3dat -- per-stage full-model field dump (07-10, thesis Ch5 figures).
+flac3d>;   Call AFTER each `model restore` (restore wipes FISH). Driver sets globals CUR/MODL first.
+flac3d>;   Outputs (keyed by id; geometry comes from <MODL>_geom.f3grid dumped once per model):
+flac3d>;     <MODL>_zf_s<CUR>.txt : id state pp visc      (zone: plastic state bitmask, pore pressure,
+flac3d>;                            maxwell viscosity -> Python: creep zone if visc>0, ACTIVE if <1e50)
+flac3d>;     <MODL>_gf_s<CUR>.txt : id ux uy uz           (gridpoint displacement)
+flac3d>;   Proven intrinsics only: zone.id/state(z,1)/pp/prop, gp.id/disp (smoke_export_probe 07-10).
+flac3d>fish define dump_zf
+   Def>    local f = MODL+'_zf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id state pp visc'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        a(1) = string(zone.id(z))+' '+string(zone.state(z,1))+' '+string(zone.pp(z))+' '+string(zone.prop(z,'viscosity-maxwell'))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-Z '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_gf
+   Def>    local f = MODL+'_gf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id ux uy uz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        a(1) = string(gp.id(g))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-G '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_zf]
+DUMP-Z lg_zf_s09.txt n=511988
+0 (integer)
+flac3d>[dump_gf]
+DUMP-G lg_gf_s09.txt n=95392
+0 (integer)
+flac3d>[io.out('EXPF-DONE '+MODL+' s'+CUR)]
+EXPF-DONE lg s09
+0 (integer)
+flac3d>
+flac3d>model restore '../output/lgs_11'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 23:59:12 2026
+Total Cycles: 250325  Super Cycles: 250325
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '11']
+flac3d>[global MODL = 'lg']
+flac3d>call 'field_dump_body.f3dat'
+flac3d>; field_dump_body.f3dat -- per-stage full-model field dump (07-10, thesis Ch5 figures).
+flac3d>;   Call AFTER each `model restore` (restore wipes FISH). Driver sets globals CUR/MODL first.
+flac3d>;   Outputs (keyed by id; geometry comes from <MODL>_geom.f3grid dumped once per model):
+flac3d>;     <MODL>_zf_s<CUR>.txt : id state pp visc      (zone: plastic state bitmask, pore pressure,
+flac3d>;                            maxwell viscosity -> Python: creep zone if visc>0, ACTIVE if <1e50)
+flac3d>;     <MODL>_gf_s<CUR>.txt : id ux uy uz           (gridpoint displacement)
+flac3d>;   Proven intrinsics only: zone.id/state(z,1)/pp/prop, gp.id/disp (smoke_export_probe 07-10).
+flac3d>fish define dump_zf
+   Def>    local f = MODL+'_zf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id state pp visc'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        a(1) = string(zone.id(z))+' '+string(zone.state(z,1))+' '+string(zone.pp(z))+' '+string(zone.prop(z,'viscosity-maxwell'))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-Z '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_gf
+   Def>    local f = MODL+'_gf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id ux uy uz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        a(1) = string(gp.id(g))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-G '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_zf]
+DUMP-Z lg_zf_s11.txt n=511988
+0 (integer)
+flac3d>[dump_gf]
+DUMP-G lg_gf_s11.txt n=95392
+0 (integer)
+flac3d>[io.out('EXPF-DONE '+MODL+' s'+CUR)]
+EXPF-DONE lg s11
+0 (integer)
+flac3d>
+flac3d>[io.out('LG-CHAIN-DONE')]
+LG-CHAIN-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週五 七月 10 13:09:15 2026
+**********************************************

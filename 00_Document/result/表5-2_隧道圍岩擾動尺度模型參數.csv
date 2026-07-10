@@ -1,0 +1,9 @@
+﻿Layer,E (GPa),c (MPa),phi (deg),rho (kg/m3),Note
+1,1.0,0.19,29.1,2600,
+2,2.0,0.29,35.1,2630,
+3,3.5,0.47,44.3,2630,
+4 (tunnel host),1.5,0.10,30.0,2630,WET weathered SS/SH interbed
+5,3.0,0.80,51.5,2630,
+6,7.0,2.06,56.3,2600,
+Shell lining,25,fc=41.2 / ft=4.12 MPa,-,2400,t=0.40 m, v=0.2
+Common,v=0.25, sig_t=100 kPa,eta_m=1.2e15, eta_k=2.4e13 Pa.s,T=0.8,k x100 annulus,threshold T=0.8 unified

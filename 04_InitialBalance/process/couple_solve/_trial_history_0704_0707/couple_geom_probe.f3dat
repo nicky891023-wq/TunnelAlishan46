@@ -1,0 +1,85 @@
+; couple_geom_probe.f3dat -- confirm the lining ball radial geometry (no state change).
+program log-file 'couple_geom_probe.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial_G3'
+fish automatic-create on
+fish define geom
+    local rmin = 1e30
+    local rmax = 0.0
+    local h = array.create(12)
+    local i = 1
+    loop while i <= 12
+        h(i) = 0
+        i = i + 1
+    end_loop
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        local rx = comp.x(p) - 1297.0
+        local rz = comp.z(p) - 1747.5
+        local r = math.sqrt(rx*rx + rz*rz)
+        if r < rmin then
+            rmin = r
+        end_if
+        if r > rmax then
+            rmax = r
+        end_if
+        local bin = int(r) + 1
+        if bin < 1 then
+            bin = 1
+        end_if
+        if bin > 12 then
+            bin = 12
+        end_if
+        h(bin) = h(bin) + 1
+    end_loop
+    io.out('GEOM ball count='+string(ball.num)+' r_min='+string(rmin)+' r_max='+string(rmax))
+    local j = 1
+    loop while j <= 12
+        io.out('GEOM r '+string(j-1)+'-'+string(j)+'m : '+string(h(j)))
+        j = j + 1
+    end_loop
+    ; springline sample (theta within 20deg of horizontal) radial band
+    local smin = 1e30
+    local smax = 0.0
+    loop foreach local b2 ball.list
+        local p2 = ball.pos(b2)
+        local rx2 = comp.x(p2) - 1297.0
+        local rz2 = comp.z(p2) - 1747.5
+        if math.abs(rz2) < 0.5 then
+            local r2 = math.sqrt(rx2*rx2 + rz2*rz2)
+            if r2 < smin then
+                smin = r2
+            end_if
+            if r2 > smax then
+                smax = r2
+            end_if
+        end_if
+    end_loop
+    io.out('GEOM springline(|z-1747.5|<0.5) radial band: '+string(smin)+' to '+string(smax)+'m')
+    ; crown sample (theta near 90, x near 1297)
+    local cmin = 1e30
+    local cmax = 0.0
+    loop foreach local b3 ball.list
+        local p3 = ball.pos(b3)
+        local rx3 = comp.x(p3) - 1297.0
+        local rz3 = comp.z(p3) - 1747.5
+        if math.abs(rx3) < 0.5 then
+        if rz3 > 0.0 then
+            local r3 = math.sqrt(rx3*rx3 + rz3*rz3)
+            if r3 < cmin then
+                cmin = r3
+            end_if
+            if r3 > cmax then
+                cmax = r3
+            end_if
+        end_if
+        end_if
+    end_loop
+    io.out('GEOM crown(|x-1297|<0.5, z>ctr) radial band: '+string(cmin)+' to '+string(cmax)+'m')
+end
+[geom]
+[io.out('GEOM-DONE')]
+program log off
+program quit

@@ -1,0 +1,34 @@
+; couple_xsec_probe.f3dat -- dump a y=885 cross-section of balls (hollow ring vs solid plug).
+program log-file 'couple_xsec_probe.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial_G3'
+fish automatic-create on
+fish define dumpxsec
+    local f = file.open('cld_xsec_y885.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x z r'
+    local st = file.write(a,1)
+    local n = 0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        local y = comp.y(p)
+        if y > 884.5 then
+        if y < 885.5 then
+            local x = comp.x(p)
+            local z = comp.z(p)
+            local r = math.sqrt((x-1297.0)^2 + (z-1747.5)^2)
+            a(1) = string(x)+' '+string(z)+' '+string(r)
+            st = file.write(a,1)
+            n = n + 1
+        end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('XSEC y885 balls='+string(n))
+end
+[dumpxsec]
+[io.out('XSEC-DONE')]
+program log off
+program quit

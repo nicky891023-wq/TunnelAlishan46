@@ -9,10 +9,10 @@
 ;   11 stages: dry1 W-110(30d), raise W-90/70/50/30(5d), wet W-10(30d),
 ;              drop W-30/50/70/90(5d), dry2 W-110(30d). cwd = 05.
 ; ============================================================================
-program log-file 'process/large_staged.log'
+program log-file 'large_staged.log'
 program log on
-model restore '../04_InitialBalance/Large_Initial'
-call '../04_InitialBalance/parameter.f3dat'
+model restore '../../04_InitialBalance/output/Large_Initial'
+call '../../04_InitialBalance/parameter.f3dat'
 call 'C:/Program Files/Itasca/Flac3d600/datafiles/Creep/SetKStrains.f3fis'
 model configure creep
 model largestrain off
@@ -20,11 +20,11 @@ fish automatic-create on
 [global cum_days = 0.0]   ; FIX 2026-07-02: 'model solve creep time-total' is a CUMULATIVE clock;
                           ; passing per-stage days made stages 2-11 run one 600s step only.
 ; import all water tables W-110..W-10 (used across stages)
-geometry import 'input/W-90.stl'
-geometry import 'input/W-70.stl'
-geometry import 'input/W-50.stl'
-geometry import 'input/W-30.stl'
-geometry import 'input/W-10.stl'
+geometry import '../input/W-90.stl'
+geometry import '../input/W-70.stl'
+geometry import '../input/W-50.stl'
+geometry import '../input/W-30.stl'
+geometry import '../input/W-10.stl'
 [io.out('LS-0 restored Large_Initial + water tables imported; zones='+string(zone.num))]
 
 ; --- threshold: Maxwell-only gating (Kelvin always on), 260529 corrected MC envelope ---
@@ -151,38 +151,38 @@ end
 ; 11 stages : dry1 W-110(30) raise W-90/70/50/30(5) wet W-10(30) drop W-30/50/70/90(5) dry2 W-110(30)
 ; ============================================================================
 [crp_stage(1,'W-110',30.0)]
-[export_box_disp('process/lg_disp_s01.txt')]
-model save 'output/lgs_01'
+[export_box_disp('lg_disp_s01.txt')]
+model save '../output/lgs_01'
 [crp_stage(2,'W-90',5.0)]
-[export_box_disp('process/lg_disp_s02.txt')]
-model save 'output/lgs_02'
+[export_box_disp('lg_disp_s02.txt')]
+model save '../output/lgs_02'
 [crp_stage(3,'W-70',5.0)]
-[export_box_disp('process/lg_disp_s03.txt')]
-model save 'output/lgs_03'
+[export_box_disp('lg_disp_s03.txt')]
+model save '../output/lgs_03'
 [crp_stage(4,'W-50',5.0)]
-[export_box_disp('process/lg_disp_s04.txt')]
-model save 'output/lgs_04'
+[export_box_disp('lg_disp_s04.txt')]
+model save '../output/lgs_04'
 [crp_stage(5,'W-30',5.0)]
-[export_box_disp('process/lg_disp_s05.txt')]
-model save 'output/lgs_05'
+[export_box_disp('lg_disp_s05.txt')]
+model save '../output/lgs_05'
 [crp_stage(6,'W-10',30.0)]
-[export_box_disp('process/lg_disp_s06.txt')]
-model save 'output/lgs_06'
+[export_box_disp('lg_disp_s06.txt')]
+model save '../output/lgs_06'
 [crp_stage(7,'W-30',5.0)]
-[export_box_disp('process/lg_disp_s07.txt')]
-model save 'output/lgs_07'
+[export_box_disp('lg_disp_s07.txt')]
+model save '../output/lgs_07'
 [crp_stage(8,'W-50',5.0)]
-[export_box_disp('process/lg_disp_s08.txt')]
-model save 'output/lgs_08'
+[export_box_disp('lg_disp_s08.txt')]
+model save '../output/lgs_08'
 [crp_stage(9,'W-70',5.0)]
-[export_box_disp('process/lg_disp_s09.txt')]
-model save 'output/lgs_09'
+[export_box_disp('lg_disp_s09.txt')]
+model save '../output/lgs_09'
 [crp_stage(10,'W-90',5.0)]
-[export_box_disp('process/lg_disp_s10.txt')]
-model save 'output/lgs_10'
+[export_box_disp('lg_disp_s10.txt')]
+model save '../output/lgs_10'
 [crp_stage(11,'W-110',30.0)]
-[export_box_disp('process/lg_disp_s11.txt')]
-model save 'output/lgs_11'
+[export_box_disp('lg_disp_s11.txt')]
+model save '../output/lgs_11'
 [io.out('LS-DONE 11-stage large staged creep complete; final dmax='+string(dmax_all))]
 program log off
 program quit

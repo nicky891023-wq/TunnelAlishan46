@@ -1,0 +1,42 @@
+; lg_chain.f3dat -- LARGE model export chain (07-10): geometry once + fields at 5 stages.
+;   Stages 01(dry1 W-110) / 04(rise W-50) / 06(wet W-10) / 09(fall W-50) / 11(dry2 W-110).
+;   Verify via THIS log: expect 5x EXPF-DONE lg + final LG-CHAIN-DONE.
+program log-file 'export_lg_chain.log'
+program log on
+
+model restore '../output/lgs_01'
+fish automatic-create on
+[io.out('LGC restored lgs_01 zones='+string(zone.num))]
+zone export 'lg_geom.f3grid'
+[io.out('LGC geom exported')]
+[global CUR = '01']
+[global MODL = 'lg']
+call 'field_dump_body.f3dat'
+
+model restore '../output/lgs_04'
+fish automatic-create on
+[global CUR = '04']
+[global MODL = 'lg']
+call 'field_dump_body.f3dat'
+
+model restore '../output/lgs_06'
+fish automatic-create on
+[global CUR = '06']
+[global MODL = 'lg']
+call 'field_dump_body.f3dat'
+
+model restore '../output/lgs_09'
+fish automatic-create on
+[global CUR = '09']
+[global MODL = 'lg']
+call 'field_dump_body.f3dat'
+
+model restore '../output/lgs_11'
+fish automatic-create on
+[global CUR = '11']
+[global MODL = 'lg']
+call 'field_dump_body.f3dat'
+
+[io.out('LG-CHAIN-DONE')]
+program log off
+program quit

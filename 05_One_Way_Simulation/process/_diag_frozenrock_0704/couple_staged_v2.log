@@ -1,0 +1,1871 @@
+**********************************************
+* Logging started at 週六 七月 4 17:20:27 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../04_InitialBalance/process/couple_solve/Couple_Initial_free2'   ; free2 = debris removed + re-converged (07-04); background break rate characterized by CONTROL-0 below
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 七月 4 15:16:31 2026
+Total Cycles: 41005  Super Cycles: 41005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>model largestrain on
+flac3d>model mechanical timestep scale
+--- density scaling activated in mechanical process with a target timestep of 1.
+flac3d>fish automatic-create on
+flac3d>call 'fracture_track_v2.fis'
+flac3d>; fname: fracture.fis
+flac3d>;
+flac3d>; Simple environment to track fragmentation in a BPM.
+flac3d>; Track LinearPBond model "bond_change" events and turn them into fractures.
+flac3d>; Use Fragment logic and Ball Result logic to record fragemnt ids 
+flac3d>;
+flac3d>; ============================================================================
+flac3d>
+flac3d>fish define add_crack(entries)
+   Def>    local contact    = entries(1)
+   Def>    local mode       = entries(2)    ; FIX: slot2=failure mode {1=tension,2=shear}; slot3=strength(force). Was entries(3)=strength -> mode never 1/2 -> crack_tension/crack_shear DFNs never created (QA empty). Verified vs PFC linearpbond cmlinearpbond.html Table3 + official fracture.p3fis.
+   Def>    local  frac_pos   = contact.pos(contact)
+   Def>    local norm       = contact.normal(contact)
+   Def>    local dfn_label  = 'crack'
+   Def>    local  frac_size
+   Def>    local  bp1 = contact.end1(contact)
+   Def>    local  bp2 = contact.end2(contact)
+   Def>    local  ret = math.min(ball.radius(bp1),ball.radius(bp2))
+   Def>                 ; (  contact.method(contact,'pb_radius')  )
+   Def>    frac_size = ret
+   Def>    local arg = array.create(5)
+   Def>    arg(1) = 'disk'
+   Def>    arg(2) = frac_pos
+   Def>    arg(3) = frac_size
+   Def>    arg(4) = math.dip.from.normal(norm)/math.degrad
+   Def>    arg(5) = math.ddir.from.normal(norm)/math.degrad
+   Def>    if arg(5) < 0.0
+   Def>      arg(5) = 360.0+arg(5)
+   Def>    end_if
+   Def>    global crack_num
+   Def>    crack_num = crack_num + 1
+   Def>    
+   Def>    if mode = 1 then 
+   Def>        ; failed in tension
+   Def>        dfn_label = dfn_label + '_tension'
+   Def>    else if mode = 2 then
+   Def>        ; failed in shear
+   Def>        dfn_label = dfn_label + '_shear'
+   Def>    endif
+   Def>        
+   Def>    global dfn = dfn.find(dfn_label)
+   Def>    if dfn = null then
+   Def>        dfn = dfn.create(dfn_label)
+   Def>    endif
+   Def>    local fnew = fracture.create(dfn,arg)
+   Def>    fracture.prop(fnew,'age')  = mech.time.total
+   Def>    fracture.extra(fnew,1) = bp1
+   Def>    fracture.extra(fnew,2) = bp2
+   Def>    crack_accum += 1
+   Def>    global frag_time
+   Def>    global xmin,xmax,ymin,ymax,zmin,zmax
+   Def>    if crack_accum > 50
+   Def>        if frag_time < mech.time.total
+   Def>            frag_time = mech.time.total
+   Def>            crack_accum = 0
+   Def>            command 
+   Def>                fragment compute
+   Def>            endcommand
+   Def>            ; go through and update the fracture positions
+   Def>            loop for (local i = 0, i < 2, i = i + 1)
+   Def>                local name = 'crack_tension'
+   Def>                if i = 1
+   Def>                    name = 'crack_shear'
+   Def>                endif
+   Def>                dfn = dfn.find(name)
+   Def>                if dfn # null
+   Def>                    loop foreach local frac dfn.fracturelist(dfn)
+   Def>                        local ball1 = fracture.extra(frac,1)
+   Def>                        local ball2 = fracture.extra(frac,2)
+   Def>                        if ball1 # null
+   Def>                            if ball2 # null
+   Def>                                local len = fracture.diameter(frac)/2.0
+   Def>                                local pos = (ball.pos(ball1)+ ...
+   Def>                                             ball.pos(ball2))/2.0
+   Def>                                if comp.x(pos)-len > xmin
+   Def>                                    if comp.x(pos)+len < xmax
+   Def>                                        if comp.y(pos)-len > ymin
+   Def>                                            if comp.y(pos)+len < ymax
+   Def>                                                if comp.z(pos)-len > zmin
+   Def>                                                    if comp.z(pos)+len < zmax
+   Def>                                                       fracture.pos(frac) = pos
+   Def>                                                    end_if
+   Def>                                                end_if
+   Def>                                            endif
+   Def>                                        endif
+   Def>                                    endif
+   Def>                                endif
+   Def>                            endif
+   Def>                        endif
+   Def>                    endloop
+   Def>                endif
+   Def>            endloop
+   Def>        endif
+   Def>    endif
+   Def>end
+flac3d>
+flac3d>fish define track_init
+   Def>    command
+   Def>        fracture delete
+   Def>        model results clear-map
+   Def>        fragment clear
+   Def>        fragment register ball-ball
+   Def>    endcommand
+   Def>  ; activate fishcalls
+   Def>    command
+   Def>        fish callback remove add_crack event bond_break
+   Def>        fish callback add add_crack event bond_break
+   Def>    endcommand
+   Def>    ; reset global variables
+   Def>    global crack_accum = 0
+   Def>    global crack_num = 0
+   Def>    global track_time0 = mech.time.total
+   Def>    global frag_time = mech.time.total
+   Def>    global xmin = domain.min.x()
+   Def>    global ymin = domain.min.y()
+   Def>    global xmax = domain.max.x()
+   Def>    global ymax = domain.max.y()
+   Def>    global zmin = domain.min.z()
+   Def>    global zmax = domain.max.z()
+   Def>
+   Def>end
+flac3d>
+flac3d>; ============================================================================
+flac3d>; eof: fracture.fis
+flac3d>call 'couple_qa_v2.fis'
+flac3d>; couple_qa_funcs.fis -- Visual QA extraction for coupled stages (call AFTER each restore).
+flac3d>;   dump_cracks(pfx): write <pfx>_cracks.txt (x y z type diam age) for crack_tension + crack_shear DFNs.
+flac3d>;   qa_walls(pfx,stg): io.out wz_outter / w_inner net contact force per stage.
+flac3d>;   crack_sectors(pfx): bin tension+shear crack count by circumferential sector (12 x 30deg) + axial band.
+flac3d>;   tunnel axis along y, centre (cx,cz)=(1297,1747.5).
+flac3d>fish define dump_cracks(pfx)
+   Def>    local fname = pfx+'_cracks.txt'
+   Def>    local st = file.open(fname,1,1)
+   Def>    local buf = array.create(1)
+   Def>    buf(1) = 'x y z type diam age'
+   Def>    file.write(buf,1)
+   Def>    global ncr_t = 0
+   Def>    global ncr_s = 0
+   Def>    local ii = 0
+   Def>    loop while ii < 2
+   Def>        local nm = 'crack_tension'
+   Def>        local ty = 1
+   Def>        if ii = 1 then
+   Def>            nm = 'crack_shear'
+   Def>            ty = 2
+   Def>        end_if
+   Def>        local d = dfn.find(nm)
+   Def>        if d # null then
+   Def>            loop foreach local fr dfn.fracturelist(d)
+   Def>                local p = fracture.pos(fr)
+   Def>                local dm = fracture.diameter(fr)
+   Def>                local ag = fracture.prop(fr,'age')
+   Def>                buf(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(ty)+' '+string(dm)+' '+string(ag)
+   Def>                file.write(buf,1)
+   Def>                if ty = 1 then
+   Def>                    ncr_t = ncr_t + 1
+   Def>                else
+   Def>                    ncr_s = ncr_s + 1
+   Def>                end_if
+   Def>            end_loop
+   Def>        end_if
+   Def>        ii = ii + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('QA-CRACKS '+pfx+' tension='+string(ncr_t)+' shear='+string(ncr_s)+' total='+string(ncr_t+ncr_s)+' -> '+fname)
+   Def>end
+flac3d>fish define qa_walls(pfx, stg)
+   Def>    loop foreach local w wall.list
+   Def>        local fc = wall.force.contact(w)
+   Def>        local m = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+   Def>        if wall.name(w) = 'wz_outter' then
+   Def>            io.out('QA-WALL '+pfx+' s'+string(stg)+' wz_outter='+string(m)+'MN ('+string(comp.x(fc)/1e6)+','+string(comp.y(fc)/1e6)+','+string(comp.z(fc)/1e6)+')')
+   Def>        end_if
+   Def>        if wall.name(w) = 'w_inner' then
+   Def>            io.out('QA-WALL '+pfx+' s'+string(stg)+' w_inner='+string(m)+'MN')
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>; mid-band only wz_outter reaction: integrate bf_couple ball-facet contact forces over y in [y0,y1]
+flac3d>;   (total wall.force.contact is end-contaminated; this isolates the mid-tunnel lining reaction)
+flac3d>fish define mid_wall_force(pfx, y0, y1)
+   Def>    global fmid_sum = 0.0      ; signed sum of normal force (compression>0 per PFC convention varies)
+   Def>    global fmid_abs = 0.0      ; sum |normal force| = contact-load magnitude proxy
+   Def>    global nmid_c = 0
+   Def>    ; coupling (ball-facet on wz_outter) = linearpbond unbreakable pb_ten>=1e10 (cb_control0 has NO
+   Def>    ;   'bf_couple' group; identify by pb_ten instead verified 62556 coupling contacts, 47806 in mid)
+   Def>    loop foreach local c contact.list
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_ten') >= 1.0e10 then
+   Def>                local p = contact.pos(c)
+   Def>                local yy = comp.y(p)
+   Def>                if yy >= y0 then
+   Def>                    if yy <= y1 then
+   Def>                        local fn = contact.force.normal(c)
+   Def>                        fmid_sum = fmid_sum + fn
+   Def>                        local af = fn
+   Def>                        if af < 0.0 then
+   Def>                            af = -af
+   Def>                        end_if
+   Def>                        fmid_abs = fmid_abs + af
+   Def>                        nmid_c = nmid_c + 1
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('MID-WALL '+pfx+' y['+string(y0)+','+string(y1)+'] bf_couple_n='+string(nmid_c)+' sum_normal='+string(fmid_sum/1e6)+'MN abs_normal='+string(fmid_abs/1e6)+'MN')
+   Def>end
+flac3d>; mid-band tunnel-wall convergence (Codex Q2 2nd proof): lining-ball radial-inward displacement in
+flac3d>;   y[y0,y1]. ball.disp tracks drive-induced motion (datum reset zeroed it). reports mean/max + inner-band.
+flac3d>fish define mid_convergence(pfx, y0, y1)
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    ; INNER-WALL (r 1.35-2.0m) radial convergence, split by region (Codex): blue-line load region
+   Def>    ;   (ang NOT in 250-320deg = sidewalls+crown) vs fixed-corner band (ang 250-320 = artifact).
+   Def>    global cv_blue = 0.0
+   Def>    global mx_blue = 0.0
+   Def>    global nb_blue = 0
+   Def>    global cv_corner = 0.0
+   Def>    global mx_corner = 0.0
+   Def>    global nb_corner = 0
+   Def>    local sblue = 0.0
+   Def>    local scorner = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local yy = comp.y(p)
+   Def>        if yy >= y0 then
+   Def>        if yy <= y1 then
+   Def>            local rx = comp.x(p) - cx
+   Def>            local rz = comp.z(p) - cz
+   Def>            local rr = math.sqrt(rx*rx + rz*rz)
+   Def>            if rr >= 1.35 then
+   Def>            if rr <= 2.0 then
+   Def>                local ang = math.atan2(rz, rx)/math.degrad
+   Def>                if ang < 0.0 then
+   Def>                    ang = 360.0 + ang
+   Def>                end_if
+   Def>                local d = ball.disp(b)
+   Def>                local ri = -(comp.x(d)*rx/rr + comp.z(d)*rz/rr)
+   Def>                local iscorner = 0
+   Def>                if ang >= 250.0 then
+   Def>                    if ang <= 320.0 then
+   Def>                        iscorner = 1
+   Def>                    end_if
+   Def>                end_if
+   Def>                if iscorner = 1 then
+   Def>                    scorner = scorner + ri
+   Def>                    nb_corner = nb_corner + 1
+   Def>                    if ri > mx_corner then
+   Def>                        mx_corner = ri
+   Def>                    end_if
+   Def>                else
+   Def>                    sblue = sblue + ri
+   Def>                    nb_blue = nb_blue + 1
+   Def>                    if ri > mx_blue then
+   Def>                        mx_blue = ri
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    if nb_blue > 0 then
+   Def>        cv_blue = sblue/float(nb_blue)
+   Def>    end_if
+   Def>    if nb_corner > 0 then
+   Def>        cv_corner = scorner/float(nb_corner)
+   Def>    end_if
+   Def>    io.out('MID-CONV '+pfx+' INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n='+string(nb_blue)+' radial_inward mean='+string(cv_blue*1000.0)+'mm max='+string(mx_blue*1000.0)+'mm | fixed-corner n='+string(nb_corner)+' mean='+string(cv_corner*1000.0)+'mm max='+string(mx_corner*1000.0)+'mm')
+   Def>end
+flac3d>fish define crack_sectors(pfx)
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    local sect = array.create(12)
+   Def>    local kk = 1
+   Def>    loop while kk <= 12
+   Def>        sect(kk) = 0
+   Def>        kk = kk + 1
+   Def>    end_loop
+   Def>    local ii = 0
+   Def>    loop while ii < 2
+   Def>        local nm = 'crack_tension'
+   Def>        if ii = 1 then
+   Def>            nm = 'crack_shear'
+   Def>        end_if
+   Def>        local d = dfn.find(nm)
+   Def>        if d # null then
+   Def>            loop foreach local fr dfn.fracturelist(d)
+   Def>                local p = fracture.pos(fr)
+   Def>                local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+   Def>                if ang < 0.0 then
+   Def>                    ang = 360.0 + ang
+   Def>                end_if
+   Def>                local s = int(ang/30.0) + 1
+   Def>                if s > 12 then
+   Def>                    s = 12
+   Def>                end_if
+   Def>                sect(s) = sect(s) + 1
+   Def>            end_loop
+   Def>        end_if
+   Def>        ii = ii + 1
+   Def>    end_loop
+   Def>    io.out('QA-SECTORS '+pfx+' (30deg bins 0..360): '+string(sect(1))+' '+string(sect(2))+' '+string(sect(3))+' '+string(sect(4))+' '+string(sect(5))+' '+string(sect(6))+' '+string(sect(7))+' '+string(sect(8))+' '+string(sect(9))+' '+string(sect(10))+' '+string(sect(11))+' '+string(sect(12)))
+   Def>end
+flac3d>
+flac3d>; ---- v2 additions (2026-07-03): p(theta,y) map + coupled bore-wall disp export ----
+flac3d>fish define export_pmap(fname)
+   Def>    ; bin bf_couple (pb_ten>=1e10 ball-facet) contact normal forces: 24 x 15deg sectors x 5 y-bands
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    local nsec = 24
+   Def>    local acc = array.create(nsec,5)
+   Def>    local cnt = array.create(nsec,5)
+   Def>    local i = 1
+   Def>    loop while i <= nsec
+   Def>        local j = 1
+   Def>        loop while j <= 5
+   Def>            acc(i,j) = 0.0
+   Def>            cnt(i,j) = 0
+   Def>            j = j + 1
+   Def>        end_loop
+   Def>        i = i + 1
+   Def>    end_loop
+   Def>    loop foreach local c contact.list
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_ten') >= 1.0e10 then
+   Def>                local p = contact.pos(c)
+   Def>                local yy = comp.y(p)
+   Def>                if yy >= 860.0 then
+   Def>                if yy <= 910.0 then
+   Def>                    local jb = int((yy-860.0)/10.0) + 1
+   Def>                    if jb > 5 then
+   Def>                        jb = 5
+   Def>                    end_if
+   Def>                    local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+   Def>                    if ang < 0.0 then
+   Def>                        ang = 360.0 + ang
+   Def>                    end_if
+   Def>                    local ib = int(ang/15.0) + 1
+   Def>                    if ib > nsec then
+   Def>                        ib = nsec
+   Def>                    end_if
+   Def>                    acc(ib,jb) = acc(ib,jb) + contact.force.normal(c)
+   Def>                    cnt(ib,jb) = cnt(ib,jb) + 1
+   Def>                end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local st = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'sector_deg yband sum_fn_N n_contacts'
+   Def>    st = file.write(a,1)
+   Def>    i = 1
+   Def>    loop while i <= nsec
+   Def>        local j2 = 1
+   Def>        loop while j2 <= 5
+   Def>            a(1) = string((i-1)*15)+' '+string(j2)+' '+string(acc(i,j2))+' '+string(cnt(i,j2))
+   Def>            st = file.write(a,1)
+   Def>            j2 = j2 + 1
+   Def>        end_loop
+   Def>        i = i + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('QA-PMAP -> '+fname)
+   Def>end
+flac3d>fish define export_cwall(fname)
+   Def>    ; coupled rock bore-wall gp displacements (G2 vs small model cpl_wall_sNN)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z dx dy dz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local yy = comp.y(p)
+   Def>        if yy > 860.0 then
+   Def>        if yy < 910.0 then
+   Def>            local rx = comp.x(p) - 1297.0
+   Def>            local rz = comp.z(p) - 1747.5
+   Def>            if rx*rx + rz*rz < 8.41 then
+   Def>                local d = gp.disp(g)
+   Def>                a(1) = string(comp.x(p))+' '+string(yy)+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>                st = file.write(a,1)
+   Def>                n = n + 1
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('QA-CWALL n='+string(n)+' -> '+fname)
+   Def>end
+flac3d>[global NSUB = 10]
+flac3d>[global NCYC = 150]
+flac3d>[io.out('CS-0 restored Couple_Initial_free: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num))]
+CS-0 restored Couple_Initial_free: zones=424908 balls=456256 walls=3
+flac3d>
+flac3d>; ---- crack tracking on (resets DFNs, registers bond_break callback) ----
+flac3d>[track_init]
+flac3d>fracture delete
++++ No fractures found in range.
+flac3d>model results clear-map
+flac3d>fragment clear
+--- The previous fragment computations have been cleared and automatic updates disabled.
+flac3d>fragment register ball-ball
+--- 2267346 contacts of type ball-ball have been registered.
+flac3d>fish callback remove add_crack event bond_break
+flac3d>fish callback add add_crack event bond_break
+0 (integer)
+flac3d>; datum: ball + gp displacements zeroed at staged-run start
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456256 ball(s).
+flac3d>zone gridpoint initialize displacement (0,0,0)
+--- displacement modified in 441728 gridpoints.
+flac3d>
+flac3d>; ---- tag + fix the driven outer-boundary gps (6 couple-box faces, +-0.3 m) ----
+flac3d>fish define tag_cpl_driven
+   Def>    global ndriven = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local x = comp.x(p)
+   Def>        local y = comp.y(p)
+   Def>        local z = comp.z(p)
+   Def>        local onb = 0
+   Def>        if math.abs(x-1277.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(x-1317.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(y-860.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(y-910.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(z-1728.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(z-1768.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if onb = 1 then
+   Def>            gp.group(g,'drive') = 'driven'
+   Def>            gp.vel(g) = vector(0.0,0.0,0.0)
+   Def>            gp.fix(g) = vector(1,1,1)
+   Def>            ndriven = ndriven + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('CS-driven outer-boundary gps tagged+fixed='+string(ndriven))
+   Def>end
+flac3d>[tag_cpl_driven]
+CS-driven outer-boundary gps tagged+fixed=20648
+0 (integer)
+flac3d>
+flac3d>; ---- drive-file reader (x y z dx dy dz, 1 header line) ----
+flac3d>fish define read_drive(fname)
+   Def>    local arr = array.create(1)
+   Def>    local st = file.open(fname,0,1)
+   Def>    ndata = 0
+   Def>    st = file.read(arr,1)
+   Def>    st = file.read(arr,1)
+   Def>    loop while st = 0
+   Def>        ndata = ndata + 1
+   Def>        st = file.read(arr,1)
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    xdat  = array.create(ndata)
+   Def>    ydat  = array.create(ndata)
+   Def>    zdat  = array.create(ndata)
+   Def>    uxdat = array.create(ndata)
+   Def>    uydat = array.create(ndata)
+   Def>    uzdat = array.create(ndata)
+   Def>    st = file.open(fname,0,1)
+   Def>    st = file.read(arr,1)
+   Def>    local i = 0
+   Def>    st = file.read(arr,1)
+   Def>    loop while st = 0
+   Def>        i = i + 1
+   Def>        local ln = arr(1)
+   Def>        xdat(i)  = string.token(ln,1)
+   Def>        ydat(i)  = string.token(ln,2)
+   Def>        zdat(i)  = string.token(ln,3)
+   Def>        uxdat(i) = string.token(ln,4)
+   Def>        uydat(i) = string.token(ln,5)
+   Def>        uzdat(i) = string.token(ln,6)
+   Def>        st = file.read(arr,1)
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('   CS-read '+fname+' ndata='+string(ndata))
+   Def>end
+flac3d>
+flac3d>; ---- store per-gp IDW targets in gp.extra(1..3) (radius 6 m, 1/d^2, nearest fallback) ----
+flac3d>fish define set_targets(radius)
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            local p = gp.pos(g)
+   Def>            local x = comp.x(p)
+   Def>            local y = comp.y(p)
+   Def>            local z = comp.z(p)
+   Def>            local sw = 0.0
+   Def>            local sux = 0.0
+   Def>            local suy = 0.0
+   Def>            local suz = 0.0
+   Def>            local dmin = 1e30
+   Def>            local i = 1
+   Def>            loop while i <= ndata
+   Def>                local dx = x - xdat(i)
+   Def>                local dy = y - ydat(i)
+   Def>                local dz = z - zdat(i)
+   Def>                local d2 = dx*dx + dy*dy + dz*dz
+   Def>                if d2 <= radius*radius then
+   Def>                    local w = 1.0/math.max(d2,1e-10)
+   Def>                    sw = sw + w
+   Def>                    sux = sux + uxdat(i)*w
+   Def>                    suy = suy + uydat(i)*w
+   Def>                    suz = suz + uzdat(i)*w
+   Def>                end_if
+   Def>                if d2 < dmin then
+   Def>                    dmin = d2
+   Def>                    global inear = i
+   Def>                end_if
+   Def>                i = i + 1
+   Def>            end_loop
+   Def>            if sw > 0.0 then
+   Def>                gp.extra(g,1) = sux/sw
+   Def>                gp.extra(g,2) = suy/sw
+   Def>                gp.extra(g,3) = suz/sw
+   Def>            else
+   Def>                gp.extra(g,1) = uxdat(inear)
+   Def>                gp.extra(g,2) = uydat(inear)
+   Def>                gp.extra(g,3) = uzdat(inear)
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>
+flac3d>; ---- one ramp substep: vel = remaining_delta / (subs_left * NCYC * dt=1) ----
+flac3d>fish define set_sub_vel(subs_left)
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            local d = gp.disp(g)
+   Def>            local den = float(subs_left)*float(NCYC)
+   Def>            gp.vel(g) = vector((gp.extra(g,1)-comp.x(d))/den, (gp.extra(g,2)-comp.y(d))/den, (gp.extra(g,3)-comp.z(d))/den)
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>fish define hold_driven
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            gp.vel(g) = vector(0.0,0.0,0.0)
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>fish define ball_dmax
+   Def>    local dm = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local d = ball.disp(b)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    ball_dmax = dm
+   Def>end
+flac3d>
+flac3d>; ---- per-stage driver ----
+flac3d>fish define cs_stage(stg, fname)
+   Def>    read_drive(fname)
+   Def>    set_targets(6.0)
+   Def>    local isub = 0
+   Def>    loop while isub < NSUB
+   Def>        isub = isub + 1
+   Def>        set_sub_vel(NSUB - isub + 1)
+   Def>        command
+   Def>            model cycle [NCYC]
+   Def>            model calm
+   Def>        endcommand
+   Def>    end_loop
+   Def>    hold_driven
+   Def>    command
+   Def>        model solve ratio-average 1e-4 or cycles 8000
+   Def>    endcommand
+   Def>    local pfx = 'cs_s'+string(stg)
+   Def>    dump_cracks(pfx)
+   Def>    qa_walls(pfx, stg)
+   Def>    mid_wall_force(pfx, 870.0, 900.0)
+   Def>    mid_convergence(pfx, 870.0, 900.0)
+   Def>    crack_sectors(pfx)
+   Def>    export_pmap(pfx+'_pmap.txt')
+   Def>    export_cwall(pfx+'_cwall.txt')
+   Def>    io.out('CS-CHK stg'+string(stg)+' cracks_t='+string(ncr_t)+' cracks_s='+string(ncr_s)+' ball_dmax='+string(ball_dmax))
+   Def>end
+flac3d>
+flac3d>; ============================================================================
+flac3d>; CONTROL-0 (gate G5): zero-target ramp -> must give 0 cracks + ~0 drift
+flac3d>; ============================================================================
+flac3d>fish define zero_targets
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            gp.extra(g,1) = 0.0
+   Def>            gp.extra(g,2) = 0.0
+   Def>            gp.extra(g,3) = 0.0
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>[zero_targets]
+0 (integer)
+flac3d>[set_sub_vel(2)]
+0 (integer)
+flac3d>model cycle 150
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      41155 00:00:02:54       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-04 17:53:03
+flac3d>model calm
+flac3d>[hold_driven]
+0 (integer)
+flac3d>model solve ratio-average 1e-4 or cycles 3000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+     1422      42577 9.4317e-05 00:00:28:08      3000            1.0000e-04             
+--- Limit ratio-average of 1.0000e-04 met in process(es): mech Zone Main (0.0000e+00),mech Struct Main (0.0000e+00),mech Ball (9.4317e-05),mech Clump (0.0000e+00).
+--- Cycling ended at: 2026-07-04 18:21:13
+flac3d>[dump_cracks('cs_control0')]
+QA-CRACKS cs_control0 tension=38 shear=4 total=42 -> cs_control0_cracks.txt
+0 (integer)
+flac3d>[io.out('CS-CONTROL0 GATE: cracks='+string(ncr_t+ncr_s)+' (must be 0) ball_drift='+string(ball_dmax)+' m (must be <5e-4)')]
+CS-CONTROL0 GATE: cracks=42 (must be 0) ball_drift=0.00247006 m (must be <5e-4)
+flac3d>
+flac3d>; ============================================================================
+flac3d>; 11 stages (cumulative residual targets from the small model)
+flac3d>; ============================================================================
+flac3d>[cs_stage(1,'cpl_resid_s01.txt')]
+   CS-read cpl_resid_s01.txt ndata=10109
+flac3d>model cycle [NCYC]
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      42727 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-04 18:26:37
+flac3d>model calm
+flac3d>model cycle [NCYC]
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 1 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 2 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 3 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 3 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 3 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 3 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 3 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 4 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 4 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 4 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 4 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 4 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 4 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 5 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      42877 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-04 18:30:00
+flac3d>model calm
+flac3d>model cycle [NCYC]
+flac3d>fragment compute
+--- 5 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 5 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 5 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 5 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 5 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 6 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 6 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 6 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 8 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 9 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 9 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 9 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 9 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 9 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 9 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 9 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 9 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 9 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 9 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 9 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 10 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 10 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 10 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 10 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 10 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 10 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 10 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 10 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 11 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 13 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 13 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 14 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      43027 00:00:03:36       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-04 18:33:37
+flac3d>model calm
+flac3d>model cycle [NCYC]
+flac3d>fragment compute
+--- 16 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 16 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 16 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 16 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 16 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 17 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 17 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 18 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 18 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 18 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 18 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 18 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 21 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 21 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 22 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 23 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 24 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 24 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 24 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 25 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 26 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 27 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 29 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 30 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 30 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 30 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 30 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 31 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 33 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 33 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 34 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 34 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 34 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 34 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 34 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 34 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 36 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 36 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 36 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 37 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 37 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 39 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 40 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 40 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 40 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 40 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 40 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 40 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 40 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 41 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 41 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 41 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 41 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 41 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 41 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 41 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 41 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 43 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      43177 00:00:03:45       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-04 18:37:24
+flac3d>model calm
+flac3d>model cycle [NCYC]
+flac3d>fragment compute
+--- 43 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 43 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 43 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 44 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 44 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 46 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 46 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 47 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 47 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 47 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 47 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 49 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 50 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 50 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 50 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 51 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 53 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 53 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 55 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 55 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 55 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 55 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 55 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 56 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 56 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 56 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 57 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 58 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 59 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 60 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 60 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 61 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 61 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 61 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 63 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 64 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 65 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 66 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 66 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 67 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 67 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 67 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 67 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      43327 00:00:03:34       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-04 18:40:59
+flac3d>model calm
+flac3d>model cycle [NCYC]
+flac3d>fragment compute
+--- 68 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 68 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 69 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 70 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 70 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 71 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 72 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 72 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 74 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 74 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 75 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 75 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 75 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 75 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 76 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 77 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 78 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 79 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 80 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 80 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 81 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 81 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 81 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 82 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 82 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 85 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 85 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 85 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 86 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 87 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 87 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 90 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 91 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 91 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 91 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 93 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      43477 00:00:03:30       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-04 18:44:30
+flac3d>model calm
+flac3d>model cycle [NCYC]
+flac3d>fragment compute
+--- 94 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 94 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 94 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 94 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 98 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 98 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 99 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 100 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 100 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 101 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 103 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 104 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 105 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 105 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 106 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 109 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 111 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 111 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 112 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 112 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 112 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 113 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 113 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 116 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 117 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 118 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 119 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 119 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 120 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 123 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      43627 00:00:03:25       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-04 18:47:57
+flac3d>model calm
+flac3d>model cycle [NCYC]
+flac3d>fragment compute
+--- 123 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 124 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 125 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 125 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 127 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 127 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 127 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 127 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 127 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 128 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 128 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 128 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 128 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 129 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 132 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 135 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 136 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 137 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 137 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 138 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 143 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 143 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 144 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 144 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 147 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 147 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      43777 00:00:03:26       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-04 18:51:24
+flac3d>model calm
+flac3d>model cycle [NCYC]
+flac3d>fragment compute
+--- 147 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 149 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 150 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 151 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 152 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 153 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 153 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 154 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 154 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 154 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 154 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 154 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 154 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 154 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 154 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 156 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 156 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 156 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 157 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 157 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 157 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      43927 00:00:03:26       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-04 18:54:52
+flac3d>model calm
+flac3d>model cycle [NCYC]
+flac3d>fragment compute
+--- 157 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 158 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 160 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 162 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 163 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 164 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 164 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 165 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 166 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 166 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 166 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 166 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 166 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 166 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 166 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 166 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 167 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 168 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 168 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 168 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 168 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 168 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      44077 00:00:03:29       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-04 18:58:23
+flac3d>model calm
+flac3d>model solve ratio-average 1e-4 or cycles 8000
+flac3d>fragment compute
+--- 168 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 169 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 169 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 169 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 169 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 170 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 170 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 170 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 170 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 172 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 172 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 172 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 172 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 172 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 172 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 172 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 172 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 172 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 172 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 173 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 173 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 173 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 173 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 174 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 175 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 175 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 175 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 175 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 175 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 176 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 176 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 176 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 176 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 176 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 176 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 176 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 178 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+      855      44932 9.8639e-05 00:00:18:03      8000            1.0000e-04             
+--- Limit ratio-average of 1.0000e-04 met in process(es): mech Zone Main (0.0000e+00),mech Struct Main (0.0000e+00),mech Ball (9.8639e-05),mech Clump (0.0000e+00).
+--- Cycling ended at: 2026-07-04 19:16:27
+QA-CRACKS cs_s1 tension=18585 shear=140 total=18725 -> cs_s1_cracks.txt
+QA-WALL cs_s1 s1 wz_outter=2.89951MN (-0.603106,-0.0276104,-2.83596)
+MID-WALL cs_s1 y[870,900] bf_couple_n=136514 sum_normal=5.30233MN abs_normal=11.6203MN
+MID-CONV cs_s1 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33990 radial_inward mean=-0.000198795mm max=0.00666948mm | fixed-corner n=4376 mean=-0.00127261mm max=0.0321198mm
+QA-SECTORS cs_s1 (30deg bins 0..360): 1541 1772 2067 1792 1345 2510 3274 261 0 61 2159 1943
+QA-PMAP -> cs_s1_pmap.txt
+QA-CWALL n=22531 -> cs_s1_cwall.txt
+CS-CHK stg1 cracks_t=18585 cracks_s=140 ball_dmax=0.0128171
+0 (integer)
+flac3d>model save '../output/cs_01'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/output/cs_01.f3sav.
+flac3d>[cs_stage(2,'cpl_resid_s02.txt')]
+   CS-read cpl_resid_s02.txt ndata=10109
+flac3d>model cycle [NCYC]
+flac3d>fragment compute
+--- 180 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+flac3d>fragment compute
+--- 180 fragment(s) have been found.
+--- Fragment IDs have been assigned.
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      45082 00:00:03:13       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-04 19:23:02
+flac3d>model calm
+flac3d>model cycle [NCYC]
+flac3d>fragment compute
+--- 180 fragment(s) have been found.
+--- Fragment IDs have been assigned.

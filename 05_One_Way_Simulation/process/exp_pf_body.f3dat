@@ -1,0 +1,20 @@
+; exp_pf_body.f3dat -- per-contact ball-facet force dump (fine pressure maps).
+;   Call AFTER each restore (restore wipes FISH). Global CUR set by driver.
+;   Output: pf_s<CUR>.txt  columns: x y z fx fy fz   (all ball-facet contacts on wz_outter)
+fish define exp_pf(fname)
+    local st = file.open(fname,1,1)
+    local a = array.create(1)
+    a(1) = 'x y z fx fy fz'
+    st = file.write(a,1)
+    local n = 0
+    loop foreach local c contact.list('ball-facet')
+        local p = contact.pos(c)
+        local f = contact.force.global(c)
+        a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(f))+' '+string(comp.y(f))+' '+string(comp.z(f))
+        st = file.write(a,1)
+        n = n + 1
+    end_loop
+    st = file.close
+    io.out('EXPPF '+fname+' n='+string(n))
+end
+[exp_pf('pf_s'+CUR+'.txt')]

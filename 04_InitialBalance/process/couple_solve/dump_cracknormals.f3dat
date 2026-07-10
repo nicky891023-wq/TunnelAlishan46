@@ -1,0 +1,39 @@
+; dump_cracknormals.f3dat -- read-only: broken ball-ball contact position + normal from cs_11.
+;   For crack-orientation analysis (circumferential vs longitudinal vs oblique by mechanism).
+program log-file 'dump_cracknormals.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../../05_One_Way_Simulation/output/cs_11'
+fish automatic-create on
+fish define dumpn
+    local f = file.open('cracknormals_s11.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x y z nx ny nz state'
+    local st = file.write(a,1)
+    local n = 0
+    loop foreach local c contact.list('ball-ball')
+        if contact.model(c) = 'linearpbond' then
+            local ps = contact.prop(c,'pb_state')
+            if ps = 1 then
+                local p = contact.pos(c)
+                local nm = contact.normal(c)
+                a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(nm))+' '+string(comp.y(nm))+' '+string(comp.z(nm))+' 1'
+                st = file.write(a,1)
+                n = n + 1
+            end_if
+            if ps = 2 then
+                local p2 = contact.pos(c)
+                local nm2 = contact.normal(c)
+                a(1) = string(comp.x(p2))+' '+string(comp.y(p2))+' '+string(comp.z(p2))+' '+string(comp.x(nm2))+' '+string(comp.y(nm2))+' '+string(comp.z(nm2))+' 2'
+                st = file.write(a,1)
+                n = n + 1
+            end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('CRACKNORM-DONE n='+string(n))
+end
+[dumpn]
+program log off
+program quit

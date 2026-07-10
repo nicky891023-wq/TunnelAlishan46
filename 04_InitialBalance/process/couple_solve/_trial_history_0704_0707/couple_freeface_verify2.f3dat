@@ -1,0 +1,44 @@
+; couple_freeface_verify2.f3dat -- stationarity verification of Couple_Initial_free2.
+;   FFX gate gave new_broken=19 (one-off cleanup around removed debris sites?) with
+;   dmax 0.6 mm. TRUE stability criterion: in a FURTHER solve segment the break count
+;   must NOT grow (delta = 0) and dmax stays sub-mm. PASS -> free2 is the staged start.
+program log-file 'couple_freeface_verify2.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'Couple_Initial_free2'
+fish automatic-create on
+fish define broken_count
+    local nb = 0
+    loop foreach local c contact.list
+        if type.pointer(c) = 'ball-ball' then
+            local st = contact.prop(c,'pb_state')
+            if st = 1 then
+                nb = nb + 1
+            end_if
+            if st = 2 then
+                nb = nb + 1
+            end_if
+        end_if
+    end_loop
+    broken_count = nb
+end
+fish define ball_dmax
+    local dm = 0.0
+    loop foreach local b ball.list
+        local d = ball.disp(b)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > dm then
+            dm = m
+        end_if
+    end_loop
+    ball_dmax = dm
+end
+ball attribute displacement multiply 0.0
+[global brk0 = broken_count]
+[io.out('FFV-0 baseline broken='+string(brk0))]
+model solve ratio-average 1e-4 or cycles 5000
+[io.out('FFV-GATE segment2: new_broken='+string(broken_count-brk0)+' (must be 0) dmax='+string(ball_dmax)+' m (must be sub-mm)')]
+[io.out('FFV-DONE')]
+program log off
+program quit

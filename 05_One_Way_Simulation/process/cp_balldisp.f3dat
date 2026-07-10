@@ -1,0 +1,20 @@
+; cp_balldisp.f3dat v2 -- body-file pattern (define AFTER restore).
+program log-file 'cp_balldisp.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../output/cs_01'
+fish automatic-create on
+[global CUR = '01']
+call 'balldisp_body.f3dat'
+model restore '../output/cs_06'
+fish automatic-create on
+[global CUR = '06']
+call 'balldisp_body.f3dat'
+model restore '../output/cs_11'
+fish automatic-create on
+[global CUR = '11']
+call 'balldisp_body.f3dat'
+[io.out('BD-CHAIN-DONE')]
+program log off
+program quit

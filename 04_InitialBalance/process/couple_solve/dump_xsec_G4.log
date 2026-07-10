@@ -1,0 +1,50 @@
+**********************************************
+* Logging started at 週三 七月 8 09:40:34 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../output/Couple_Initial_G4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週二 七月 7 15:06:06 2026
+Total Cycles: 56705  Super Cycles: 56705
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define dumpx
+   Def>    local f = file.open('xsec_G4_y885.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x z'
+   Def>    local st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local y = comp.y(p)
+   Def>        if y > 884.5 then
+   Def>        if y < 885.5 then
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.z(p))
+   Def>            st = file.write(a,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('XSECG4-DONE balls='+string(n))
+   Def>end
+flac3d>[dumpx]
+XSECG4-DONE balls=8999
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週三 七月 8 09:41:10 2026
+**********************************************

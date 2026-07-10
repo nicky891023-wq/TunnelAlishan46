@@ -1,0 +1,82 @@
+**********************************************
+* Logging started at 週三 七月 8 08:31:04 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../output/Couple_Initial_G4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週二 七月 7 15:06:06 2026
+Total Cycles: 56705  Super Cycles: 56705
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define census
+   Def>    local grid = array.create(24,5)
+   Def>    local i = 1
+   Def>    loop while i <= 24
+   Def>        local j = 1
+   Def>        loop while j <= 5
+   Def>            grid(i,j) = 0
+   Def>            j = j + 1
+   Def>        end_loop
+   Def>        i = i + 1
+   Def>    end_loop
+   Def>    local n = 0
+   Def>    loop foreach local c contact.list('ball-ball')
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_state') = 3 then
+   Def>            if contact.prop(c,'pb_ten') < 1e10 then
+   Def>                local p = contact.pos(c)
+   Def>                local zz = comp.z(p)
+   Def>                if zz > 1745.30 then
+   Def>                    local th = math.atan2(zz-1747.5, comp.x(p)-1297.0)*180.0/math.pi
+   Def>                    if th < 0.0 then
+   Def>                        th = th + 360.0
+   Def>                    end_if
+   Def>                    local bi = int(th/15.0) + 1
+   Def>                    if bi > 24 then
+   Def>                        bi = 24
+   Def>                    end_if
+   Def>                    local bj = int((comp.y(p)-860.0)/10.0) + 1
+   Def>                    if bj < 1 then
+   Def>                        bj = 1
+   Def>                    end_if
+   Def>                    if bj > 5 then
+   Def>                        bj = 5
+   Def>                    end_if
+   Def>                    grid(bi,bj) = grid(bi,bj) + 1
+   Def>                    n = n + 1
+   Def>                end_if
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local f = file.open('bond_census_G4.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    local ii = 1
+   Def>    loop while ii <= 24
+   Def>        a(1) = string(grid(ii,1))+' '+string(grid(ii,2))+' '+string(grid(ii,3))+' '+string(grid(ii,4))+' '+string(grid(ii,5))
+   Def>        local st = file.write(a,1)
+   Def>        ii = ii + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('CENSUS-DONE breakable(non-feet) bonds='+string(n)+' -> bond_census_G4.txt')
+   Def>end
+flac3d>[census]
+CENSUS-DONE breakable(non-feet) bonds=2076871 -> bond_census_G4.txt
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週三 七月 8 08:32:16 2026
+**********************************************

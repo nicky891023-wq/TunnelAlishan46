@@ -1,0 +1,45 @@
+**********************************************
+* Logging started at 週三 七月 8 21:04:40 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../output/Couple_Initial_G4'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週二 七月 7 15:06:06 2026
+Total Cycles: 56705  Super Cycles: 56705
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define dumpr
+   Def>    local f = file.open('ring3d_G4.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z'
+   Def>    local st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('RING3D-DONE n='+string(n))
+   Def>end
+flac3d>[dumpr]
+RING3D-DONE n=456162
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週三 七月 8 21:05:15 2026
+**********************************************

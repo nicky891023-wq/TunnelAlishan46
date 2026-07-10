@@ -1,0 +1,201 @@
+; ============================================================================
+; couple_stepH_rebond.f3dat -- STEP H: drain + IN-SITU RE-BOND (2026-07-05).
+;   WHY: Couple_Initial_G (STEP G v4 annealed transmitter) is a snapshot of a
+;   NOT-YET-EXHAUSTED lock-in cascade: every unswept 1500-3000 cycle window
+;   still breaks 4-6k bonds (F1 solve2 -8,986; G2 final solve -5,921; staged
+;   CONTROL-0 died at Illegal zone 273817). The locked-in forces are an
+;   artifact of assembling the ring inside a RIGID mold; a real lining is cast
+;   stress-free in place and then loaded. So:
+;     D  drain: 6 swept relaxation legs (600 cyc, sweep >10mm, calm) to bed
+;        the geometry (legs never died in v3/v4; only unswept windows did).
+;     R  re-bond ALL ball-ball contacts at the BEDDED geometry with unchanged
+;        D7 micro-parameters (v6 recipe): fresh pb bonds carry ZERO initial
+;        force => lock-in reservoir erased by construction; transition damage
+;        erased (it was mold-softening artifact, not field damage). Feet
+;        strips re-overridden unbreakable. bf_couple (1e20) never broke.
+;     V  verify: 2 swept legs + solve 2000 + 1 swept leg; gate: new breaks
+;        since re-bond must be ~background (<~500), midband quiet.
+;   Save -> ../../output/Couple_Initial_G2 (Couple_Initial_G kept as fallback).
+;   cwd = this dir, bare filename.
+; ============================================================================
+program log-file 'couple_stepH.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial_G'
+model largestrain on
+model mechanical timestep scale
+fish automatic-create on
+call '../../parameter.f3dat'
+
+; ---- QA helpers ----
+fish define n_intact
+    local n = 0
+    loop foreach local c contact.list('ball-ball')
+        if contact.model(c) = 'linearpbond' then
+            if contact.prop(c,'pb_state') = 3 then
+                n = n + 1
+            end_if
+        end_if
+    end_loop
+    n_intact = n
+end
+fish define bdmax
+    local dm = 0.0
+    loop foreach local b ball.list
+        local d = ball.disp(b)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > dm then
+            dm = m
+        end_if
+    end_loop
+    bdmax = dm
+end
+fish define gpdmax
+    local dm = 0.0
+    loop foreach local g gp.list
+        local d = gp.disp(g)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > dm then
+            dm = m
+        end_if
+    end_loop
+    gpdmax = dm
+end
+fish define midconv
+    local s = 0.0
+    local n = 0
+    local mx = 0.0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        local yy = comp.y(p)
+        if yy > 870.0 then
+        if yy < 900.0 then
+            local rx = comp.x(p) - 1297.0
+            local rz = comp.z(p) - 1747.5
+            local rr = math.sqrt(rx*rx + rz*rz)
+            if rr > 1.35 then
+            if rr < 2.05 then
+                local d = ball.disp(b)
+                local ur = (comp.x(d)*rx + comp.z(d)*rz)/rr
+                s = s + ur
+                n = n + 1
+                if math.abs(ur) > mx then
+                    mx = math.abs(ur)
+                end_if
+            end_if
+            end_if
+        end_if
+        end_if
+    end_loop
+    global mc_mean = s/float(n)
+    global mc_max = mx
+    global mc_n = n
+    midconv = mc_mean
+end
+fish define relax_legs(tagpfx, nlegs)
+    local ileg = 0
+    local dry = 0
+    loop while ileg < nlegs
+        ileg = ileg + 1
+        if dry < 2 then
+            command
+                model cycle 600
+            endcommand
+            global ndeb = 0
+            loop foreach local b ball.list
+                local d = ball.disp(b)
+                local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+                if m > 0.010 then
+                    ball.group(b,'debris') = 'debris'
+                    ndeb = ndeb + 1
+                end_if
+            end_loop
+            command
+                ball delete range group 'debris'
+                model calm
+            endcommand
+            if ndeb = 0 then
+                dry = dry + 1
+            else
+                dry = 0
+            end_if
+            local dmg = 0.0
+            local px = 0.0
+            local py = 0.0
+            local pz = 0.0
+            loop foreach local g gp.list
+                local dg = gp.disp(g)
+                local mg = math.sqrt(comp.x(dg)^2+comp.y(dg)^2+comp.z(dg)^2)
+                if mg > dmg then
+                    dmg = mg
+                    local pp = gp.pos(g)
+                    px = comp.x(pp)
+                    py = comp.y(pp)
+                    pz = comp.z(pp)
+                end_if
+            end_loop
+            io.out(tagpfx+' leg'+string(ileg)+' swept='+string(ndeb)+' dry='+string(dry)+' gp_dmax='+string(dmg)+'m@('+string(px)+','+string(py)+','+string(pz)+') intact='+string(n_intact))
+        end_if
+    end_loop
+end
+
+; ---- datum ----
+ball attribute displacement multiply 0.0
+zone gridpoint initialize displacement (0,0,0)
+zone gridpoint initialize velocity (0,0,0)
+model calm
+[global ni0 = n_intact]
+[io.out('STEPH-0 start: balls='+string(ball.num)+' walls='+string(wall.num)+' intact0='+string(ni0))]
+
+; ============================================================================
+; D: ONE sweep leg only (v2 of this script, 07-05 15:0x): the first launch's
+;   drain legs revealed the true mechanism -- the no-invert horseshoe ring is
+;   SPREADING on the compliant bed (both feet lines plowing ~20mm/leg, no
+;   deceleration; the PM damage bands at the feet-strip edges act as hinges).
+;   Draining longer only deepens the hinges. Re-bond IMMEDIATELY: fresh bonds
+;   restore monolithic arch stiffness and stop the spread elastically.
+; ============================================================================
+[relax_legs('STEPH-D', 1)]
+
+; ============================================================================
+; R (v3, 07-05 15:4x): FULL IN-SITU RE-CAST. v2 (re-bond only) still broke 12k
+;   bonds/leg: the sustained MN thrust plowing the feet is the SERVO-ERA HOOP
+;   PRE-COMPRESSION stored in the LINEAR overlap-force web (lin_mode 1 state)
+;   and in the surviving bonds' pb force states -- re-bonding alone does not
+;   touch either. Complete zeroing (= true stress-free casting at the bedded
+;   geometry, same proven command as the v5/v6 force-free install):
+;     unbond all -> lin_force 0 (all contacts) -> rock stress 0 -> re-bond
+;     fresh (D7 ball-ball, 1e20 bf_couple, feet strips override).
+; ============================================================================
+[global ni_d = n_intact]
+contact method unbond range contact type 'ball-ball'
+contact method unbond range contact group 'bf_couple'
+contact property lin_force 0.0 0.0 0.0 lin_mode 1
+[zero_zone_stress]
+zone gridpoint initialize velocity (0,0,0)
+model calm
+contact method bond gap [pfc_bondgap] range contact type 'ball-ball'
+contact method pb_deform emod [pfc_pb_emod] kratio [pfc_pb_krat] range contact type 'ball-ball'
+contact property pb_ten [pfc_pb_ten] pb_coh [pfc_pb_coh] pb_fa [pfc_pb_fa] range contact type 'ball-ball'
+contact property pb_ten [pfc_bf_strong] pb_coh [pfc_bf_strong] range contact type 'ball-ball' position-z 1740.0 1745.30
+contact method bond gap [pfc_bondgap] range contact group 'bf_couple'
+contact method pb_deform emod [pfc_pb_emod] kratio [pfc_pb_krat] range contact group 'bf_couple'
+contact property pb_ten [pfc_bf_strong] pb_coh [pfc_bf_strong] pb_fa [pfc_pb_fa] range contact group 'bf_couple'
+[global ni_rb = n_intact]
+[io.out('STEPH-R re-CAST: intact after drain='+string(ni_d)+' -> after recast='+string(ni_rb)+' (all lin+pb forces zeroed at bedded geometry)')]
+
+; ============================================================================
+; V: verify -- must be near-silent now
+; ============================================================================
+[relax_legs('STEPH-V', 2)]
+model solve ratio-average 1e-4 or cycles 2000
+[relax_legs('STEPH-V2', 1)]
+[global ni1 = n_intact]
+[midconv]
+[io.out('STEPH GATE: broken_since_rebond='+string(ni_rb-ni1)+' (must be ~background <500) ball_dmax='+string(bdmax)+'m gp_dmax='+string(gpdmax)+'m | midband ur mean='+string(mc_mean*1000.0)+'mm max='+string(mc_max*1000.0)+'mm n='+string(mc_n)+' balls='+string(ball.num))]
+
+model save '../../output/Couple_Initial_G2'
+[io.out('STEPH-DONE saved Couple_Initial_G2 (in-situ re-bonded ring on bedded compliant rock)')]
+program log off
+program quit

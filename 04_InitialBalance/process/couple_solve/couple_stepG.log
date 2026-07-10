@@ -1,0 +1,358 @@
+**********************************************
+* Logging started at 週日 七月 5 21:04:43 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../output/Couple_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 七月 4 15:16:31 2026
+Total Cycles: 41005  Super Cycles: 41005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>model largestrain on
+flac3d>model mechanical timestep scale
+--- density scaling activated in mechanical process with a target timestep of 1.
+flac3d>fish automatic-create on
+flac3d>
+flac3d>; ---- QA helpers ----
+flac3d>fish define n_intact
+   Def>    local n = 0
+   Def>    loop foreach local c contact.list('ball-ball')
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_state') = 3 then
+   Def>                n = n + 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    n_intact = n
+   Def>end
+flac3d>fish define bdmax
+   Def>    local dm = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local d = ball.disp(b)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    bdmax = dm
+   Def>end
+flac3d>fish define gpdmax
+   Def>    local dm = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    gpdmax = dm
+   Def>end
+flac3d>fish define midconv
+   Def>    local s = 0.0
+   Def>    local n = 0
+   Def>    local mx = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local yy = comp.y(p)
+   Def>        if yy > 870.0 then
+   Def>        if yy < 900.0 then
+   Def>            local rx = comp.x(p) - 1297.0
+   Def>            local rz = comp.z(p) - 1747.5
+   Def>            local rr = math.sqrt(rx*rx + rz*rz)
+   Def>            if rr > 1.35 then
+   Def>            if rr < 2.05 then
+   Def>                local d = ball.disp(b)
+   Def>                local ur = (comp.x(d)*rx + comp.z(d)*rz)/rr
+   Def>                s = s + ur
+   Def>                n = n + 1
+   Def>                if math.abs(ur) > mx then
+   Def>                    mx = math.abs(ur)
+   Def>                end_if
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    global mc_mean = s/float(n)
+   Def>    global mc_max = mx
+   Def>    global mc_n = n
+   Def>    midconv = mc_mean
+   Def>end
+flac3d>fish define zero_zone_stress
+   Def>    loop foreach local z zone.list
+   Def>        zone.stress.xx(z) = 0.0
+   Def>        zone.stress.yy(z) = 0.0
+   Def>        zone.stress.zz(z) = 0.0
+   Def>        zone.stress.xy(z) = 0.0
+   Def>        zone.stress.xz(z) = 0.0
+   Def>        zone.stress.yz(z) = 0.0
+   Def>    end_loop
+   Def>    io.out('   zone stresses zeroed (incremental-transmitter datum)')
+   Def>end
+flac3d>fish define relax_legs(tagpfx, nlegs)
+   Def>    local ileg = 0
+   Def>    local dry = 0
+   Def>    loop while ileg < nlegs
+   Def>        ileg = ileg + 1
+   Def>        if dry < 2 then
+   Def>            command
+   Def>                model cycle 600
+   Def>            endcommand
+   Def>            global ndeb = 0
+   Def>            loop foreach local b ball.list
+   Def>                local d = ball.disp(b)
+   Def>                local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>                if m > 0.010 then
+   Def>                    ball.group(b,'debris') = 'debris'
+   Def>                    ndeb = ndeb + 1
+   Def>                end_if
+   Def>            end_loop
+   Def>            command
+   Def>                ball delete range group 'debris'
+   Def>                model calm
+   Def>            endcommand
+   Def>            if ndeb = 0 then
+   Def>                dry = dry + 1
+   Def>            else
+   Def>                dry = 0
+   Def>            end_if
+   Def>            local dmg = 0.0
+   Def>            local px = 0.0
+   Def>            local py = 0.0
+   Def>            local pz = 0.0
+   Def>            loop foreach local g gp.list
+   Def>                local dg = gp.disp(g)
+   Def>                local mg = math.sqrt(comp.x(dg)^2+comp.y(dg)^2+comp.z(dg)^2)
+   Def>                if mg > dmg then
+   Def>                    dmg = mg
+   Def>                    local pp = gp.pos(g)
+   Def>                    px = comp.x(pp)
+   Def>                    py = comp.y(pp)
+   Def>                    pz = comp.z(pp)
+   Def>                end_if
+   Def>            end_loop
+   Def>            io.out(tagpfx+' leg'+string(ileg)+' swept='+string(ndeb)+' dry='+string(dry)+' gp_dmax='+string(dmg)+'m@('+string(px)+','+string(py)+','+string(pz)+') intact='+string(n_intact))
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>fish define purge_orphans
+   Def>    loop foreach local b0 ball.list
+   Def>        ball.extra(b0,1) = 0
+   Def>    end_loop
+   Def>    loop foreach local c1 contact.list('ball-ball')
+   Def>        if contact.model(c1) = 'linearpbond' then
+   Def>            if contact.prop(c1,'pb_state') = 3 then
+   Def>                ball.extra(contact.end1(c1),1) = 1
+   Def>                ball.extra(contact.end2(c1),1) = 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    loop foreach local c2 contact.list('ball-facet')
+   Def>        if contact.model(c2) = 'linearpbond' then
+   Def>            if contact.prop(c2,'pb_state') = 3 then
+   Def>                ball.extra(contact.end1(c2),1) = 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    global norph = 0
+   Def>    loop foreach local b1 ball.list
+   Def>        if ball.extra(b1,1) = 0 then
+   Def>            ball.group(b1,'debris') = 'orphan'
+   Def>            norph = norph + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('STEPG-P orphan balls (zero intact bonds)='+string(norph))
+   Def>end
+flac3d>
+flac3d>; ---- datum ----
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456256 ball(s).
+flac3d>zone gridpoint initialize displacement (0,0,0)
+--- displacement modified in 441728 gridpoints.
+flac3d>zone gridpoint initialize velocity (0,0,0)
+--- velocity modified in 441728 gridpoints.
+flac3d>model calm
+flac3d>[global ni0 = n_intact]
+flac3d>[io.out('STEPG-0 start: walls='+string(wall.num)+' balls='+string(ball.num)+' zones='+string(zone.num)+' intact0='+string(ni0))]
+STEPG-0 start: walls=3 balls=456256 zones=424908 intact0=2267346
+flac3d>
+flac3d>; ---- P: orphan purge (frozen rock) ----
+flac3d>[purge_orphans]
+STEPG-P orphan balls (zero intact bonds)=38
+0 (integer)
+flac3d>ball delete range group 'orphan'
+--- 38 balls deleted.
+flac3d>[io.out('STEPG-P purged, balls left='+string(ball.num))]
+STEPG-P purged, balls left=456218
+flac3d>
+flac3d>; ---- transmitter datum + INTERFACE CONSISTENCY ----
+flac3d>zone face apply-remove
+--- Apply conditions removed from 25752 faces.
+flac3d>[zero_zone_stress]
+   zone stresses zeroed (incremental-transmitter datum)
+0 (integer)
+flac3d>zone initialize density 1.0
+--- density modified in 424908 zones.
+flac3d>contact method deformability emod 2.31e9 kratio 1.0 range contact type 'ball-facet'
+--- Method deformability applied to 382289 contacts in range.
+flac3d>contact method pb_deform emod 2.31e9 kratio 1.0 range contact type 'ball-facet'
+--- Method pb_deformability applied to 381738 contacts in range.
+flac3d>cmat default type 'ball-facet' model linearpbond method deformability emod 2.31e9 kratio 1.0 proximity 0.03 property fric 0.5
+flac3d>[io.out('STEPG-IFX interface softened to E_eq (bf emod+pb_emod=2.31e9, strengths untouched)')]
+STEPG-IFX interface softened to E_eq (bf emod+pb_emod=2.31e9, strengths untouched)
+flac3d>
+flac3d>; ---- unfreeze at 100x, mini insurance ladder down to 1x ----
+flac3d>zone property young 2.31e11
+--- Property young set in 424908 zones using the elastic model.
+flac3d>zone gridpoint free velocity
+--- Free velocity         specified in 441728 gridpoints.
+flac3d>zone gridpoint initialize velocity (0,0,0)
+--- velocity modified in 441728 gridpoints.
+flac3d>zone gridpoint fix velocity range position-x 1276.7 1277.3
+--- Fix velocity         specified in 3584 gridpoints.
+flac3d>zone gridpoint fix velocity range position-x 1316.7 1317.3
+--- Fix velocity         specified in 3584 gridpoints.
+flac3d>zone gridpoint fix velocity range position-y 859.7 860.3
+--- Fix velocity         specified in 3944 gridpoints.
+flac3d>zone gridpoint fix velocity range position-y 909.7 910.3
+--- Fix velocity         specified in 3944 gridpoints.
+flac3d>zone gridpoint fix velocity range position-z 1727.7 1728.3
+--- Fix velocity         specified in 3248 gridpoints.
+flac3d>zone gridpoint fix velocity range position-z 1767.7 1768.3
+--- Fix velocity         specified in 3024 gridpoints.
+flac3d>[io.out('STEPG-1 rock unfrozen at 100x E_eq (interior free, 6 bands re-fixed)')]
+STEPG-1 rock unfrozen at 100x E_eq (interior free, 6 bands re-fixed)
+0 (integer)
+flac3d>[relax_legs('STEPG-A100', 1)]
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      41605 00:00:13:25       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-05 21:19:25
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPG-A100 leg1 swept=0 dry=1 gp_dmax=3.13304e-06m@(1299.74,902.342,1748.43) intact=2267296
+0 (integer)
+flac3d>zone property young 2.31e10
+--- Property young set in 424908 zones using the elastic model.
+flac3d>[relax_legs('STEPG-A10', 1)]
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      42205 00:00:13:27       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-05 21:33:10
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPG-A10 leg1 swept=0 dry=1 gp_dmax=3.40623e-06m@(1299.74,902.342,1748.43) intact=2267294
+0 (integer)
+flac3d>zone property young 2.31e9
+--- Property young set in 424908 zones using the elastic model.
+flac3d>[relax_legs('STEPG-A1', 2)]
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      42805 00:00:13:25       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-05 21:46:53
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPG-A1 leg1 swept=0 dry=1 gp_dmax=1.80549e-05m@(1299.74,902.342,1748.43) intact=2267292
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      43405 00:00:13:25       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-05 22:00:36
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPG-A1 leg2 swept=0 dry=2 gp_dmax=3.91727e-05m@(1299.74,902.342,1748.43) intact=2267289
+0 (integer)
+flac3d>
+flac3d>; ---- delete platens, settle ----
+flac3d>wall delete wall range name 'w_860'
+--- 1 walls deleted.
+flac3d>wall delete wall range name 'w_910'
+--- 1 walls deleted.
+flac3d>[io.out('STEPG-2 platens w_860/w_910 deleted, walls left='+string(wall.num))]
+STEPG-2 platens w_860/w_910 deleted, walls left=1
+flac3d>[relax_legs('STEPG-L2', 3)]
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      44005 00:00:13:08       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-05 22:14:03
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPG-L2 leg1 swept=0 dry=1 gp_dmax=4.4099e-05m@(1299.74,902.342,1748.43) intact=2267276
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      44605 00:00:13:05       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-05 22:27:27
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPG-L2 leg2 swept=0 dry=2 gp_dmax=3.95449e-05m@(1301.24,887.928,1747.71) intact=2267275
+0 (integer)
+flac3d>
+flac3d>; ---- calm-cadenced settle (official idiom) + short ratio window ----
+flac3d>model cycle 2400 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2400      47005 00:00:52:23      2400                        
+--- Global cycle limit of 2400 met.
+--- Cycling ended at: 2026-07-05 23:20:08
+flac3d>[relax_legs('STEPG-F1', 1)]
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      47605 00:00:13:06       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-05 23:33:16
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPG-F1 leg1 swept=0 dry=1 gp_dmax=6.46748e-05m@(1296.32,887.027,1747.11) intact=2267256
+0 (integer)
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+      800      48405 2.5042e-03 00:00:17:27       800            1.0000e-04             
+--- Global cycle limit of 800 met.
+--- Cycling ended at: 2026-07-05 23:51:01
+flac3d>[global ni1 = n_intact]
+flac3d>[midconv]
+-2.9e-08 (real)
+flac3d>[io.out('STEPG GATE: new_broken='+string(ni0-ni1)+' ball_dmax='+string(bdmax)+'m gp_dmax='+string(gpdmax)+'m | midband ur mean='+string(mc_mean*1000.0)+'mm max='+string(mc_max*1000.0)+'mm n='+string(mc_n)+' balls='+string(ball.num))]
+STEPG GATE: new_broken=91 ball_dmax=0.00107766m gp_dmax=5.88182e-05m | midband ur mean=-2.92186e-05mm max=0.621782mm n=41140 balls=456218
+flac3d>
+flac3d>model save '../../output/Couple_Initial_G3'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/output/Couple_Initial_G3.f3sav.
+flac3d>[io.out('STEPG-DONE saved Couple_Initial_G3 (consistent-interface elastic transmitter, no platens)')]
+STEPG-DONE saved Couple_Initial_G3 (consistent-interface elastic transmitter, no platens)
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週日 七月 5 23:51:36 2026
+**********************************************

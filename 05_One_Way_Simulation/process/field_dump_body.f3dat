@@ -1,0 +1,46 @@
+; field_dump_body.f3dat -- per-stage full-model field dump (07-10, thesis Ch5 figures).
+;   Call AFTER each `model restore` (restore wipes FISH). Driver sets globals CUR/MODL first.
+;   Outputs (keyed by id; geometry comes from <MODL>_geom.f3grid dumped once per model):
+;     <MODL>_zf_s<CUR>.txt : id state pp visc      (zone: plastic state bitmask, pore pressure,
+;                            maxwell viscosity -> Python: creep zone if visc>0, ACTIVE if <1e50)
+;     <MODL>_gf_s<CUR>.txt : id ux uy uz           (gridpoint displacement)
+;   Proven intrinsics only: zone.id/state(z,1)/pp/prop, gp.id/disp (smoke_export_probe 07-10).
+fish define dump_zf
+    local f = MODL+'_zf_s'+CUR+'.txt'
+    local st = file.open(f,1,1)
+    local a = array.create(1)
+    a(1) = 'id state pp visc'
+    st = file.write(a,1)
+    local n = 0
+    loop foreach local z zone.list
+        ; null zones (excavated tunnel) have no properties -> zone.prop THROWS on model null
+        local vv = 0.0
+        if zone.model(z) # 'null' then
+            vv = zone.prop(z,'viscosity-maxwell')
+        end_if
+        a(1) = string(zone.id(z))+' '+string(zone.state(z,1))+' '+string(zone.pp(z))+' '+string(vv)
+        st = file.write(a,1)
+        n = n + 1
+    end_loop
+    st = file.close
+    io.out('DUMP-Z '+f+' n='+string(n))
+end
+fish define dump_gf
+    local f = MODL+'_gf_s'+CUR+'.txt'
+    local st = file.open(f,1,1)
+    local a = array.create(1)
+    a(1) = 'id ux uy uz'
+    st = file.write(a,1)
+    local n = 0
+    loop foreach local g gp.list
+        local d = gp.disp(g)
+        a(1) = string(gp.id(g))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+        st = file.write(a,1)
+        n = n + 1
+    end_loop
+    st = file.close
+    io.out('DUMP-G '+f+' n='+string(n))
+end
+[dump_zf]
+[dump_gf]
+[io.out('EXPF-DONE '+MODL+' s'+CUR)]

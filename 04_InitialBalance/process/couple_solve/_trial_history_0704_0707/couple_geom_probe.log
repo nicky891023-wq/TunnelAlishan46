@@ -1,0 +1,121 @@
+**********************************************
+* Logging started at 週一 七月 6 12:10:17 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../output/Couple_Initial_G3'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 七月 5 23:51:18 2026
+Total Cycles: 48405  Super Cycles: 48405
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define geom
+   Def>    local rmin = 1e30
+   Def>    local rmax = 0.0
+   Def>    local h = array.create(12)
+   Def>    local i = 1
+   Def>    loop while i <= 12
+   Def>        h(i) = 0
+   Def>        i = i + 1
+   Def>    end_loop
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local rx = comp.x(p) - 1297.0
+   Def>        local rz = comp.z(p) - 1747.5
+   Def>        local r = math.sqrt(rx*rx + rz*rz)
+   Def>        if r < rmin then
+   Def>            rmin = r
+   Def>        end_if
+   Def>        if r > rmax then
+   Def>            rmax = r
+   Def>        end_if
+   Def>        local bin = int(r) + 1
+   Def>        if bin < 1 then
+   Def>            bin = 1
+   Def>        end_if
+   Def>        if bin > 12 then
+   Def>            bin = 12
+   Def>        end_if
+   Def>        h(bin) = h(bin) + 1
+   Def>    end_loop
+   Def>    io.out('GEOM ball count='+string(ball.num)+' r_min='+string(rmin)+' r_max='+string(rmax))
+   Def>    local j = 1
+   Def>    loop while j <= 12
+   Def>        io.out('GEOM r '+string(j-1)+'-'+string(j)+'m : '+string(h(j)))
+   Def>        j = j + 1
+   Def>    end_loop
+   Def>    ; springline sample (theta within 20deg of horizontal) radial band
+   Def>    local smin = 1e30
+   Def>    local smax = 0.0
+   Def>    loop foreach local b2 ball.list
+   Def>        local p2 = ball.pos(b2)
+   Def>        local rx2 = comp.x(p2) - 1297.0
+   Def>        local rz2 = comp.z(p2) - 1747.5
+   Def>        if math.abs(rz2) < 0.5 then
+   Def>            local r2 = math.sqrt(rx2*rx2 + rz2*rz2)
+   Def>            if r2 < smin then
+   Def>                smin = r2
+   Def>            end_if
+   Def>            if r2 > smax then
+   Def>                smax = r2
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('GEOM springline(|z-1747.5|<0.5) radial band: '+string(smin)+' to '+string(smax)+'m')
+   Def>    ; crown sample (theta near 90, x near 1297)
+   Def>    local cmin = 1e30
+   Def>    local cmax = 0.0
+   Def>    loop foreach local b3 ball.list
+   Def>        local p3 = ball.pos(b3)
+   Def>        local rx3 = comp.x(p3) - 1297.0
+   Def>        local rz3 = comp.z(p3) - 1747.5
+   Def>        if math.abs(rx3) < 0.5 then
+   Def>        if rz3 > 0.0 then
+   Def>            local r3 = math.sqrt(rx3*rx3 + rz3*rz3)
+   Def>            if r3 < cmin then
+   Def>                cmin = r3
+   Def>            end_if
+   Def>            if r3 > cmax then
+   Def>                cmax = r3
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('GEOM crown(|x-1297|<0.5, z>ctr) radial band: '+string(cmin)+' to '+string(cmax)+'m')
+   Def>end
+flac3d>[geom]
+GEOM ball count=456218 r_min=0.324533 r_max=5.04374
+GEOM r 0-1m : 22525
+GEOM r 1-2m : 96731
+GEOM r 2-3m : 131214
+GEOM r 3-4m : 152089
+GEOM r 4-5m : 53604
+GEOM r 5-6m : 55
+GEOM r 6-7m : 0
+GEOM r 7-8m : 0
+GEOM r 8-9m : 0
+GEOM r 9-10m : 0
+GEOM r 10-11m : 0
+GEOM r 11-12m : 0
+GEOM springline(|z-1747.5|<0.5) radial band: 0.324533 to 4.30637m
+GEOM crown(|x-1297|<0.5, z>ctr) radial band: 0.325551 to 3.5586m
+0 (integer)
+flac3d>[io.out('GEOM-DONE')]
+GEOM-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週一 七月 6 12:10:52 2026
+**********************************************

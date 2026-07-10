@@ -1,0 +1,270 @@
+; ============================================================================
+; couple_stepI_recast0g.f3dat -- STEP I: ZERO-GRAVITY in-situ re-cast (07-07).
+;   DIAGNOSIS (Fable, from f=0.25 stage-1 forensics): G3's ball-ball force
+;   network still carries the servo-era installation lock-in (force-chain
+;   pre-tension tail sits just below pb_ten). Any added deformation harvests
+;   that tail: 38,428 "cracks" ignited at 0.13x drive (0.008% strain, half the
+;   concrete cracking strain), rate curve = reservoir drainage (peak then
+;   monotonic decay), cavity wall moved <=1.34mm with ZERO balls >10mm =
+;   NOT structural failure. Most cracks are installation artifacts.
+;   FIX: cast the ring stress-free at its bedded geometry. STEP H v3 proved
+;   every command here but failed only because zeroing 6 MN of load-bearing
+;   force at 1g = drop test. At ZERO g nothing moves when forces vanish.
+;   RECIPE:
+;     E  bake in Wade-approved E_eq=1.6 GPa (tunnel sits in weak layer l4)
+;        + interface consistency at 1.6 (numerical-stability requirement).
+;     I1 model gravity 0.
+;     I2 unbond all (ball-ball + ball-facet) -> lin_force 0 (lin_mode 1 state,
+;        proven v5/v6 install command) -> zone stresses 0 -> re-bond fresh:
+;        D7 ball-ball, feet strip unbreakable, 1e20 ball-facet glue at
+;        interface stiffness 1.6.
+;     I3 0g verification leg (must be dead silent -- no forces, no loads).
+;     I4 gravity ramp 0.10/0.25/0.50/0.75/1.00 g with swept relaxation legs
+;        (weight per bond ~kN << 10.5 kN bond capacity; no drop dynamics).
+;     Gate: breaks since re-cast ~tens, midband quiet -> save Couple_Initial_G4
+;     = genuinely stress-free cast lining carrying only self-weight.
+;   cwd = this dir, bare filename.
+; ============================================================================
+program log-file 'couple_stepI.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial_G3'
+model largestrain on
+model mechanical timestep scale
+fish automatic-create on
+call '../../parameter.f3dat'
+[global grav_i = 9.81]
+
+; ---- QA helpers (proven set) ----
+fish define n_intact
+    local n = 0
+    loop foreach local c contact.list('ball-ball')
+        if contact.model(c) = 'linearpbond' then
+            if contact.prop(c,'pb_state') = 3 then
+                n = n + 1
+            end_if
+        end_if
+    end_loop
+    n_intact = n
+end
+fish define bdmax
+    local dm = 0.0
+    loop foreach local b ball.list
+        local d = ball.disp(b)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > dm then
+            dm = m
+        end_if
+    end_loop
+    bdmax = dm
+end
+fish define gpdmax
+    local dm = 0.0
+    loop foreach local g gp.list
+        local d = gp.disp(g)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > dm then
+            dm = m
+        end_if
+    end_loop
+    gpdmax = dm
+end
+fish define midconv
+    local s = 0.0
+    local n = 0
+    local mx = 0.0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        local yy = comp.y(p)
+        if yy > 870.0 then
+        if yy < 900.0 then
+            local rx = comp.x(p) - 1297.0
+            local rz = comp.z(p) - 1747.5
+            local rr = math.sqrt(rx*rx + rz*rz)
+            if rr > 1.35 then
+            if rr < 2.05 then
+                local d = ball.disp(b)
+                local ur = (comp.x(d)*rx + comp.z(d)*rz)/rr
+                s = s + ur
+                n = n + 1
+                if math.abs(ur) > mx then
+                    mx = math.abs(ur)
+                end_if
+            end_if
+            end_if
+        end_if
+        end_if
+    end_loop
+    global mc_mean = s/float(n)
+    global mc_max = mx
+    global mc_n = n
+    midconv = mc_mean
+end
+fish define zero_zone_stress
+    loop foreach local z zone.list
+        zone.stress.xx(z) = 0.0
+        zone.stress.yy(z) = 0.0
+        zone.stress.zz(z) = 0.0
+        zone.stress.xy(z) = 0.0
+        zone.stress.xz(z) = 0.0
+        zone.stress.yz(z) = 0.0
+    end_loop
+    io.out('   zone stresses zeroed')
+end
+fish define relax_legs(tagpfx, nlegs)
+    local ileg = 0
+    local dry = 0
+    loop while ileg < nlegs
+        ileg = ileg + 1
+        if dry < 2 then
+            command
+                model cycle 600
+            endcommand
+            global ndeb = 0
+            loop foreach local b ball.list
+                local d = ball.disp(b)
+                local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+                if m > 0.010 then
+                    ball.group(b,'debris') = 'debris'
+                    ndeb = ndeb + 1
+                end_if
+            end_loop
+            command
+                ball delete range group 'debris'
+                model calm
+            endcommand
+            if ndeb = 0 then
+                dry = dry + 1
+            else
+                dry = 0
+            end_if
+            io.out(tagpfx+' leg'+string(ileg)+' swept='+string(ndeb)+' dry='+string(dry)+' gp_dmax='+string(gpdmax)+'m ball_dmax='+string(bdmax)+'m intact='+string(n_intact))
+        end_if
+    end_loop
+end
+
+; ---- datum ----
+ball attribute displacement multiply 0.0
+zone gridpoint initialize displacement (0,0,0)
+zone gridpoint initialize velocity (0,0,0)
+model calm
+[global ni0 = n_intact]
+[io.out('STEPI-0 start: balls='+string(ball.num)+' walls='+string(wall.num)+' intact0='+string(ni0))]
+
+; ---- E: bake in Wade-approved E_eq=1.6 GPa + interface consistency ----
+zone property young 1.6e9
+contact method deformability emod 1.6e9 kratio 1.0 range contact type 'ball-facet'
+contact method pb_deform emod 1.6e9 kratio 1.0 range contact type 'ball-facet'
+cmat default type 'ball-facet' model linearpbond method deformability emod 1.6e9 kratio 1.0 proximity 0.03 property fric 0.5
+[io.out('STEPI-E E_eq=1.6GPa (Wade-approved, l4 layer) + interface 1.6 baked in')]
+
+; ---- I1: zero gravity ----
+model gravity 0 0 0
+[io.out('STEPI-1 gravity OFF')]
+
+; ---- I2: stress-free re-cast at bedded geometry ----
+contact method unbond range contact type 'ball-ball'
+contact method unbond range contact type 'ball-facet'
+contact property lin_force 0.0 0.0 0.0 lin_mode 1
+[zero_zone_stress]
+zone gridpoint initialize velocity (0,0,0)
+model calm
+contact method bond gap [pfc_bondgap] range contact type 'ball-ball'
+contact method pb_deform emod [pfc_pb_emod] kratio [pfc_pb_krat] range contact type 'ball-ball'
+contact property pb_ten [pfc_pb_ten] pb_coh [pfc_pb_coh] pb_fa [pfc_pb_fa] range contact type 'ball-ball'
+contact property pb_ten [pfc_bf_strong] pb_coh [pfc_bf_strong] range contact type 'ball-ball' position-z 1740.0 1745.30
+; v2 FIX (07-07 12:3x): ball-facet re-bond restricted to the ORIGINAL bf_couple
+; glue group (62,556 contacts) -- v1 bonded type-wide (377,610 = 6x, multi-edge
+; secondaries included). Six rotational-stiffness pb bonds per surface ball
+; re-tripped the wall-zone integration instability (docs: rotational stiffness
+; must be accounted in gp mass scaling; multi-edge contact "significantly
+; stiffer"); zero-force state is an unstable fixed point -> roundoff e-folded
+; to Illegal geometry zone 260104 (right foot, densest facets) at cycle 313.
+; All previously-stable configs (v6/G3/A') used bf_couple-group glue only.
+contact method bond gap [pfc_bondgap] range contact group 'bf_couple'
+contact method pb_deform emod 1.6e9 kratio 1.0 range contact group 'bf_couple'
+contact property pb_ten [pfc_bf_strong] pb_coh [pfc_bf_strong] pb_fa [pfc_pb_fa] range contact group 'bf_couple'
+[global ni_rc = n_intact]
+[io.out('STEPI-R re-cast complete: intact '+string(ni0)+' -> '+string(ni_rc)+' (all lin+pb forces zeroed at 0g, fresh D7 bonds, bf glue = bf_couple group only)')]
+
+; ---- I2b: built-in self-diagnosis (zero-force state MUST be dead) ----
+fish define maxcf_scan(tag)
+    local mx = 0.0
+    local px = 0.0
+    local py = 0.0
+    local pz = 0.0
+    loop foreach local c contact.list
+        local f = contact.force.global(c)
+        local m = math.sqrt(comp.x(f)^2+comp.y(f)^2+comp.z(f)^2)
+        if m > mx then
+            mx = m
+            local p = contact.pos(c)
+            px = comp.x(p)
+            py = comp.y(p)
+            pz = comp.z(p)
+        end_if
+    end_loop
+    io.out('STEPI-CF '+tag+' max|F|='+string(mx)+'N at ('+string(px)+','+string(py)+','+string(pz)+')')
+end
+fish define maxvel_scan(tag)
+    local mv = 0.0
+    local px = 0.0
+    local py = 0.0
+    local pz = 0.0
+    loop foreach local b ball.list
+        local v = ball.vel(b)
+        local m = math.sqrt(comp.x(v)^2+comp.y(v)^2+comp.z(v)^2)
+        if m > mv then
+            mv = m
+            local p = ball.pos(b)
+            px = comp.x(p)
+            py = comp.y(p)
+            pz = comp.z(p)
+        end_if
+    end_loop
+    local mg = 0.0
+    loop foreach local g gp.list
+        local vg = gp.vel(g)
+        local m2 = math.sqrt(comp.x(vg)^2+comp.y(vg)^2+comp.z(vg)^2)
+        if m2 > mg then
+            mg = m2
+        end_if
+    end_loop
+    io.out('STEPI-VEL '+tag+' ball_vmax='+string(mv)+'@('+string(px)+','+string(py)+','+string(pz)+') gp_vmax='+string(mg))
+end
+[maxcf_scan('post-recast')]
+model cycle 100
+[maxvel_scan('c100')]
+model calm
+model cycle 100
+[maxvel_scan('c200')]
+model calm
+model cycle 100
+[maxvel_scan('c300')]
+model calm
+
+; ---- I3: 0g verification (must be dead silent) ----
+[relax_legs('STEPI-V0G', 1)]
+
+; ---- I4: gravity ramp with swept legs ----
+model gravity 0 0 [-grav_i*0.10]
+[relax_legs('STEPI-G10', 2)]
+model gravity 0 0 [-grav_i*0.25]
+[relax_legs('STEPI-G25', 1)]
+model gravity 0 0 [-grav_i*0.50]
+[relax_legs('STEPI-G50', 2)]
+model gravity 0 0 [-grav_i*0.75]
+[relax_legs('STEPI-G75', 1)]
+model gravity 0 0 [-grav_i]
+[relax_legs('STEPI-G100', 4)]
+model solve ratio-average 1e-4 or cycles 800
+[relax_legs('STEPI-F', 1)]
+[global ni1 = n_intact]
+[midconv]
+[io.out('STEPI GATE: broken_since_recast='+string(ni_rc-ni1)+' (expect ~tens) ball_dmax='+string(bdmax)+'m gp_dmax='+string(gpdmax)+'m | midband ur mean='+string(mc_mean*1000.0)+'mm max='+string(mc_max*1000.0)+'mm n='+string(mc_n)+' balls='+string(ball.num))]
+
+model save '../../output/Couple_Initial_G4'
+[io.out('STEPI-DONE saved Couple_Initial_G4 (stress-free cast lining, self-weight only, E_eq 1.6)')]
+program log off
+program quit

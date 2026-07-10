@@ -1,0 +1,83 @@
+; exp_body.f3dat -- (re)defines the two exporters and runs them for suffix [CUR].
+;   Must be call'd AFTER each `model restore` (restore wipes the FISH environment,
+;   so the definitions have to be reloaded every stage). Uses global CUR set by driver.
+fish define exp_bnd(fname)
+    local fb = file.open(fname,1,1)
+    local a = array.create(1)
+    a(1) = 'x y z dx dy dz'
+    local st = file.write(a,1)
+    local nb = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local x = comp.x(p)
+        local y = comp.y(p)
+        local z = comp.z(p)
+        if x > 1276.0 then
+        if x < 1318.0 then
+        if y > 859.0 then
+        if y < 911.0 then
+        if z > 1727.0 then
+        if z < 1769.0 then
+            local onb = 0
+            if math.abs(x-1277.0) < 1.0 then
+                onb = 1
+            end_if
+            if math.abs(x-1317.0) < 1.0 then
+                onb = 1
+            end_if
+            if math.abs(y-860.0) < 1.0 then
+                onb = 1
+            end_if
+            if math.abs(y-910.0) < 1.0 then
+                onb = 1
+            end_if
+            if math.abs(z-1728.0) < 1.0 then
+                onb = 1
+            end_if
+            if math.abs(z-1768.0) < 1.0 then
+                onb = 1
+            end_if
+            if onb = 1 then
+                local d = gp.disp(g)
+                a(1) = string(x)+' '+string(y)+' '+string(z)+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+                st = file.write(a,1)
+                nb = nb + 1
+            end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('CEB-BND '+fname+' n='+string(nb))
+end
+fish define exp_wall(fname)
+    local fw = file.open(fname,1,1)
+    local a = array.create(1)
+    a(1) = 'x y z dx dy dz'
+    local st = file.write(a,1)
+    local nw = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local y = comp.y(p)
+        if y > 860.0 then
+        if y < 910.0 then
+            local rx = comp.x(p) - 1297.0
+            local rz = comp.z(p) - 1747.5
+            if rx*rx + rz*rz < 12.25 then
+                local d = gp.disp(g)
+                a(1) = string(comp.x(p))+' '+string(y)+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+                st = file.write(a,1)
+                nw = nw + 1
+            end_if
+        end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('CEB-WALL '+fname+' n='+string(nw))
+end
+[exp_bnd('cpl_bnd_s'+CUR+'.txt')]
+[exp_wall('cpl_wall_s'+CUR+'.txt')]
+[io.out('CEB stage '+CUR+' done')]

@@ -1,0 +1,70 @@
+; sm_chain.f3dat -- SMALL model export chain (07-10): geometry once + fields + stress rays
+;   at 5 stages (01/04/06/09/11). Shell geometry dump LAST (unproven struct intrinsics --
+;   if it dies, all field/ray data already on disk).
+;   Verify via THIS log: 5x EXPF-DONE sm + 5x RAY-DONE + SM-SHELLS (best effort) + SM-CHAIN-DONE.
+program log-file 'export_sm_chain.log'
+program log on
+
+model restore '../output/ss_01'
+fish automatic-create on
+[io.out('SMC restored ss_01 zones='+string(zone.num)+' shells='+string(struct.num))]
+zone export 'sm_geom.f3grid'
+[io.out('SMC geom exported')]
+[global CUR = '01']
+[global MODL = 'sm']
+call 'field_dump_body.f3dat'
+call 'ray_dump_body.f3dat'
+
+model restore '../output/ss_04'
+fish automatic-create on
+[global CUR = '04']
+[global MODL = 'sm']
+call 'field_dump_body.f3dat'
+call 'ray_dump_body.f3dat'
+
+model restore '../output/ss_06'
+fish automatic-create on
+[global CUR = '06']
+[global MODL = 'sm']
+call 'field_dump_body.f3dat'
+call 'ray_dump_body.f3dat'
+
+model restore '../output/ss_09'
+fish automatic-create on
+[global CUR = '09']
+[global MODL = 'sm']
+call 'field_dump_body.f3dat'
+call 'ray_dump_body.f3dat'
+
+model restore '../output/ss_11'
+fish automatic-create on
+[global CUR = '11']
+[global MODL = 'sm']
+call 'field_dump_body.f3dat'
+call 'ray_dump_body.f3dat'
+
+; --- shell geometry (once; positions at s11 fine for the MODEL figure) ---
+fish define dump_shells
+    local st = file.open('sm_shells.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'sid x1 y1 z1 x2 y2 z2 x3 y3 z3'
+    local w = file.write(a,1)
+    local n = 0
+    loop foreach local s struct.list
+        if struct.type(s) = 'shell' then
+            local p1 = struct.node.pos(struct.node(s,1))
+            local p2 = struct.node.pos(struct.node(s,2))
+            local p3 = struct.node.pos(struct.node(s,3))
+            a(1) = string(struct.id(s))+' '+string(comp.x(p1))+' '+string(comp.y(p1))+' '+string(comp.z(p1))+' '+string(comp.x(p2))+' '+string(comp.y(p2))+' '+string(comp.z(p2))+' '+string(comp.x(p3))+' '+string(comp.y(p3))+' '+string(comp.z(p3))
+            w = file.write(a,1)
+            n = n + 1
+        end_if
+    end_loop
+    w = file.close
+    io.out('SM-SHELLS n='+string(n))
+end
+[dump_shells]
+
+[io.out('SM-CHAIN-DONE')]
+program log off
+program quit

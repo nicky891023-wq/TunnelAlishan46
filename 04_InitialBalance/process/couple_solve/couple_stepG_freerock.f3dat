@@ -1,0 +1,240 @@
+; ============================================================================
+; couple_stepG_freerock.f3dat -- STEP G v5: unfreeze with CONSISTENT INTERFACE
+;   (2026-07-05 evening; doc-verdict build).
+;   ROOT CAUSE (v1-v4 + STEP H v1-v3 forensics + 5+1 doc-agent verdict):
+;   wall-zone coupled integration runs AT the dt=1 stability boundary with zero
+;   margin; with soft zones (E_eq) the stiff ball-facet interface (emod 9.65e9)
+;   locally exceeds the gridpoint mass scaling -> oscillation e-folds over
+;   ~1000 cycles in any un-calmed window (150-350x break-rate difference
+;   between calmed legs and bare solve windows; 4 fatal Illegal-geometry runs).
+;   Official practice (PunchIndentation, the only shipped wall-zone example):
+;   zones and ball-facet cmat share ONE modulus; contrast only ever makes
+;   zones STIFFER. => interface emod/pb_emod = E_eq (grout/backfill reading),
+;   strengths untouched (1e20), calibrated ball-ball material untouched.
+;   Remedy validated by couple_ifx_probe (2x2500 bare cycles on the 4x-fatal
+;   testbed) before this script is launched.
+;   RECIPE: P orphan purge (frozen) -> apply-remove + zero stress + density 1
+;   -> INTERFACE SOFTEN (all ball-facet + cmat default) -> mini insurance
+;   ladder young 100x -> 10x -> 1x E_eq (1 swept leg each; expected silent
+;   since the true lock-in release measured only ~205 bonds in v4's ladder)
+;   -> delete platens -> swept legs -> calm-cadenced settle (official
+;   'cycle N calm M' idiom) -> short ratio window -> gates -> save
+;   ../../output/Couple_Initial_G3.  cwd = this dir, bare filename.
+; ============================================================================
+program log-file 'couple_stepG.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial'
+model largestrain on
+model mechanical timestep scale
+fish automatic-create on
+
+; ---- QA helpers ----
+fish define n_intact
+    local n = 0
+    loop foreach local c contact.list('ball-ball')
+        if contact.model(c) = 'linearpbond' then
+            if contact.prop(c,'pb_state') = 3 then
+                n = n + 1
+            end_if
+        end_if
+    end_loop
+    n_intact = n
+end
+fish define bdmax
+    local dm = 0.0
+    loop foreach local b ball.list
+        local d = ball.disp(b)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > dm then
+            dm = m
+        end_if
+    end_loop
+    bdmax = dm
+end
+fish define gpdmax
+    local dm = 0.0
+    loop foreach local g gp.list
+        local d = gp.disp(g)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > dm then
+            dm = m
+        end_if
+    end_loop
+    gpdmax = dm
+end
+fish define midconv
+    local s = 0.0
+    local n = 0
+    local mx = 0.0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        local yy = comp.y(p)
+        if yy > 870.0 then
+        if yy < 900.0 then
+            local rx = comp.x(p) - 1297.0
+            local rz = comp.z(p) - 1747.5
+            local rr = math.sqrt(rx*rx + rz*rz)
+            if rr > 1.35 then
+            if rr < 2.05 then
+                local d = ball.disp(b)
+                local ur = (comp.x(d)*rx + comp.z(d)*rz)/rr
+                s = s + ur
+                n = n + 1
+                if math.abs(ur) > mx then
+                    mx = math.abs(ur)
+                end_if
+            end_if
+            end_if
+        end_if
+        end_if
+    end_loop
+    global mc_mean = s/float(n)
+    global mc_max = mx
+    global mc_n = n
+    midconv = mc_mean
+end
+fish define zero_zone_stress
+    loop foreach local z zone.list
+        zone.stress.xx(z) = 0.0
+        zone.stress.yy(z) = 0.0
+        zone.stress.zz(z) = 0.0
+        zone.stress.xy(z) = 0.0
+        zone.stress.xz(z) = 0.0
+        zone.stress.yz(z) = 0.0
+    end_loop
+    io.out('   zone stresses zeroed (incremental-transmitter datum)')
+end
+fish define relax_legs(tagpfx, nlegs)
+    local ileg = 0
+    local dry = 0
+    loop while ileg < nlegs
+        ileg = ileg + 1
+        if dry < 2 then
+            command
+                model cycle 600
+            endcommand
+            global ndeb = 0
+            loop foreach local b ball.list
+                local d = ball.disp(b)
+                local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+                if m > 0.010 then
+                    ball.group(b,'debris') = 'debris'
+                    ndeb = ndeb + 1
+                end_if
+            end_loop
+            command
+                ball delete range group 'debris'
+                model calm
+            endcommand
+            if ndeb = 0 then
+                dry = dry + 1
+            else
+                dry = 0
+            end_if
+            local dmg = 0.0
+            local px = 0.0
+            local py = 0.0
+            local pz = 0.0
+            loop foreach local g gp.list
+                local dg = gp.disp(g)
+                local mg = math.sqrt(comp.x(dg)^2+comp.y(dg)^2+comp.z(dg)^2)
+                if mg > dmg then
+                    dmg = mg
+                    local pp = gp.pos(g)
+                    px = comp.x(pp)
+                    py = comp.y(pp)
+                    pz = comp.z(pp)
+                end_if
+            end_loop
+            io.out(tagpfx+' leg'+string(ileg)+' swept='+string(ndeb)+' dry='+string(dry)+' gp_dmax='+string(dmg)+'m@('+string(px)+','+string(py)+','+string(pz)+') intact='+string(n_intact))
+        end_if
+    end_loop
+end
+fish define purge_orphans
+    loop foreach local b0 ball.list
+        ball.extra(b0,1) = 0
+    end_loop
+    loop foreach local c1 contact.list('ball-ball')
+        if contact.model(c1) = 'linearpbond' then
+            if contact.prop(c1,'pb_state') = 3 then
+                ball.extra(contact.end1(c1),1) = 1
+                ball.extra(contact.end2(c1),1) = 1
+            end_if
+        end_if
+    end_loop
+    loop foreach local c2 contact.list('ball-facet')
+        if contact.model(c2) = 'linearpbond' then
+            if contact.prop(c2,'pb_state') = 3 then
+                ball.extra(contact.end1(c2),1) = 1
+            end_if
+        end_if
+    end_loop
+    global norph = 0
+    loop foreach local b1 ball.list
+        if ball.extra(b1,1) = 0 then
+            ball.group(b1,'debris') = 'orphan'
+            norph = norph + 1
+        end_if
+    end_loop
+    io.out('STEPG-P orphan balls (zero intact bonds)='+string(norph))
+end
+
+; ---- datum ----
+ball attribute displacement multiply 0.0
+zone gridpoint initialize displacement (0,0,0)
+zone gridpoint initialize velocity (0,0,0)
+model calm
+[global ni0 = n_intact]
+[io.out('STEPG-0 start: walls='+string(wall.num)+' balls='+string(ball.num)+' zones='+string(zone.num)+' intact0='+string(ni0))]
+
+; ---- P: orphan purge (frozen rock) ----
+[purge_orphans]
+ball delete range group 'orphan'
+[io.out('STEPG-P purged, balls left='+string(ball.num))]
+
+; ---- transmitter datum + INTERFACE CONSISTENCY ----
+zone face apply-remove
+[zero_zone_stress]
+zone initialize density 1.0
+contact method deformability emod 2.31e9 kratio 1.0 range contact type 'ball-facet'
+contact method pb_deform emod 2.31e9 kratio 1.0 range contact type 'ball-facet'
+cmat default type 'ball-facet' model linearpbond method deformability emod 2.31e9 kratio 1.0 proximity 0.03 property fric 0.5
+[io.out('STEPG-IFX interface softened to E_eq (bf emod+pb_emod=2.31e9, strengths untouched)')]
+
+; ---- unfreeze at 100x, mini insurance ladder down to 1x ----
+zone property young 2.31e11
+zone gridpoint free velocity
+zone gridpoint initialize velocity (0,0,0)
+zone gridpoint fix velocity range position-x 1276.7 1277.3
+zone gridpoint fix velocity range position-x 1316.7 1317.3
+zone gridpoint fix velocity range position-y 859.7 860.3
+zone gridpoint fix velocity range position-y 909.7 910.3
+zone gridpoint fix velocity range position-z 1727.7 1728.3
+zone gridpoint fix velocity range position-z 1767.7 1768.3
+[io.out('STEPG-1 rock unfrozen at 100x E_eq (interior free, 6 bands re-fixed)')]
+[relax_legs('STEPG-A100', 1)]
+zone property young 2.31e10
+[relax_legs('STEPG-A10', 1)]
+zone property young 2.31e9
+[relax_legs('STEPG-A1', 2)]
+
+; ---- delete platens, settle ----
+wall delete wall range name 'w_860'
+wall delete wall range name 'w_910'
+[io.out('STEPG-2 platens w_860/w_910 deleted, walls left='+string(wall.num))]
+[relax_legs('STEPG-L2', 3)]
+
+; ---- calm-cadenced settle (official idiom) + short ratio window ----
+model cycle 2400 calm 300
+[relax_legs('STEPG-F1', 1)]
+model solve ratio-average 1e-4 or cycles 800
+[global ni1 = n_intact]
+[midconv]
+[io.out('STEPG GATE: new_broken='+string(ni0-ni1)+' ball_dmax='+string(bdmax)+'m gp_dmax='+string(gpdmax)+'m | midband ur mean='+string(mc_mean*1000.0)+'mm max='+string(mc_max*1000.0)+'mm n='+string(mc_n)+' balls='+string(ball.num))]
+
+model save '../../output/Couple_Initial_G3'
+[io.out('STEPG-DONE saved Couple_Initial_G3 (consistent-interface elastic transmitter, no platens)')]
+program log off
+program quit

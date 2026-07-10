@@ -1,0 +1,85 @@
+; ============================================================================
+; couple_ifx_probe.f3dat -- PROBE: interface-stiffness-consistency remedy (07-05).
+;   Doc-grounded diagnosis (5+1 doc-agent workflow, see RUN_STATUS): both
+;   integrators run AT the dt=1 stability boundary with zero margin; ball-facet
+;   contact stiffness (emod 9.65e9) >> soft zone stiffness (E_eq 2.31e9) at the
+;   ring feet locally exceeds the gridpoint mass scaling -> oscillation grows
+;   over ~1000 cycles in any un-calmed window (4 fatal runs). Official example
+;   practice (PunchIndentation): SAME modulus for zones and ball-facet cmat.
+;   REMEDY UNDER TEST: soften ONLY the ball-facet interface (all of it = wz
+;   coupling; platens gone) to E_eq. Strengths (1e20) and ball-ball calibrated
+;   material untouched. Physical reading: grout/backfill layer.
+;   TEST: Couple_Initial_G died 4x in >1500-cycle un-calmed windows. With the
+;   remedy it must survive TWO consecutive 2500-cycle bare windows quietly.
+;   NO SAVE. cwd = this dir, bare filename.
+; ============================================================================
+program log-file 'couple_ifx_probe.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial_G'
+model largestrain on
+model mechanical timestep scale
+fish automatic-create on
+
+fish define n_intact
+    local n = 0
+    loop foreach local c contact.list('ball-ball')
+        if contact.model(c) = 'linearpbond' then
+            if contact.prop(c,'pb_state') = 3 then
+                n = n + 1
+            end_if
+        end_if
+    end_loop
+    n_intact = n
+end
+fish define report_max(tag)
+    local dmg = 0.0
+    local px = 0.0
+    local py = 0.0
+    local pz = 0.0
+    loop foreach local g gp.list
+        local dg = gp.disp(g)
+        local mg = math.sqrt(comp.x(dg)^2+comp.y(dg)^2+comp.z(dg)^2)
+        if mg > dmg then
+            dmg = mg
+            local pp = gp.pos(g)
+            px = comp.x(pp)
+            py = comp.y(pp)
+            pz = comp.z(pp)
+        end_if
+    end_loop
+    local dmb = 0.0
+    loop foreach local b ball.list
+        local db = ball.disp(b)
+        local mb = math.sqrt(comp.x(db)^2+comp.y(db)^2+comp.z(db)^2)
+        if mb > dmb then
+            dmb = mb
+        end_if
+    end_loop
+    io.out('IFX '+tag+' gp_dmax='+string(dmg*1000.0)+'mm@('+string(px)+','+string(py)+','+string(pz)+') ball_dmax='+string(dmb*1000.0)+'mm intact='+string(n_intact))
+end
+
+; ---- datum ----
+ball attribute displacement multiply 0.0
+zone gridpoint initialize displacement (0,0,0)
+zone gridpoint initialize velocity (0,0,0)
+model calm
+[report_max('start')]
+
+; ---- REMEDY: interface stiffness -> E_eq (existing + future contacts) ----
+contact method deformability emod 2.31e9 kratio 1.0 range contact type 'ball-facet'
+contact method pb_deform emod 2.31e9 kratio 1.0 range contact type 'ball-facet'
+cmat default type 'ball-facet' model linearpbond method deformability emod 2.31e9 kratio 1.0 proximity 0.03 property fric 0.5
+[io.out('IFX interface softened to E_eq=2.31e9 (bf emod + pb_emod; strengths untouched)')]
+
+; ---- window A: 2500 bare cycles (the killer window, no calm) ----
+model cycle 2500
+[report_max('A-c2500')]
+
+; ---- window B: 2500 more bare cycles (growth check) ----
+model cycle 2500
+[report_max('B-c5000')]
+[io.out('IFX-DONE (no save)')]
+program log off
+program quit

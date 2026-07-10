@@ -1,0 +1,182 @@
+**********************************************
+* Logging started at 週五 七月 10 13:45:10 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../output/ss_01'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週五 七月 3 09:37:07 2026
+Total Cycles: 32436  Super Cycles: 32436
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '01']
+flac3d>call 'ray_dump_body2.f3dat'
+flac3d>; ray_dump_body.f3dat -- small-model radial stress rays for FIG 5-14 (07-10, v2 null-guarded).
+flac3d>;   Call AFTER restore + globals CUR set. Tunnel centre (1297, y885, z1747.5), global coords.
+flac3d>;   Crown ray: vertical +z column above crown; Springline ray: horizontal +x from right wall.
+flac3d>;   Columns: x y z sxx syy szz sxy sxz syz pp  (full tensor -> sigma_r/sigma_theta in Python)
+flac3d>;   Null zones (excavated interior) skipped: no properties/meaningful stress.
+flac3d>fish define dump_ray_crown
+   Def>    local f = 'sm_ray_crown2_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(xx-1298.85) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if zz > 1747.0 then
+   Def>                        if zz < 1800.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYC '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_ray_spring
+   Def>    local f = 'sm_ray_spring2_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(zz-1747.5) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if xx > 1300.0 then
+   Def>                        if xx < 1347.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYS '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_ray_crown]
+DUMP-RAYC sm_ray_crown2_s01.txt n=11216
+0 (integer)
+flac3d>[dump_ray_spring]
+DUMP-RAYS sm_ray_spring2_s01.txt n=12546
+0 (integer)
+flac3d>[io.out('RAY-DONE s'+CUR)]
+RAY-DONE s01
+0 (integer)
+flac3d>model restore '../output/ss_06'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週五 七月 3 11:35:08 2026
+Total Cycles: 55292  Super Cycles: 55292
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '06']
+flac3d>call 'ray_dump_body2.f3dat'
+flac3d>; ray_dump_body.f3dat -- small-model radial stress rays for FIG 5-14 (07-10, v2 null-guarded).
+flac3d>;   Call AFTER restore + globals CUR set. Tunnel centre (1297, y885, z1747.5), global coords.
+flac3d>;   Crown ray: vertical +z column above crown; Springline ray: horizontal +x from right wall.
+flac3d>;   Columns: x y z sxx syy szz sxy sxz syz pp  (full tensor -> sigma_r/sigma_theta in Python)
+flac3d>;   Null zones (excavated interior) skipped: no properties/meaningful stress.
+flac3d>fish define dump_ray_crown
+   Def>    local f = 'sm_ray_crown2_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(xx-1298.85) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if zz > 1747.0 then
+   Def>                        if zz < 1800.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYC '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_ray_spring
+   Def>    local f = 'sm_ray_spring2_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(zz-1747.5) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if xx > 1300.0 then
+   Def>                        if xx < 1347.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYS '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_ray_crown]
+DUMP-RAYC sm_ray_crown2_s06.txt n=11216
+0 (integer)
+flac3d>[dump_ray_spring]
+DUMP-RAYS sm_ray_spring2_s06.txt n=12546
+0 (integer)
+flac3d>[io.out('RAY-DONE s'+CUR)]
+RAY-DONE s06
+0 (integer)
+flac3d>[io.out('RAY-REDUMP-DONE')]
+RAY-REDUMP-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週五 七月 10 13:45:37 2026
+**********************************************

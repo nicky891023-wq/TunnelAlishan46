@@ -1,0 +1,68 @@
+; bond_census_G4.f3dat -- one-time census of BREAKABLE bonds per sector (24x15deg x 5 y-bands)
+;   for damage-density normalization (RESULTS_FIGURE_SPEC.md N_bond_s). Run AFTER the staged
+;   run finishes (console free). Counts ball-ball linearpbond contacts with pb_ten < 1e10
+;   (excludes 1e20/1e100 feet+glue) regardless of current pb_state (broken ones still count
+;   toward the breakable population denominator IF still in contact... NOTE: contacts of
+;   deleted/separated pairs vanish -> denominator from G4 pristine state = correct choice).
+;   Output: bond_census_G4.txt (24 rows x 5 cols, theta-major grid of counts).
+program log-file 'bond_census_G4.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial_G4'
+fish automatic-create on
+fish define census
+    local grid = array.create(24,5)
+    local i = 1
+    loop while i <= 24
+        local j = 1
+        loop while j <= 5
+            grid(i,j) = 0
+            j = j + 1
+        end_loop
+        i = i + 1
+    end_loop
+    local n = 0
+    loop foreach local c contact.list('ball-ball')
+        if contact.model(c) = 'linearpbond' then
+            if contact.prop(c,'pb_state') = 3 then
+            if contact.prop(c,'pb_ten') < 1e10 then
+                local p = contact.pos(c)
+                local zz = comp.z(p)
+                if zz > 1745.30 then
+                    local th = math.atan2(zz-1747.5, comp.x(p)-1297.0)*180.0/math.pi
+                    if th < 0.0 then
+                        th = th + 360.0
+                    end_if
+                    local bi = int(th/15.0) + 1
+                    if bi > 24 then
+                        bi = 24
+                    end_if
+                    local bj = int((comp.y(p)-860.0)/10.0) + 1
+                    if bj < 1 then
+                        bj = 1
+                    end_if
+                    if bj > 5 then
+                        bj = 5
+                    end_if
+                    grid(bi,bj) = grid(bi,bj) + 1
+                    n = n + 1
+                end_if
+            end_if
+            end_if
+        end_if
+    end_loop
+    local f = file.open('bond_census_G4.txt',1,1)
+    local a = array.create(1)
+    local ii = 1
+    loop while ii <= 24
+        a(1) = string(grid(ii,1))+' '+string(grid(ii,2))+' '+string(grid(ii,3))+' '+string(grid(ii,4))+' '+string(grid(ii,5))
+        local st = file.write(a,1)
+        ii = ii + 1
+    end_loop
+    st = file.close
+    io.out('CENSUS-DONE breakable(non-feet) bonds='+string(n)+' -> bond_census_G4.txt')
+end
+[census]
+program log off
+program quit

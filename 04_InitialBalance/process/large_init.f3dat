@@ -92,7 +92,7 @@ model solve elastic
 ; --- datum: zero velocity + displacement (260529 t03-f L91,97) ---
 zone gridpoint initialize velocity 0 0 0
 zone gridpoint initialize displacement 0 0 0
-model save 'Large_Initial'
+model save 'output/Large_Initial'
 [io.out('LI-5 saved Large_Initial (260529-method: fluid W-110 -> solve elastic)')]
 
 ; --- export near-field zone stresses for the small model (IDW source) ---

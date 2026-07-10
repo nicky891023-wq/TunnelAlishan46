@@ -1,0 +1,8 @@
+﻿Item,Value,Remark
+Rock equivalent modulus E_eq,1.6 GPa,tunnel hosted in layer-4 weak zone; interface stiffness unified
+PFC emod / kratio,9.65 GPa / 1.0,linear deformability
+pb_emod / kratio,5.88 GPa / 0.6,parallel-bond deformability
+pb_ten / pb_coh / pb_fa,2.10 MPa / 23.0 MPa / 25 deg,calibrated bond strength (D7)
+Balls / bonds,456,163 / ~2.23M,horseshoe, no invert, feet anchored
+Drive scale factor f,0.25,keeps lining in crack-development regime (trend-level)
+Initial state,zero-gravity in-place recast (G4),stress-free ring, self-weight only

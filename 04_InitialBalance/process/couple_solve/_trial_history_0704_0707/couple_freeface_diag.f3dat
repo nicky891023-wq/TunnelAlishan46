@@ -1,0 +1,123 @@
+; couple_freeface_diag.f3dat -- STEP F gate failure diagnosis (2026-07-04).
+;   Gate read: new_broken=48, ball_disp_delta=0.284 m (expected mm).
+;   Hypotheses: (a) loose/never-bonded balls near the OPEN invert rim (z~1744.85)
+;   or portal mouths dropped into the void = debris, not structure;
+;   (b) structural sagging of the lining ring = serious.
+;   This script quantifies: mover histogram, mover locations, fallen-below-rim count,
+;   broken-bond locations, blue-line ring convergence. cwd = couple_solve.
+program log-file 'couple_freeface_diag.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'Couple_Initial_free'
+fish automatic-create on
+fish define diag
+    local n1=0
+    local n5=0
+    local n10=0
+    local n50=0
+    local n100=0
+    local n200=0
+    local nfall=0
+    local nball=0
+    local zlo=1e30
+    local worst=0.0
+    local wx=0.0
+    local wy=0.0
+    local wz=0.0
+    loop foreach local b ball.list
+        nball = nball + 1
+        local d = ball.disp(b)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > 0.001 then
+            n1 = n1 + 1
+        end_if
+        if m > 0.005 then
+            n5 = n5 + 1
+        end_if
+        if m > 0.01 then
+            n10 = n10 + 1
+        end_if
+        if m > 0.05 then
+            n50 = n50 + 1
+        end_if
+        if m > 0.1 then
+            n100 = n100 + 1
+        end_if
+        if m > 0.2 then
+            n200 = n200 + 1
+        end_if
+        local p = ball.pos(b)
+        if comp.z(p) < 1744.3 then
+            nfall = nfall + 1
+        end_if
+        if comp.z(p) < zlo then
+            zlo = comp.z(p)
+        end_if
+        if m > worst then
+            worst = m
+            wx = comp.x(p)
+            wy = comp.y(p)
+            wz = comp.z(p)
+        end_if
+    end_loop
+    io.out('DIAG movers: >1mm='+string(n1)+' >5mm='+string(n5)+' >10mm='+string(n10)+' >50mm='+string(n50)+' >100mm='+string(n100)+' >200mm='+string(n200)+' of '+string(nball))
+    io.out('DIAG fallen below rim(z<1744.3)='+string(nfall)+' lowest ball z='+string(zlo))
+    io.out('DIAG worst mover disp='+string(worst)+' at ('+string(wx)+','+string(wy)+','+string(wz)+')')
+end
+[diag]
+; mover z-histogram (>20mm movers) + dump for render
+fish define movers_dump
+    local st = file.open('freeface_movers.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x y z r disp'
+    st = file.write(a,1)
+    local n = 0
+    loop foreach local b ball.list
+        local d = ball.disp(b)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > 0.02 then
+            local p = ball.pos(b)
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(ball.radius(b))+' '+string(m)
+            st = file.write(a,1)
+            n = n + 1
+        end_if
+    end_loop
+    st = file.close
+    io.out('DIAG movers>20mm dumped n='+string(n)+' -> freeface_movers.txt')
+end
+[movers_dump]
+; broken-bond locations
+fish define broken_dump
+    local st = file.open('freeface_broken.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x y z state'
+    st = file.write(a,1)
+    local n = 0
+    loop foreach local c contact.list
+        if type.pointer(c) = 'ball-ball' then
+            local sc = contact.prop(c,'pb_state')
+            if sc = 1 then
+                local p = contact.pos(c)
+                a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' 1'
+                st = file.write(a,1)
+                n = n + 1
+            end_if
+            if sc = 2 then
+                local p2 = contact.pos(c)
+                a(1) = string(comp.x(p2))+' '+string(comp.y(p2))+' '+string(comp.z(p2))+' 2'
+                st = file.write(a,1)
+                n = n + 1
+            end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('DIAG broken bonds dumped n='+string(n)+' -> freeface_broken.txt')
+end
+[broken_dump]
+; ring convergence integrity (blue-line vs corner, mid band)
+call '../../../05_One_Way_Simulation/process/couple_qa_v2.fis'
+[mid_convergence('freeface', 870.0, 900.0)]
+[io.out('DIAG-DONE')]
+program log off
+program quit

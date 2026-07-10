@@ -635,3 +635,57 @@ flac3d>ball attribute displacement multiply 0.0
 --- Attribute displacement initialized in 456302 ball(s).
 flac3d>wall delete wall range name 'w_inner'
 --- 1 walls deleted.
+flac3d>[io.out('V6-F1 w_inner DELETED (inner face now FREE; feet anchored; w_860/w_910 kept)')]
+V6-F1 w_inner DELETED (inner face now FREE; feet anchored; w_860/w_910 kept)
+0 (integer)
+flac3d>model solve ratio-average 1e-4 cycles 12000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+    12000      33005 2.9145e-02 00:04:31:19     12000            1.0000e-04             
+--- Global cycle limit of 12000 met.
+--- Cycling ended at: 2026-07-04 03:20:38
+flac3d>[global brk1 = broken_count]
+flac3d>[global bdm1 = ball_dmax]
+flac3d>[io.out('V6-F2 GATE after free-face re-converge: new_broken='+string(brk1-brk0)+' (must be 0) ball_disp_delta='+string(bdm1)+' m (expect mm-level)')]
+V6-F2 GATE after free-face re-converge: new_broken=48 (must be 0) ball_disp_delta=0.283669 m (expect mm-level)
+flac3d>model save 'Couple_Initial_free'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/process/couple_solve/Couple_Initial_free.f3sav.
+flac3d>[io.out('V6-BONDCHK at Couple_Initial_free:')]
+V6-BONDCHK at Couple_Initial_free:
+0 (integer)
+flac3d>[count_state]
+   bonds(slice)=41140 tension-broken=0 shear-broken=0 | ball disp_max=0.283669 m | rock gp disp_max=0 m
+0 (integer)
+flac3d>
+flac3d>; ---- y885 slice export for QA render ----
+flac3d>fish define _exp_v6
+   Def>    local fz = file.open('couple_v6_y885.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x z sxx syy szz sxy sxz syz'
+   Def>    fz = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.group(z,'mat') = 'rock' then
+   Def>            local p = zone.pos(z)
+   Def>            if comp.y(p) > 884.0 then
+   Def>            if comp.y(p) < 886.0 then
+   Def>                a(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))
+   Def>                fz = file.write(a,1)
+   Def>                n = n + 1
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    fz = file.close
+   Def>    io.out('V6-EXP '+string(n)+' rock zones @y885 -> couple_v6_y885.txt')
+   Def>end
+flac3d>[_exp_v6]
+V6-EXP 19140 rock zones @y885 -> couple_v6_y885.txt
+0 (integer)
+flac3d>[io.out('V6-DONE')]
+V6-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at ¶g¤» ¤C¤ë 4 03:21:36 2026
+**********************************************

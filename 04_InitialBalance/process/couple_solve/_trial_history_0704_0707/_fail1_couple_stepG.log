@@ -1,0 +1,150 @@
+**********************************************
+* Logging started at 週六 七月 4 19:27:54 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../output/Couple_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 七月 4 15:16:31 2026
+Total Cycles: 41005  Super Cycles: 41005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>model largestrain on
+flac3d>model mechanical timestep scale
+--- density scaling activated in mechanical process with a target timestep of 1.
+flac3d>fish automatic-create on
+flac3d>
+flac3d>; ---- QA helpers ----
+flac3d>fish define n_intact
+   Def>    local n = 0
+   Def>    loop foreach local c contact.list('ball-ball')
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_state') = 3 then
+   Def>                n = n + 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    n_intact = n
+   Def>end
+flac3d>fish define bdmax
+   Def>    local dm = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local d = ball.disp(b)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    bdmax = dm
+   Def>end
+flac3d>fish define gpdmax
+   Def>    local dm = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    gpdmax = dm
+   Def>end
+flac3d>fish define midconv
+   Def>    local s = 0.0
+   Def>    local n = 0
+   Def>    local mx = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local yy = comp.y(p)
+   Def>        if yy > 870.0 then
+   Def>        if yy < 900.0 then
+   Def>            local rx = comp.x(p) - 1297.0
+   Def>            local rz = comp.z(p) - 1747.5
+   Def>            local rr = math.sqrt(rx*rx + rz*rz)
+   Def>            if rr > 1.35 then
+   Def>            if rr < 2.05 then
+   Def>                local d = ball.disp(b)
+   Def>                local ur = (comp.x(d)*rx + comp.z(d)*rz)/rr
+   Def>                s = s + ur
+   Def>                n = n + 1
+   Def>                if math.abs(ur) > mx then
+   Def>                    mx = math.abs(ur)
+   Def>                end_if
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    global mc_mean = s/float(n)
+   Def>    global mc_max = mx
+   Def>    global mc_n = n
+   Def>    midconv = mc_mean
+   Def>end
+flac3d>fish define zero_zone_stress
+   Def>    loop foreach local z zone.list
+   Def>        zone.stress.xx(z) = 0.0
+   Def>        zone.stress.yy(z) = 0.0
+   Def>        zone.stress.zz(z) = 0.0
+   Def>        zone.stress.xy(z) = 0.0
+   Def>        zone.stress.xz(z) = 0.0
+   Def>        zone.stress.yz(z) = 0.0
+   Def>    end_loop
+   Def>    io.out('   zone stresses zeroed (incremental-transmitter datum)')
+   Def>end
+flac3d>
+flac3d>; ---- datum ----
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456256 ball(s).
+flac3d>zone gridpoint initialize displacement (0,0,0)
+--- displacement modified in 441728 gridpoints.
+flac3d>zone gridpoint initialize velocity (0,0,0)
+--- velocity modified in 441728 gridpoints.
+flac3d>model calm
+flac3d>[global ni0 = n_intact]
+flac3d>[io.out('STEPG-0 start: walls='+string(wall.num)+' balls='+string(ball.num)+' zones='+string(zone.num)+' intact0='+string(ni0))]
+STEPG-0 start: walls=3 balls=456256 zones=424908 intact0=2267346
+flac3d>
+flac3d>; ============================================================================
+flac3d>; G1: rock -> incremental elastic transmitter (zero stress, no self-weight, FREE)
+flac3d>; ============================================================================
+flac3d>[zero_zone_stress]
+   zone stresses zeroed (incremental-transmitter datum)
+0 (integer)
+flac3d>zone initialize density 1.0
+--- density modified in 424908 zones.
+flac3d>zone gridpoint free velocity
+--- Free velocity         specified in 441728 gridpoints.
+flac3d>zone gridpoint initialize velocity (0,0,0)
+--- velocity modified in 441728 gridpoints.
+flac3d>zone gridpoint fix velocity range position-x 1276.7 1277.3
+--- Fix velocity         specified in 3584 gridpoints.
+flac3d>zone gridpoint fix velocity range position-x 1316.7 1317.3
+--- Fix velocity         specified in 3584 gridpoints.
+flac3d>zone gridpoint fix velocity range position-y 859.7 860.3
+--- Fix velocity         specified in 3944 gridpoints.
+flac3d>zone gridpoint fix velocity range position-y 909.7 910.3
+--- Fix velocity         specified in 3944 gridpoints.
+flac3d>zone gridpoint fix velocity range position-z 1727.7 1728.3
+--- Fix velocity         specified in 3248 gridpoints.
+flac3d>zone gridpoint fix velocity range position-z 1767.7 1768.3
+--- Fix velocity         specified in 3024 gridpoints.
+flac3d>[io.out('STEPG-1 rock unfrozen (interior free, 6 boundary bands re-fixed)')]
+STEPG-1 rock unfrozen (interior free, 6 boundary bands re-fixed)
+0 (integer)
+flac3d>model solve ratio-average 1e-4 or cycles 15000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+     9474      50479 1.6431e-01 00:03:29:24     15000            1.0000e-04             
+--- Cycling ended at: 2026-07-04 22:58:14
+*** Illegal geometry in zone 260648.
+    While processing line 127 of file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/process/couple_solve/couple_stepG_freerock.f3dat.

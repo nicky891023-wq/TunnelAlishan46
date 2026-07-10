@@ -1,0 +1,88 @@
+; ============================================================================
+; couple_stepG_pm.f3dat -- POST-MORTEM spatial scan of Couple_Initial_G.
+;   Question: are the STEP G bond breaks (a) inner-surface raveling (ongoing,
+;   bad) or (b) feet re-bedding into the newly compliant rock (one-time, ok)?
+;   Dumps for python analysis:
+;     stepG_broken.txt   x y z state   (all ball-ball pb_state 1/2)
+;     stepG_balldisp.txt x y z dx dy dz (balls |u|>2mm)
+;     stepG_gpdisp.txt   x y z dx dy dz (gps   |u|>2mm)
+;   cwd = this dir, bare filename. NO state change, no save.
+; ============================================================================
+program log-file 'couple_stepG_pm.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial_G'
+fish automatic-create on
+
+fish define dump_broken(fname)
+    local f = file.open(fname,1,1)
+    local a = array.create(1)
+    a(1) = 'x y z state'
+    local st = file.write(a,1)
+    local n = 0
+    loop foreach local c contact.list('ball-ball')
+        if contact.model(c) = 'linearpbond' then
+            local ps = contact.prop(c,'pb_state')
+            if ps = 1 then
+                local p = contact.pos(c)
+                a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' 1'
+                st = file.write(a,1)
+                n = n + 1
+            end_if
+            if ps = 2 then
+                local p2 = contact.pos(c)
+                a(1) = string(comp.x(p2))+' '+string(comp.y(p2))+' '+string(comp.z(p2))+' 2'
+                st = file.write(a,1)
+                n = n + 1
+            end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('PM-BROKEN n='+string(n)+' -> '+fname)
+end
+fish define dump_balldisp(fname)
+    local f = file.open(fname,1,1)
+    local a = array.create(1)
+    a(1) = 'x y z dx dy dz'
+    local st = file.write(a,1)
+    local n = 0
+    loop foreach local b ball.list
+        local d = ball.disp(b)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > 0.002 then
+            local p = ball.pos(b)
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+            st = file.write(a,1)
+            n = n + 1
+        end_if
+    end_loop
+    st = file.close
+    io.out('PM-BALLDISP n='+string(n)+' -> '+fname)
+end
+fish define dump_gpdisp(fname)
+    local f = file.open(fname,1,1)
+    local a = array.create(1)
+    a(1) = 'x y z dx dy dz'
+    local st = file.write(a,1)
+    local n = 0
+    loop foreach local g gp.list
+        local d = gp.disp(g)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > 0.002 then
+            local p = gp.pos(g)
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+            st = file.write(a,1)
+            n = n + 1
+        end_if
+    end_loop
+    st = file.close
+    io.out('PM-GPDISP n='+string(n)+' -> '+fname)
+end
+
+[dump_broken('stepG_broken.txt')]
+[dump_balldisp('stepG_balldisp.txt')]
+[dump_gpdisp('stepG_gpdisp.txt')]
+[io.out('PM-DONE')]
+program log off
+program quit

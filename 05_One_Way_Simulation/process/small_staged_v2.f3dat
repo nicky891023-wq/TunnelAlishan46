@@ -17,10 +17,10 @@
 ;                        drop W-30/50/70/90(5d) dry2 W-110(30d).  cwd = 05.
 ;   Drive files: lg_disp_resid_sNN.txt (rigid-removed residual, make_resid.py).
 ; ============================================================================
-program log-file 'process/small_staged_v2.log'
+program log-file 'small_staged_v2.log'
 program log on
-model restore '../04_InitialBalance/Small_Initial'
-call '../04_InitialBalance/parameter.f3dat'
+model restore '../../04_InitialBalance/output/Small_Initial'
+call '../../04_InitialBalance/parameter.f3dat'
 call 'C:/Program Files/Itasca/Flac3d600/datafiles/Creep/SetKStrains.f3fis'
 model configure creep
 model largestrain off
@@ -28,11 +28,11 @@ fish automatic-create on
 [global cum_days = 0.0]
 [global abort_flag = 0]
 [global capfail_run = 0]
-geometry import 'input/W-90.stl'
-geometry import 'input/W-70.stl'
-geometry import 'input/W-50.stl'
-geometry import 'input/W-30.stl'
-geometry import 'input/W-10.stl'
+geometry import '../input/W-90.stl'
+geometry import '../input/W-70.stl'
+geometry import '../input/W-50.stl'
+geometry import '../input/W-30.stl'
+geometry import '../input/W-10.stl'
 zone water density [rho_w]
 [io.out('SSv2-0 restored Small_Initial; zones='+string(zone.num)+' gps='+string(gp.num)+' shells='+string(struct.num)+' T='+string(crp_threshold))]
 
@@ -421,28 +421,28 @@ end
 ; ============================================================================
 ; 11 stages
 ; ============================================================================
-[crp_stage(1,'W-110','process/lg_disp_resid_s01.txt',30.0)]
-model save 'output/ss_01'
-[crp_stage(2,'W-90','process/lg_disp_resid_s02.txt',5.0)]
-model save 'output/ss_02'
-[crp_stage(3,'W-70','process/lg_disp_resid_s03.txt',5.0)]
-model save 'output/ss_03'
-[crp_stage(4,'W-50','process/lg_disp_resid_s04.txt',5.0)]
-model save 'output/ss_04'
-[crp_stage(5,'W-30','process/lg_disp_resid_s05.txt',5.0)]
-model save 'output/ss_05'
-[crp_stage(6,'W-10','process/lg_disp_resid_s06.txt',30.0)]
-model save 'output/ss_06'
-[crp_stage(7,'W-30','process/lg_disp_resid_s07.txt',5.0)]
-model save 'output/ss_07'
-[crp_stage(8,'W-50','process/lg_disp_resid_s08.txt',5.0)]
-model save 'output/ss_08'
-[crp_stage(9,'W-70','process/lg_disp_resid_s09.txt',5.0)]
-model save 'output/ss_09'
-[crp_stage(10,'W-90','process/lg_disp_resid_s10.txt',5.0)]
-model save 'output/ss_10'
-[crp_stage(11,'W-110','process/lg_disp_resid_s11.txt',30.0)]
-model save 'output/ss_11'
+[crp_stage(1,'W-110','lg_disp_resid_s01.txt',30.0)]
+model save '../output/ss_01'
+[crp_stage(2,'W-90','lg_disp_resid_s02.txt',5.0)]
+model save '../output/ss_02'
+[crp_stage(3,'W-70','lg_disp_resid_s03.txt',5.0)]
+model save '../output/ss_03'
+[crp_stage(4,'W-50','lg_disp_resid_s04.txt',5.0)]
+model save '../output/ss_04'
+[crp_stage(5,'W-30','lg_disp_resid_s05.txt',5.0)]
+model save '../output/ss_05'
+[crp_stage(6,'W-10','lg_disp_resid_s06.txt',30.0)]
+model save '../output/ss_06'
+[crp_stage(7,'W-30','lg_disp_resid_s07.txt',5.0)]
+model save '../output/ss_07'
+[crp_stage(8,'W-50','lg_disp_resid_s08.txt',5.0)]
+model save '../output/ss_08'
+[crp_stage(9,'W-70','lg_disp_resid_s09.txt',5.0)]
+model save '../output/ss_09'
+[crp_stage(10,'W-90','lg_disp_resid_s10.txt',5.0)]
+model save '../output/ss_10'
+[crp_stage(11,'W-110','lg_disp_resid_s11.txt',30.0)]
+model save '../output/ss_11'
 [io.out('SSv2-DONE 11-stage complete; final vclose='+string(vclose)+'mm hclose='+string(hclose)+'mm dmax='+string(dmax_all)+' abort='+string(abort_flag))]
 program log off
 program quit

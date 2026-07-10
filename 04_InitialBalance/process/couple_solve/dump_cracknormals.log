@@ -1,0 +1,58 @@
+**********************************************
+* Logging started at 週四 七月 9 14:16:05 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../../05_One_Way_Simulation/output/cs_11'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週三 七月 8 08:28:26 2026
+Total Cycles: 105714  Super Cycles: 105714
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define dumpn
+   Def>    local f = file.open('cracknormals_s11.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z nx ny nz state'
+   Def>    local st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local c contact.list('ball-ball')
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            local ps = contact.prop(c,'pb_state')
+   Def>            if ps = 1 then
+   Def>                local p = contact.pos(c)
+   Def>                local nm = contact.normal(c)
+   Def>                a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(nm))+' '+string(comp.y(nm))+' '+string(comp.z(nm))+' 1'
+   Def>                st = file.write(a,1)
+   Def>                n = n + 1
+   Def>            end_if
+   Def>            if ps = 2 then
+   Def>                local p2 = contact.pos(c)
+   Def>                local nm2 = contact.normal(c)
+   Def>                a(1) = string(comp.x(p2))+' '+string(comp.y(p2))+' '+string(comp.z(p2))+' '+string(comp.x(nm2))+' '+string(comp.y(nm2))+' '+string(comp.z(nm2))+' 2'
+   Def>                st = file.write(a,1)
+   Def>                n = n + 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('CRACKNORM-DONE n='+string(n))
+   Def>end
+flac3d>[dumpn]
+CRACKNORM-DONE n=37682
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週四 七月 9 14:16:59 2026
+**********************************************

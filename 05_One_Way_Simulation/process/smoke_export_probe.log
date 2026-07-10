@@ -1,0 +1,82 @@
+**********************************************
+* Logging started at 週五 七月 10 13:04:41 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>model restore '../output/lgs_01'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 21:47:51 2026
+Total Cycles: 32178  Super Cycles: 32178
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>[io.out('SMK-0 restored lgs_01 zones='+string(zone.num)+' gps='+string(gp.num))]
+SMK-0 restored lgs_01 zones=511988 gps=95392
+flac3d>fish automatic-create on
+flac3d>
+flac3d>; --- probe 1: zone-side intrinsics needed by field dumps ---
+flac3d>fish define probe_zone
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if n = 0 then
+   Def>            io.out('SMK-Z id='+string(zone.id(z))+' group='+zone.group(z))
+   Def>            io.out('SMK-Z state='+string(zone.state(z,1))+' pp='+string(zone.pp(z)))
+   Def>            io.out('SMK-Z sxx='+string(zone.stress.xx(z))+' szz='+string(zone.stress.zz(z)))
+   Def>            local g = zone.gp(z,1)
+   Def>            io.out('SMK-Z gp1.id='+string(gp.id(g))+' x='+string(comp.x(gp.pos(g))))
+   Def>            local g4 = zone.gp(z,4)
+   Def>            io.out('SMK-Z gp4.id='+string(gp.id(g4)))
+   Def>        end_if
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    io.out('SMK-Z looped='+string(n))
+   Def>end
+flac3d>[probe_zone]
+SMK-Z id=1 group=None
+SMK-Z state=0 pp=0
+SMK-Z sxx=-739444 szz=-956558
+SMK-Z gp1.id=15975 x=991.624
+SMK-Z gp4.id=93552
+SMK-Z looped=511988
+0 (integer)
+flac3d>
+flac3d>; --- probe 2: gridpoint displacement (for disp field dumps) ---
+flac3d>fish define probe_gp
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        if n = 0 then
+   Def>            io.out('SMK-G id='+string(gp.id(g))+' ux='+string(comp.x(gp.disp(g)))+' uz='+string(comp.z(gp.disp(g))))
+   Def>        end_if
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    io.out('SMK-G looped='+string(n))
+   Def>end
+flac3d>[probe_gp]
+SMK-G id=1 ux=0 uz=0.0605196
+SMK-G looped=95392
+0 (integer)
+flac3d>
+flac3d>; --- probe 3: native geometry export (preferred over FISH geometry dump) ---
+flac3d>[io.out('SMK-E trying zone export...')]
+SMK-E trying zone export...
+0 (integer)
+flac3d>zone export 'lg_geom_smoke.f3grid'
+--- 95392 gridpoints exported.
+--- 511988 zones exported.
+--- 10 zone groups assigned.
+--- 34518 faces assigned to 11 face collections/groups.
+--- Exporting grid completed.
+flac3d>[io.out('SMK-E zone export OK')]
+SMK-E zone export OK
+0 (integer)
+flac3d>[io.out('SMK-DONE')]
+SMK-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週五 七月 10 13:04:47 2026
+**********************************************

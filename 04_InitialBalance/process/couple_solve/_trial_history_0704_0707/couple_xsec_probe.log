@@ -1,0 +1,56 @@
+**********************************************
+* Logging started at 週一 七月 6 12:15:29 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../output/Couple_Initial_G3'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 七月 5 23:51:18 2026
+Total Cycles: 48405  Super Cycles: 48405
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define dumpxsec
+   Def>    local f = file.open('cld_xsec_y885.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x z r'
+   Def>    local st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local y = comp.y(p)
+   Def>        if y > 884.5 then
+   Def>        if y < 885.5 then
+   Def>            local x = comp.x(p)
+   Def>            local z = comp.z(p)
+   Def>            local r = math.sqrt((x-1297.0)^2 + (z-1747.5)^2)
+   Def>            a(1) = string(x)+' '+string(z)+' '+string(r)
+   Def>            st = file.write(a,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('XSEC y885 balls='+string(n))
+   Def>end
+flac3d>[dumpxsec]
+XSEC y885 balls=9000
+0 (integer)
+flac3d>[io.out('XSEC-DONE')]
+XSEC-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週一 七月 6 12:16:04 2026
+**********************************************

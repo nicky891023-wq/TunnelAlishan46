@@ -1,0 +1,114 @@
+**********************************************
+* Logging started at 週日 七月 5 17:06:43 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../output/Couple_Initial_G'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 七月 5 12:23:24 2026
+Total Cycles: 55705  Super Cycles: 55705
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>model largestrain on
+flac3d>model mechanical timestep scale
+--- density scaling activated in mechanical process with a target timestep of 1.
+flac3d>fish automatic-create on
+flac3d>
+flac3d>fish define n_intact
+   Def>    local n = 0
+   Def>    loop foreach local c contact.list('ball-ball')
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_state') = 3 then
+   Def>                n = n + 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    n_intact = n
+   Def>end
+flac3d>fish define report_max(tag)
+   Def>    local dmg = 0.0
+   Def>    local px = 0.0
+   Def>    local py = 0.0
+   Def>    local pz = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        local dg = gp.disp(g)
+   Def>        local mg = math.sqrt(comp.x(dg)^2+comp.y(dg)^2+comp.z(dg)^2)
+   Def>        if mg > dmg then
+   Def>            dmg = mg
+   Def>            local pp = gp.pos(g)
+   Def>            px = comp.x(pp)
+   Def>            py = comp.y(pp)
+   Def>            pz = comp.z(pp)
+   Def>        end_if
+   Def>    end_loop
+   Def>    local dmb = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local db = ball.disp(b)
+   Def>        local mb = math.sqrt(comp.x(db)^2+comp.y(db)^2+comp.z(db)^2)
+   Def>        if mb > dmb then
+   Def>            dmb = mb
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('IFX '+tag+' gp_dmax='+string(dmg*1000.0)+'mm@('+string(px)+','+string(py)+','+string(pz)+') ball_dmax='+string(dmb*1000.0)+'mm intact='+string(n_intact))
+   Def>end
+flac3d>
+flac3d>; ---- datum ----
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456052 ball(s).
+flac3d>zone gridpoint initialize displacement (0,0,0)
+--- displacement modified in 441728 gridpoints.
+flac3d>zone gridpoint initialize velocity (0,0,0)
+--- velocity modified in 441728 gridpoints.
+flac3d>model calm
+flac3d>[report_max('start')]
+IFX start gp_dmax=0mm@(0,0,0) ball_dmax=0mm intact=2234087
+0 (integer)
+flac3d>
+flac3d>; ---- REMEDY: interface stiffness -> E_eq (existing + future contacts) ----
+flac3d>contact method deformability emod 2.31e9 kratio 1.0 range contact type 'ball-facet'
+--- Method deformability applied to 377436 contacts in range.
+flac3d>contact method pb_deform emod 2.31e9 kratio 1.0 range contact type 'ball-facet'
+--- Method pb_deformability applied to 377436 contacts in range.
+flac3d>cmat default type 'ball-facet' model linearpbond method deformability emod 2.31e9 kratio 1.0 proximity 0.03 property fric 0.5
+flac3d>[io.out('IFX interface softened to E_eq=2.31e9 (bf emod + pb_emod; strengths untouched)')]
+IFX interface softened to E_eq=2.31e9 (bf emod + pb_emod; strengths untouched)
+flac3d>
+flac3d>; ---- window A: 2500 bare cycles (the killer window, no calm) ----
+flac3d>model cycle 2500
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2500      58205 00:00:56:14      2500                        
+--- Global cycle limit of 2500 met.
+--- Cycling ended at: 2026-07-05 18:03:55
+flac3d>[report_max('A-c2500')]
+IFX A-c2500 gp_dmax=18.751mm@(1301.17,877.573,1744.8) ball_dmax=256.079mm intact=2230817
+0 (integer)
+flac3d>
+flac3d>; ---- window B: 2500 more bare cycles (growth check) ----
+flac3d>model cycle 2500
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2500      60705 00:00:56:46      2500                        
+--- Global cycle limit of 2500 met.
+--- Cycling ended at: 2026-07-05 19:01:00
+flac3d>[report_max('B-c5000')]
+IFX B-c5000 gp_dmax=19.3952mm@(1301.17,877.573,1744.8) ball_dmax=605.444mm intact=2230684
+0 (integer)
+flac3d>[io.out('IFX-DONE (no save)')]
+IFX-DONE (no save)
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週日 七月 5 19:01:17 2026
+**********************************************

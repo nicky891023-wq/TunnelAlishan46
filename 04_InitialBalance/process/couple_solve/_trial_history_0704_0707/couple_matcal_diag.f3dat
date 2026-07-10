@@ -1,0 +1,254 @@
+; ============================================================================
+; couple_matcal_diag.f3dat -- MATERIAL-CALIBRATION diagnosis (2026-07-06).
+;   Stage-1 full load shattered the horseshoe legs (36k cracks). Wade's call:
+;   try adjusting MATERIAL PARAMS on the existing G3 (NO equilibrium redo needed
+;   -- bond STRENGTHS and the zero-stress rock stiffness don't change the zero-
+;   force initial state) to bring full stage-1 load into a "moderate springline
+;   cracking" regime with REALISTIC params. If params must go unrealistic to
+;   stop shattering, THEN add drive reduction.
+;   This run: apply a trial param set to G3, ramp to full stage-1 drive with
+;   census at 25/50/75/100%. NO SAVE. cwd = this dir, bare filename.
+;   ---- TRIAL PARAM SET (edit these 4 globals to iterate) ----
+;     LIN_MULT : lining bond strength multiplier (x2 -> macro ft ~8 MPa = RC eqv)
+;     E_ROCK   : rock equivalent Young (GPa range of layers is 1.5-7.0)
+;     E_IFACE  : ball-facet interface emod (confinement)
+;   Feet strips (z<=1745.30) stay 1e100 unbreakable; bf_couple stays 1e20.
+; ============================================================================
+program log-file 'couple_matcal_diag.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial_G3'
+model largestrain on
+model mechanical timestep scale
+fish automatic-create on
+[global LIN_MULT = 2.0]
+[global E_ROCK  = 4.62e9]
+[global E_IFACE = 4.62e9]
+[global NSUB = 5]
+[global NCYC = 150]
+
+; ---- apply trial material params (no equilibrium redo; state is zero-force) ----
+[global pb_ten_new = 2.10e6 * LIN_MULT]
+[global pb_coh_new = 2.30e7 * LIN_MULT]
+contact property pb_ten [pb_ten_new] pb_coh [pb_coh_new] range contact type 'ball-ball'
+contact property pb_ten 1.0e100 pb_coh 1.0e100 range contact type 'ball-ball' position-z 1740.0 1745.30
+zone property young [E_ROCK]
+contact method deformability emod [E_IFACE] kratio 1.0 range contact type 'ball-facet'
+contact method pb_deform emod [E_IFACE] kratio 1.0 range contact type 'ball-facet'
+[io.out('MCAL params: lining x'+string(LIN_MULT)+' (pb_ten='+string(pb_ten_new)+' pb_coh='+string(pb_coh_new)+') E_rock='+string(E_ROCK)+' E_iface='+string(E_IFACE))]
+[io.out('MCAL-0 restored G3: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num))]
+
+; datum
+ball attribute displacement multiply 0.0
+zone gridpoint initialize displacement (0,0,0)
+zone gridpoint initialize velocity (0,0,0)
+model calm
+
+; ---- driven-gp tag + drive infrastructure (same as load_diag) ----
+fish define tag_driven
+    global ndriven = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local x = comp.x(p)
+        local y = comp.y(p)
+        local z = comp.z(p)
+        local onb = 0
+        if math.abs(x-1277.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(x-1317.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(y-860.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(y-910.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(z-1728.0) < 0.3 then
+            onb = 1
+        end_if
+        if math.abs(z-1768.0) < 0.3 then
+            onb = 1
+        end_if
+        if onb = 1 then
+            gp.group(g,'drive') = 'driven'
+            gp.vel(g) = vector(0.0,0.0,0.0)
+            gp.fix(g) = vector(1,1,1)
+            ndriven = ndriven + 1
+        end_if
+    end_loop
+    io.out('MCAL driven gps='+string(ndriven))
+end
+[tag_driven]
+fish define read_drive(fname)
+    local arr = array.create(1)
+    local st = file.open(fname,0,1)
+    ndata = 0
+    st = file.read(arr,1)
+    st = file.read(arr,1)
+    loop while st = 0
+        ndata = ndata + 1
+        st = file.read(arr,1)
+    end_loop
+    st = file.close
+    xdat  = array.create(ndata)
+    ydat  = array.create(ndata)
+    zdat  = array.create(ndata)
+    uxdat = array.create(ndata)
+    uydat = array.create(ndata)
+    uzdat = array.create(ndata)
+    st = file.open(fname,0,1)
+    st = file.read(arr,1)
+    local i = 0
+    st = file.read(arr,1)
+    loop while st = 0
+        i = i + 1
+        local ln = arr(1)
+        xdat(i)  = string.token(ln,1)
+        ydat(i)  = string.token(ln,2)
+        zdat(i)  = string.token(ln,3)
+        uxdat(i) = string.token(ln,4)
+        uydat(i) = string.token(ln,5)
+        uzdat(i) = string.token(ln,6)
+        st = file.read(arr,1)
+    end_loop
+    st = file.close
+    io.out('MCAL read '+fname+' ndata='+string(ndata))
+end
+fish define set_full_targets(radius)
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            local p = gp.pos(g)
+            local x = comp.x(p)
+            local y = comp.y(p)
+            local z = comp.z(p)
+            local sw = 0.0
+            local sux = 0.0
+            local suy = 0.0
+            local suz = 0.0
+            local dmin = 1e30
+            local i = 1
+            loop while i <= ndata
+                local dx = x - xdat(i)
+                local dy = y - ydat(i)
+                local dz = z - zdat(i)
+                local d2 = dx*dx + dy*dy + dz*dz
+                if d2 <= radius*radius then
+                    local w = 1.0/math.max(d2,1e-10)
+                    sw = sw + w
+                    sux = sux + uxdat(i)*w
+                    suy = suy + uydat(i)*w
+                    suz = suz + uzdat(i)*w
+                end_if
+                if d2 < dmin then
+                    dmin = d2
+                    global inear = i
+                end_if
+                i = i + 1
+            end_loop
+            if sw > 0.0 then
+                gp.extra(g,4) = sux/sw
+                gp.extra(g,5) = suy/sw
+                gp.extra(g,6) = suz/sw
+            else
+                gp.extra(g,4) = uxdat(inear)
+                gp.extra(g,5) = uydat(inear)
+                gp.extra(g,6) = uzdat(inear)
+            end_if
+        end_if
+    end_loop
+    io.out('MCAL full targets set')
+end
+fish define set_frac(frac)
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            gp.extra(g,1) = frac*gp.extra(g,4)
+            gp.extra(g,2) = frac*gp.extra(g,5)
+            gp.extra(g,3) = frac*gp.extra(g,6)
+        end_if
+    end_loop
+end
+fish define set_sub_vel(subs_left)
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            local d = gp.disp(g)
+            local den = float(subs_left)*float(NCYC)
+            gp.vel(g) = vector((gp.extra(g,1)-comp.x(d))/den, (gp.extra(g,2)-comp.y(d))/den, (gp.extra(g,3)-comp.z(d))/den)
+        end_if
+    end_loop
+end
+fish define hold_driven
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            gp.vel(g) = vector(0.0,0.0,0.0)
+        end_if
+    end_loop
+end
+fish define ramp_to(frac)
+    set_frac(frac)
+    local isub = 0
+    loop while isub < NSUB
+        isub = isub + 1
+        set_sub_vel(NSUB - isub + 1)
+        command
+            model cycle [NCYC]
+            model calm
+        endcommand
+    end_loop
+    hold_driven
+end
+fish define census(tag, frac)
+    local nbt = 0
+    local nbs = 0
+    local ncrown = 0
+    local nlegs = 0
+    loop foreach local c contact.list('ball-ball')
+        if contact.model(c) = 'linearpbond' then
+            local ps = contact.prop(c,'pb_state')
+            if ps = 1 then
+                nbt = nbt + 1
+            end_if
+            if ps = 2 then
+                nbs = nbs + 1
+            end_if
+            if ps < 3 then
+            if ps > 0 then
+                local zz = comp.z(contact.pos(c))
+                if zz > 1749.0 then
+                    ncrown = ncrown + 1
+                else
+                    if zz > 1745.3 then
+                        nlegs = nlegs + 1
+                    end_if
+                end_if
+            end_if
+            end_if
+        end_if
+    end_loop
+    local dmb = 0.0
+    loop foreach local b ball.list
+        local db = ball.disp(b)
+        local mb = math.sqrt(comp.x(db)^2+comp.y(db)^2+comp.z(db)^2)
+        if mb > dmb then
+            dmb = mb
+        end_if
+    end_loop
+    io.out('MCAL-CENSUS '+tag+' frac='+string(frac)+' broken_t='+string(nbt)+' broken_s='+string(nbs)+' | crown='+string(ncrown)+' legs='+string(nlegs)+' | ball_dmax='+string(dmb*1000.0)+'mm')
+end
+
+[read_drive('../../../05_One_Way_Simulation/process/cpl_resid_s01.txt')]
+[set_full_targets(6.0)]
+[census('baseline', 0.0)]
+[ramp_to(0.25)]
+[census('f25', 0.25)]
+[ramp_to(0.50)]
+[census('f50', 0.50)]
+[ramp_to(0.75)]
+[census('f75', 0.75)]
+[ramp_to(1.00)]
+[census('f100', 1.00)]
+[io.out('MCAL-DONE (no save)')]
+program log off
+program quit

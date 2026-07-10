@@ -1,0 +1,197 @@
+**********************************************
+* Logging started at 週六 七月 4 23:03:17 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../output/Couple_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 七月 4 15:16:31 2026
+Total Cycles: 41005  Super Cycles: 41005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>model largestrain on
+flac3d>model mechanical timestep scale
+--- density scaling activated in mechanical process with a target timestep of 1.
+flac3d>fish automatic-create on
+flac3d>
+flac3d>fish define locate_zone(zid)
+   Def>    local z = zone.find(zid)
+   Def>    if z # null then
+   Def>        local p = zone.pos(z)
+   Def>        io.out('DIAG-Z zone '+string(zid)+' pos=('+string(comp.x(p))+','+string(comp.y(p))+','+string(comp.z(p))+')')
+   Def>    else
+   Def>        io.out('DIAG-Z zone '+string(zid)+' NOT FOUND')
+   Def>    end_if
+   Def>end
+flac3d>[locate_zone(260648)]
+DIAG-Z zone 260648 pos=(1301.27,877.793,1745.03)
+0 (integer)
+flac3d>
+flac3d>fish define report_max(tag)
+   Def>    local dmg = 0.0
+   Def>    local pgx = 0.0
+   Def>    local pgy = 0.0
+   Def>    local pgz = 0.0
+   Def>    local n1mm = 0
+   Def>    local n10mm = 0
+   Def>    loop foreach local g gp.list
+   Def>        local d1 = gp.disp(g)
+   Def>        local m1 = math.sqrt(comp.x(d1)^2+comp.y(d1)^2+comp.z(d1)^2)
+   Def>        if m1 > 0.001 then
+   Def>            n1mm = n1mm + 1
+   Def>        end_if
+   Def>        if m1 > 0.01 then
+   Def>            n10mm = n10mm + 1
+   Def>        end_if
+   Def>        if m1 > dmg then
+   Def>            dmg = m1
+   Def>            local pg = gp.pos(g)
+   Def>            pgx = comp.x(pg)
+   Def>            pgy = comp.y(pg)
+   Def>            pgz = comp.z(pg)
+   Def>        end_if
+   Def>    end_loop
+   Def>    local dmb = 0.0
+   Def>    local pbx = 0.0
+   Def>    local pby = 0.0
+   Def>    local pbz = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local d2 = ball.disp(b)
+   Def>        local m2 = math.sqrt(comp.x(d2)^2+comp.y(d2)^2+comp.z(d2)^2)
+   Def>        if m2 > dmb then
+   Def>            dmb = m2
+   Def>            local pb = ball.pos(b)
+   Def>            pbx = comp.x(pb)
+   Def>            pby = comp.y(pb)
+   Def>            pbz = comp.z(pb)
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('DIAG '+tag+' gp_dmax='+string(dmg*1000.0)+'mm at ('+string(pgx)+','+string(pgy)+','+string(pgz)+') n>1mm='+string(n1mm)+' n>10mm='+string(n10mm))
+   Def>    io.out('DIAG '+tag+' ball_dmax='+string(dmb*1000.0)+'mm at ('+string(pbx)+','+string(pby)+','+string(pbz)+')')
+   Def>end
+flac3d>
+flac3d>fish define zero_zone_stress
+   Def>    loop foreach local z zone.list
+   Def>        zone.stress.xx(z) = 0.0
+   Def>        zone.stress.yy(z) = 0.0
+   Def>        zone.stress.zz(z) = 0.0
+   Def>        zone.stress.xy(z) = 0.0
+   Def>        zone.stress.xz(z) = 0.0
+   Def>        zone.stress.yz(z) = 0.0
+   Def>    end_loop
+   Def>    io.out('   zone stresses zeroed')
+   Def>end
+flac3d>
+flac3d>; ---- datum + G1 setup (same as failed run) ----
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456256 ball(s).
+flac3d>zone gridpoint initialize displacement (0,0,0)
+--- displacement modified in 441728 gridpoints.
+flac3d>zone gridpoint initialize velocity (0,0,0)
+--- velocity modified in 441728 gridpoints.
+flac3d>model calm
+flac3d>[zero_zone_stress]
+   zone stresses zeroed
+0 (integer)
+flac3d>zone initialize density 1.0
+--- density modified in 424908 zones.
+flac3d>zone gridpoint free velocity
+--- Free velocity         specified in 441728 gridpoints.
+flac3d>zone gridpoint initialize velocity (0,0,0)
+--- velocity modified in 441728 gridpoints.
+flac3d>zone gridpoint fix velocity range position-x 1276.7 1277.3
+--- Fix velocity         specified in 3584 gridpoints.
+flac3d>zone gridpoint fix velocity range position-x 1316.7 1317.3
+--- Fix velocity         specified in 3584 gridpoints.
+flac3d>zone gridpoint fix velocity range position-y 859.7 860.3
+--- Fix velocity         specified in 3944 gridpoints.
+flac3d>zone gridpoint fix velocity range position-y 909.7 910.3
+--- Fix velocity         specified in 3944 gridpoints.
+flac3d>zone gridpoint fix velocity range position-z 1727.7 1728.3
+--- Fix velocity         specified in 3248 gridpoints.
+flac3d>zone gridpoint fix velocity range position-z 1767.7 1768.3
+--- Fix velocity         specified in 3024 gridpoints.
+flac3d>
+flac3d>; ---- D1: reproduce (short) ----
+flac3d>model cycle 100
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      41105 00:00:02:00       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-04 23:05:56
+flac3d>[report_max('D1-c100')]
+DIAG D1-c100 gp_dmax=0.156595mm at (1296.19,877.568,1745.76) n>1mm=0 n>10mm=0
+DIAG D1-c100 ball_dmax=0.151163mm at (1300.75,887.929,1749.27)
+0 (integer)
+flac3d>model cycle 400
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      400      41505 00:00:07:48       400                        
+--- Global cycle limit of 400 met.
+--- Cycling ended at: 2026-07-04 23:13:46
+flac3d>[report_max('D1-c500')]
+DIAG D1-c500 gp_dmax=0.584455mm at (1296.37,884.324,1747.35) n>1mm=0 n>10mm=0
+DIAG D1-c500 ball_dmax=19.5364mm at (1296.69,884.333,1747.21)
+0 (integer)
+flac3d>
+flac3d>; ---- D2: remove ALL applied face conditions -> pure displacement transmitter ----
+flac3d>zone face apply-remove
+--- Apply conditions removed from 25752 faces.
+flac3d>[io.out('DIAG-D2 all zone face applies REMOVED')]
+DIAG-D2 all zone face applies REMOVED
+0 (integer)
+flac3d>zone gridpoint initialize displacement (0,0,0)
+--- displacement modified in 441728 gridpoints.
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456256 ball(s).
+flac3d>zone gridpoint initialize velocity (0,0,0)
+--- velocity modified in 441728 gridpoints.
+flac3d>model calm
+flac3d>model cycle 100
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      41605 00:00:02:00       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-04 23:15:50
+flac3d>[report_max('D2-c100')]
+DIAG D2-c100 gp_dmax=0.477476mm at (1300.05,867.207,1745.94) n>1mm=0 n>10mm=0
+DIAG D2-c100 ball_dmax=1.48131mm at (1300.08,867.671,1746.29)
+0 (integer)
+flac3d>model cycle 400
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      400      42005 00:00:07:47       400                        
+--- Global cycle limit of 400 met.
+--- Cycling ended at: 2026-07-04 23:23:38
+flac3d>[report_max('D2-c500')]
+DIAG D2-c500 gp_dmax=0.965052mm at (1300.77,894.685,1748.3) n>1mm=0 n>10mm=0
+DIAG D2-c500 ball_dmax=18.4742mm at (1299.8,867.758,1746.25)
+0 (integer)
+flac3d>model cycle 1500
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     1500      43505 00:00:30:22      1500                        
+--- Global cycle limit of 1500 met.
+--- Cycling ended at: 2026-07-04 23:54:02
+flac3d>[report_max('D2-c2000')]
+DIAG D2-c2000 gp_dmax=2.2383mm at (1295.83,873.063,1745.09) n>1mm=6 n>10mm=0
+DIAG D2-c2000 ball_dmax=240.326mm at (1296.59,891.973,1748.09)
+0 (integer)
+flac3d>[io.out('DIAG-DONE (no save)')]
+DIAG-DONE (no save)
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週六 七月 4 23:54:02 2026
+**********************************************

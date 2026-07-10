@@ -1,0 +1,63 @@
+; fracture_track_v3.fis -- crack DFN tracker for the coupled BPM (2026-07-06).
+;   v3 change (performance): REMOVES all fragment operations that crippled v2 on
+;   this 456k-ball / 2.27M-bond model:
+;     - track_init no longer does `fragment register ball-ball` (v2 line 102 was
+;       a ~28-min single-threaded startup on this model).
+;     - add_crack no longer calls `fragment compute` every 50 cracks (v2 lines
+;       52-58 recomputed connectivity over ALL 456k balls per 50 cracks -> each
+;       staged stage crawled).
+;   The fragment system was used ONLY to cosmetically re-sync crack DFN
+;   positions after large-strain ball motion. At the mm-scale motion here the
+;   creation position == current position to <1 mm, so this is dropped with no
+;   meaningful loss. The crack_tension / crack_shear DFNs are still created per
+;   bond break (fracture.create), so dump_cracks / crack_sectors work unchanged.
+; ============================================================================
+fish define add_crack(entries)
+    local contact    = entries(1)
+    local mode       = entries(2)    ; slot2 = failure mode {1=tension, 2=shear}
+    local frac_pos   = contact.pos(contact)
+    local norm       = contact.normal(contact)
+    local dfn_label  = 'crack'
+    local bp1 = contact.end1(contact)
+    local bp2 = contact.end2(contact)
+    local frac_size = math.min(ball.radius(bp1), ball.radius(bp2))
+    local arg = array.create(5)
+    arg(1) = 'disk'
+    arg(2) = frac_pos
+    arg(3) = frac_size
+    arg(4) = math.dip.from.normal(norm)/math.degrad
+    arg(5) = math.ddir.from.normal(norm)/math.degrad
+    if arg(5) < 0.0
+        arg(5) = 360.0+arg(5)
+    end_if
+    global crack_num
+    crack_num = crack_num + 1
+    if mode = 1 then
+        dfn_label = dfn_label + '_tension'
+    else if mode = 2 then
+        dfn_label = dfn_label + '_shear'
+    endif
+    global dfn = dfn.find(dfn_label)
+    if dfn = null then
+        dfn = dfn.create(dfn_label)
+    endif
+    local fnew = fracture.create(dfn,arg)
+    fracture.prop(fnew,'age')  = mech.time.total
+    fracture.extra(fnew,1) = bp1
+    fracture.extra(fnew,2) = bp2
+    crack_accum += 1
+end
+
+fish define track_init
+    command
+        fracture delete
+        model results clear-map
+    endcommand
+    command
+        fish callback remove add_crack event bond_break
+        fish callback add add_crack event bond_break
+    endcommand
+    global crack_accum = 0
+    global crack_num = 0
+    global track_time0 = mech.time.total
+end

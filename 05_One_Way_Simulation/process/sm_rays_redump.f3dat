@@ -1,0 +1,16 @@
+; sm_rays_redump.f3dat -- re-dump stress rays with CORRECT crown position x=1298.85
+; (ring centre verified from xsec_G4_y885; previous corridor x=1297+-2 was 1.85 m left
+;  of the true crown). Springline ray unchanged (right wall x>1300 still correct).
+program log-file 'sm_rays_redump.log'
+program log on
+model restore '../output/ss_01'
+fish automatic-create on
+[global CUR = '01']
+call 'ray_dump_body2.f3dat'
+model restore '../output/ss_06'
+fish automatic-create on
+[global CUR = '06']
+call 'ray_dump_body2.f3dat'
+[io.out('RAY-REDUMP-DONE')]
+program log off
+program quit

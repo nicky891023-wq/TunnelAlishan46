@@ -1,0 +1,149 @@
+**********************************************
+* Logging started at 週六 七月 4 12:29:07 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore 'Couple_Initial_free'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 七月 4 03:20:55 2026
+Total Cycles: 33005  Super Cycles: 33005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>
+flac3d>fish define tag_debris
+   Def>    local nd = 0
+   Def>    loop foreach local b ball.list
+   Def>        local d = ball.disp(b)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > 0.02 then
+   Def>            ball.group(b) = 'debris'
+   Def>            nd = nd + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('FFX-1 debris balls tagged='+string(nd))
+   Def>end
+flac3d>[tag_debris]
+FFX-1 debris balls tagged=46
+0 (integer)
+flac3d>ball delete range group 'debris'
+--- 46 balls deleted.
+flac3d>[io.out('FFX-2 debris deleted; balls now='+string(ball.num))]
+FFX-2 debris deleted; balls now=456256
+flac3d>
+flac3d>; fresh baselines after deletion (deleting balls removed their contacts/broken records)
+flac3d>fish define broken_count
+   Def>    local nb = 0
+   Def>    loop foreach local c contact.list
+   Def>        if type.pointer(c) = 'ball-ball' then
+   Def>            local st = contact.prop(c,'pb_state')
+   Def>            if st = 1 then
+   Def>                nb = nb + 1
+   Def>            end_if
+   Def>            if st = 2 then
+   Def>                nb = nb + 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    broken_count = nb
+   Def>end
+flac3d>fish define ball_dmax
+   Def>    local dm = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local d = ball.disp(b)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    ball_dmax = dm
+   Def>end
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456256 ball(s).
+flac3d>ball attribute velocity multiply 0.0 spin multiply 0.0
+--- Attribute velocity initialized in 456256 ball(s).
+--- Attribute spin initialized in 456256 ball(s).
+flac3d>[global brk0 = broken_count]
+flac3d>[io.out('FFX-3 baseline after delete: broken='+string(brk0))]
+FFX-3 baseline after delete: broken=421
+flac3d>model solve ratio-average 1e-4 or cycles 8000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+     8000      41005 7.6630e-03 00:02:46:08      8000            1.0000e-04             
+--- Global cycle limit of 8000 met.
+--- Cycling ended at: 2026-07-04 15:16:14
+flac3d>[global brk1 = broken_count]
+flac3d>[global bdm1 = ball_dmax]
+flac3d>[io.out('FFX-GATE new_broken='+string(brk1-brk0)+' (must be 0) ball_dmax='+string(bdm1)+' m (must be mm-level)')]
+FFX-GATE new_broken=19 (must be 0) ball_dmax=0.000598819 m (must be mm-level)
+flac3d>model save 'Couple_Initial_free2'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/process/couple_solve/Couple_Initial_free2.f3sav.
+flac3d>call 'count_bonds.f3fis'
+flac3d>fish automatic-create on
+flac3d>fish define count_state
+   Def>    local nbb = 0
+   Def>    local ntens = 0
+   Def>    local nshear = 0
+   Def>    loop foreach local c contact.list
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_ten') < 1.0e10 then
+   Def>                local cp = contact.pos(c)
+   Def>                if comp.y(cp) > 884.5 then
+   Def>                if comp.y(cp) < 885.5 then
+   Def>                    nbb = nbb + 1
+   Def>                    local st = contact.prop(c,'pb_state')
+   Def>                    if st = 1 then
+   Def>                        ntens = ntens + 1
+   Def>                    end_if
+   Def>                    if st = 2 then
+   Def>                        nshear = nshear + 1
+   Def>                    end_if
+   Def>                end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local dmax = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local dx = ball.disp(b,1)
+   Def>        local dy = ball.disp(b,2)
+   Def>        local dz = ball.disp(b,3)
+   Def>        local dm = math.sqrt(dx*dx+dy*dy+dz*dz)
+   Def>        if dm > dmax then
+   Def>            dmax = dm
+   Def>        end_if
+   Def>    end_loop
+   Def>    local gpmax = 0.0
+   Def>    loop foreach local gp gp.list
+   Def>        local gd = gp.disp(gp)
+   Def>        local gm = math.sqrt(comp.x(gd)*comp.x(gd)+comp.y(gd)*comp.y(gd)+comp.z(gd)*comp.z(gd))
+   Def>        if gm > gpmax then
+   Def>            gpmax = gm
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('   bonds(slice)='+string(nbb)+' tension-broken='+string(ntens)+' shear-broken='+string(nshear)+' | ball disp_max='+string(dmax)+' m | rock gp disp_max='+string(gpmax)+' m')
+   Def>end
+flac3d>[io.out('FFX-BONDCHK at Couple_Initial_free2:')]
+FFX-BONDCHK at Couple_Initial_free2:
+0 (integer)
+flac3d>[count_state]
+   bonds(slice)=41140 tension-broken=0 shear-broken=0 | ball disp_max=0.000598819 m | rock gp disp_max=0 m
+0 (integer)
+flac3d>[io.out('FFX-DONE')]
+FFX-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週六 七月 4 15:17:14 2026
+**********************************************

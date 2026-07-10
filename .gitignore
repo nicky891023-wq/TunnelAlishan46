@@ -6,3 +6,25 @@
 __pycache__/
 *.pyc
 .claude/
+
+.netlify/
+.vscode/
+
+# Word 暫存鎖檔
+~$*.docx
+# 論文全文保護（政策同 docx；Wade 決定公開時移除）
+00_Document/draft/
+00_Document/thesis_src/
+# 大型可再生資料（由 05/process 的 lg_chain/sm_chain/cp_chain/cp_balldisp 腳本自 .f3sav 重生）
+*.f3grid
+*.vtu
+05_One_Way_Simulation/process/cp_cforce_s*.txt
+05_One_Way_Simulation/process/cp_balldisp_s*.txt
+05_One_Way_Simulation/process/lg_zf_s*.txt
+05_One_Way_Simulation/process/lg_gf_s*.txt
+05_One_Way_Simulation/process/sm_zf_s*.txt
+05_One_Way_Simulation/process/sm_gf_s*.txt
+05_One_Way_Simulation/process/ring3d_G4.txt
+# 第三方計畫文件（阿里山林鐵管理處等委辦成果，不上公開 repo）
+00_Document/202411_*/
+00_Document/*報告*/

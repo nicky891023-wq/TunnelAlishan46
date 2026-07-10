@@ -1,0 +1,30 @@
+; dump_xsec_G4.f3dat -- read-only y=885 ball cross-section from G4 (for result figure).
+program log-file 'dump_xsec_G4.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial_G4'
+fish automatic-create on
+fish define dumpx
+    local f = file.open('xsec_G4_y885.txt',1,1)
+    local a = array.create(1)
+    a(1) = 'x z'
+    local st = file.write(a,1)
+    local n = 0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        local y = comp.y(p)
+        if y > 884.5 then
+        if y < 885.5 then
+            a(1) = string(comp.x(p))+' '+string(comp.z(p))
+            st = file.write(a,1)
+            n = n + 1
+        end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('XSECG4-DONE balls='+string(n))
+end
+[dumpx]
+program log off
+program quit

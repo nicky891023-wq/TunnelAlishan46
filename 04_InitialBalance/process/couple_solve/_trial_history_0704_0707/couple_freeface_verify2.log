@@ -1,0 +1,69 @@
+**********************************************
+* Logging started at 週六 七月 4 15:18:42 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore 'Couple_Initial_free2'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 七月 4 15:16:31 2026
+Total Cycles: 41005  Super Cycles: 41005
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>fish define broken_count
+   Def>    local nb = 0
+   Def>    loop foreach local c contact.list
+   Def>        if type.pointer(c) = 'ball-ball' then
+   Def>            local st = contact.prop(c,'pb_state')
+   Def>            if st = 1 then
+   Def>                nb = nb + 1
+   Def>            end_if
+   Def>            if st = 2 then
+   Def>                nb = nb + 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    broken_count = nb
+   Def>end
+flac3d>fish define ball_dmax
+   Def>    local dm = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local d = ball.disp(b)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    ball_dmax = dm
+   Def>end
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456256 ball(s).
+flac3d>[global brk0 = broken_count]
+flac3d>[io.out('FFV-0 baseline broken='+string(brk0))]
+FFV-0 baseline broken=440
+flac3d>model solve ratio-average 1e-4 or cycles 5000
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+     5000      46005 7.1515e-03 00:01:31:53      5000            1.0000e-04             
+--- Global cycle limit of 5000 met.
+--- Cycling ended at: 2026-07-04 16:51:28
+flac3d>[io.out('FFV-GATE segment2: new_broken='+string(broken_count-brk0)+' (must be 0) dmax='+string(ball_dmax)+' m (must be sub-mm)')]
+FFV-GATE segment2: new_broken=23 (must be 0) dmax=0.000982195 m (must be sub-mm)
+flac3d>[io.out('FFV-DONE')]
+FFV-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週六 七月 4 16:51:45 2026
+**********************************************

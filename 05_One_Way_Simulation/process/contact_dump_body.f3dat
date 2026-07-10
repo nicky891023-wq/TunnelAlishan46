@@ -1,0 +1,29 @@
+; contact_dump_body.f3dat -- coupled-model ball-ball contact dump (07-10, lining INTERNAL forces).
+;   Call AFTER restore + global CUR set. Template = dump_cracknormals.f3dat (proven intrinsics:
+;   contact.list('ball-ball'), contact.model, contact.prop pb_state, contact.pos/normal,
+;   contact.force.global).
+;   Output cp_cforce_s<CUR>.txt : x y z fx fy fz nx ny nz pbstate
+;   pbstate: 3=bonded (carries internal force), 1/2=broken (tension/shear).
+fish define dump_cf
+    local f = 'cp_cforce_s'+CUR+'.txt'
+    local st = file.open(f,1,1)
+    local a = array.create(1)
+    a(1) = 'x y z fx fy fz nx ny nz pbstate'
+    st = file.write(a,1)
+    local n = 0
+    loop foreach local c contact.list('ball-ball')
+        if contact.model(c) = 'linearpbond' then
+            local p = contact.pos(c)
+            local fg = contact.force.global(c)
+            local nm = contact.normal(c)
+            local ps = contact.prop(c,'pb_state')
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(fg))+' '+string(comp.y(fg))+' '+string(comp.z(fg))+' '+string(comp.x(nm))+' '+string(comp.y(nm))+' '+string(comp.z(nm))+' '+string(ps)
+            st = file.write(a,1)
+            n = n + 1
+        end_if
+    end_loop
+    st = file.close
+    io.out('DUMP-CF '+f+' n='+string(n))
+end
+[dump_cf]
+[io.out('CF-DONE s'+CUR)]

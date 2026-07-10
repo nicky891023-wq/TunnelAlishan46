@@ -1,0 +1,11 @@
+; smoke_expf.f3dat -- single-stage smoke test of exp_fields_body (iron rule: short-test first)
+program log-file 'smoke_expf.log'
+program log on
+fish automatic-create on
+model restore '../output/lgs_01'
+[global CUR = '01']
+[global MODL = 'lg']
+call 'exp_fields_body.f3dat'
+[io.out('SMOKE-DONE')]
+program log off
+program quit

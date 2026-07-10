@@ -1,0 +1,19 @@
+; export_pf_3ckpt.f3dat -- fine-pressure dumps from the 3 staged checkpoints.
+;   cwd = process/, bare filename. ~35 min (3 restores of 5GB).
+program log-file 'export_pf_3ckpt.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+fish automatic-create on
+model restore '../output/cs_01'
+[global CUR = '01']
+call 'exp_pf_body.f3dat'
+model restore '../output/cs_06'
+[global CUR = '06']
+call 'exp_pf_body.f3dat'
+model restore '../output/cs_11'
+[global CUR = '11']
+call 'exp_pf_body.f3dat'
+[io.out('EXPPF-DONE 3 checkpoints')]
+program log off
+program quit

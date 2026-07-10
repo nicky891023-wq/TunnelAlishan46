@@ -1,0 +1,12 @@
+﻿Stage,Water table,Phase,Duration (d)
+s1,W-110,dry (initial),30
+s2,W-90,rising,5
+s3,W-70,rising,5
+s4,W-50,rising,5
+s5,W-30,rising,5
+s6,W-10,wet (peak),30
+s7,W-30,falling,5
+s8,W-50,falling,5
+s9,W-70,falling,5
+s10,W-90,falling,5
+s11,W-110,dry (final),30

@@ -1,0 +1,70 @@
+; couple_freeface_fix.f3dat -- STEP F remediation (2026-07-04).
+;   Diagnosis verdict: 72/456,302 movers (0.016%), ring blue-line mean 0.005 mm =
+;   LOOSE DEBRIS BALLS, no structural sagging. Fix: delete balls with |disp|>20 mm
+;   (46 balls), re-converge, re-run the gate. PASS = new_broken 0 AND dmax mm-level
+;   -> save Couple_Initial_free2 (the staged starting state). cwd = couple_solve.
+program log-file 'couple_freeface_fix.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore 'Couple_Initial_free'
+fish automatic-create on
+
+fish define tag_debris
+    local nd = 0
+    loop foreach local b ball.list
+        local d = ball.disp(b)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > 0.02 then
+            ball.group(b) = 'debris'
+            nd = nd + 1
+        end_if
+    end_loop
+    io.out('FFX-1 debris balls tagged='+string(nd))
+end
+[tag_debris]
+ball delete range group 'debris'
+[io.out('FFX-2 debris deleted; balls now='+string(ball.num))]
+
+; fresh baselines after deletion (deleting balls removed their contacts/broken records)
+fish define broken_count
+    local nb = 0
+    loop foreach local c contact.list
+        if type.pointer(c) = 'ball-ball' then
+            local st = contact.prop(c,'pb_state')
+            if st = 1 then
+                nb = nb + 1
+            end_if
+            if st = 2 then
+                nb = nb + 1
+            end_if
+        end_if
+    end_loop
+    broken_count = nb
+end
+fish define ball_dmax
+    local dm = 0.0
+    loop foreach local b ball.list
+        local d = ball.disp(b)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > dm then
+            dm = m
+        end_if
+    end_loop
+    ball_dmax = dm
+end
+ball attribute displacement multiply 0.0
+ball attribute velocity multiply 0.0 spin multiply 0.0
+[global brk0 = broken_count]
+[io.out('FFX-3 baseline after delete: broken='+string(brk0))]
+model solve ratio-average 1e-4 or cycles 8000
+[global brk1 = broken_count]
+[global bdm1 = ball_dmax]
+[io.out('FFX-GATE new_broken='+string(brk1-brk0)+' (must be 0) ball_dmax='+string(bdm1)+' m (must be mm-level)')]
+model save 'Couple_Initial_free2'
+call 'count_bonds.f3fis'
+[io.out('FFX-BONDCHK at Couple_Initial_free2:')]
+[count_state]
+[io.out('FFX-DONE')]
+program log off
+program quit

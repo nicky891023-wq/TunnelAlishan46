@@ -1,0 +1,819 @@
+**********************************************
+* Logging started at 週五 七月 10 13:10:46 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>
+flac3d>model restore '../output/ss_01'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週五 七月 3 09:37:07 2026
+Total Cycles: 32436  Super Cycles: 32436
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('SMC restored ss_01 zones='+string(zone.num)+' shells='+string(struct.num))]
+SMC restored ss_01 zones=1433466 shells=69828
+flac3d>zone export 'sm_geom.f3grid'
+--- 269452 gridpoints exported.
+--- 1433466 zones exported.
+--- 17 zone groups assigned.
+--- 111664 faces assigned to 14 face collections/groups.
+--- Exporting grid completed.
+flac3d>[io.out('SMC geom exported')]
+SMC geom exported
+0 (integer)
+flac3d>[global CUR = '01']
+flac3d>[global MODL = 'sm']
+flac3d>call 'field_dump_body.f3dat'
+flac3d>; field_dump_body.f3dat -- per-stage full-model field dump (07-10, thesis Ch5 figures).
+flac3d>;   Call AFTER each `model restore` (restore wipes FISH). Driver sets globals CUR/MODL first.
+flac3d>;   Outputs (keyed by id; geometry comes from <MODL>_geom.f3grid dumped once per model):
+flac3d>;     <MODL>_zf_s<CUR>.txt : id state pp visc      (zone: plastic state bitmask, pore pressure,
+flac3d>;                            maxwell viscosity -> Python: creep zone if visc>0, ACTIVE if <1e50)
+flac3d>;     <MODL>_gf_s<CUR>.txt : id ux uy uz           (gridpoint displacement)
+flac3d>;   Proven intrinsics only: zone.id/state(z,1)/pp/prop, gp.id/disp (smoke_export_probe 07-10).
+flac3d>fish define dump_zf
+   Def>    local f = MODL+'_zf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id state pp visc'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        a(1) = string(zone.id(z))+' '+string(zone.state(z,1))+' '+string(zone.pp(z))+' '+string(zone.prop(z,'viscosity-maxwell'))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-Z '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_gf
+   Def>    local f = MODL+'_gf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id ux uy uz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        a(1) = string(gp.id(g))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-G '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_zf]
+*** Property viscosity-maxwell not found in model null.
+    From line 16 of source C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/process/field_dump_body.f3dat.
+    While processing line 39 of file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/process/field_dump_body.f3dat.
+**********************************************
+* Logging started at 週五 七月 10 13:22:25 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>
+flac3d>model restore '../output/ss_01'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週五 七月 3 09:37:07 2026
+Total Cycles: 32436  Super Cycles: 32436
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('SMC restored ss_01 zones='+string(zone.num)+' shells='+string(struct.num))]
+SMC restored ss_01 zones=1433466 shells=69828
+flac3d>zone export 'sm_geom.f3grid'
+--- 269452 gridpoints exported.
+--- 1433466 zones exported.
+--- 17 zone groups assigned.
+--- 111664 faces assigned to 14 face collections/groups.
+--- Exporting grid completed.
+flac3d>[io.out('SMC geom exported')]
+SMC geom exported
+0 (integer)
+flac3d>[global CUR = '01']
+flac3d>[global MODL = 'sm']
+flac3d>call 'field_dump_body.f3dat'
+flac3d>; field_dump_body.f3dat -- per-stage full-model field dump (07-10, thesis Ch5 figures).
+flac3d>;   Call AFTER each `model restore` (restore wipes FISH). Driver sets globals CUR/MODL first.
+flac3d>;   Outputs (keyed by id; geometry comes from <MODL>_geom.f3grid dumped once per model):
+flac3d>;     <MODL>_zf_s<CUR>.txt : id state pp visc      (zone: plastic state bitmask, pore pressure,
+flac3d>;                            maxwell viscosity -> Python: creep zone if visc>0, ACTIVE if <1e50)
+flac3d>;     <MODL>_gf_s<CUR>.txt : id ux uy uz           (gridpoint displacement)
+flac3d>;   Proven intrinsics only: zone.id/state(z,1)/pp/prop, gp.id/disp (smoke_export_probe 07-10).
+flac3d>fish define dump_zf
+   Def>    local f = MODL+'_zf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id state pp visc'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        ; null zones (excavated tunnel) have no properties -> zone.prop THROWS on model null
+   Def>        local vv = 0.0
+   Def>        if zone.model(z) # 'null' then
+   Def>            vv = zone.prop(z,'viscosity-maxwell')
+   Def>        end_if
+   Def>        a(1) = string(zone.id(z))+' '+string(zone.state(z,1))+' '+string(zone.pp(z))+' '+string(vv)
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-Z '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_gf
+   Def>    local f = MODL+'_gf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id ux uy uz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        a(1) = string(gp.id(g))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-G '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_zf]
+DUMP-Z sm_zf_s01.txt n=1433466
+0 (integer)
+flac3d>[dump_gf]
+DUMP-G sm_gf_s01.txt n=269452
+0 (integer)
+flac3d>[io.out('EXPF-DONE '+MODL+' s'+CUR)]
+EXPF-DONE sm s01
+0 (integer)
+flac3d>call 'ray_dump_body.f3dat'
+flac3d>; ray_dump_body.f3dat -- small-model radial stress rays for FIG 5-14 (07-10, v2 null-guarded).
+flac3d>;   Call AFTER restore + globals CUR set. Tunnel centre (1297, y885, z1747.5), global coords.
+flac3d>;   Crown ray: vertical +z column above crown; Springline ray: horizontal +x from right wall.
+flac3d>;   Columns: x y z sxx syy szz sxy sxz syz pp  (full tensor -> sigma_r/sigma_theta in Python)
+flac3d>;   Null zones (excavated interior) skipped: no properties/meaningful stress.
+flac3d>fish define dump_ray_crown
+   Def>    local f = 'sm_ray_crown_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(xx-1297.0) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if zz > 1747.0 then
+   Def>                        if zz < 1800.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYC '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_ray_spring
+   Def>    local f = 'sm_ray_spring_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(zz-1747.5) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if xx > 1300.0 then
+   Def>                        if xx < 1347.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYS '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_ray_crown]
+DUMP-RAYC sm_ray_crown_s01.txt n=8774
+0 (integer)
+flac3d>[dump_ray_spring]
+DUMP-RAYS sm_ray_spring_s01.txt n=12546
+0 (integer)
+flac3d>[io.out('RAY-DONE s'+CUR)]
+RAY-DONE s01
+0 (integer)
+flac3d>
+flac3d>model restore '../output/ss_04'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週五 七月 3 10:25:59 2026
+Total Cycles: 41956  Super Cycles: 41956
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '04']
+flac3d>[global MODL = 'sm']
+flac3d>call 'field_dump_body.f3dat'
+flac3d>; field_dump_body.f3dat -- per-stage full-model field dump (07-10, thesis Ch5 figures).
+flac3d>;   Call AFTER each `model restore` (restore wipes FISH). Driver sets globals CUR/MODL first.
+flac3d>;   Outputs (keyed by id; geometry comes from <MODL>_geom.f3grid dumped once per model):
+flac3d>;     <MODL>_zf_s<CUR>.txt : id state pp visc      (zone: plastic state bitmask, pore pressure,
+flac3d>;                            maxwell viscosity -> Python: creep zone if visc>0, ACTIVE if <1e50)
+flac3d>;     <MODL>_gf_s<CUR>.txt : id ux uy uz           (gridpoint displacement)
+flac3d>;   Proven intrinsics only: zone.id/state(z,1)/pp/prop, gp.id/disp (smoke_export_probe 07-10).
+flac3d>fish define dump_zf
+   Def>    local f = MODL+'_zf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id state pp visc'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        ; null zones (excavated tunnel) have no properties -> zone.prop THROWS on model null
+   Def>        local vv = 0.0
+   Def>        if zone.model(z) # 'null' then
+   Def>            vv = zone.prop(z,'viscosity-maxwell')
+   Def>        end_if
+   Def>        a(1) = string(zone.id(z))+' '+string(zone.state(z,1))+' '+string(zone.pp(z))+' '+string(vv)
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-Z '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_gf
+   Def>    local f = MODL+'_gf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id ux uy uz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        a(1) = string(gp.id(g))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-G '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_zf]
+DUMP-Z sm_zf_s04.txt n=1433466
+0 (integer)
+flac3d>[dump_gf]
+DUMP-G sm_gf_s04.txt n=269452
+0 (integer)
+flac3d>[io.out('EXPF-DONE '+MODL+' s'+CUR)]
+EXPF-DONE sm s04
+0 (integer)
+flac3d>call 'ray_dump_body.f3dat'
+flac3d>; ray_dump_body.f3dat -- small-model radial stress rays for FIG 5-14 (07-10, v2 null-guarded).
+flac3d>;   Call AFTER restore + globals CUR set. Tunnel centre (1297, y885, z1747.5), global coords.
+flac3d>;   Crown ray: vertical +z column above crown; Springline ray: horizontal +x from right wall.
+flac3d>;   Columns: x y z sxx syy szz sxy sxz syz pp  (full tensor -> sigma_r/sigma_theta in Python)
+flac3d>;   Null zones (excavated interior) skipped: no properties/meaningful stress.
+flac3d>fish define dump_ray_crown
+   Def>    local f = 'sm_ray_crown_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(xx-1297.0) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if zz > 1747.0 then
+   Def>                        if zz < 1800.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYC '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_ray_spring
+   Def>    local f = 'sm_ray_spring_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(zz-1747.5) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if xx > 1300.0 then
+   Def>                        if xx < 1347.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYS '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_ray_crown]
+DUMP-RAYC sm_ray_crown_s04.txt n=8774
+0 (integer)
+flac3d>[dump_ray_spring]
+DUMP-RAYS sm_ray_spring_s04.txt n=12546
+0 (integer)
+flac3d>[io.out('RAY-DONE s'+CUR)]
+RAY-DONE s04
+0 (integer)
+flac3d>
+flac3d>model restore '../output/ss_06'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週五 七月 3 11:35:08 2026
+Total Cycles: 55292  Super Cycles: 55292
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '06']
+flac3d>[global MODL = 'sm']
+flac3d>call 'field_dump_body.f3dat'
+flac3d>; field_dump_body.f3dat -- per-stage full-model field dump (07-10, thesis Ch5 figures).
+flac3d>;   Call AFTER each `model restore` (restore wipes FISH). Driver sets globals CUR/MODL first.
+flac3d>;   Outputs (keyed by id; geometry comes from <MODL>_geom.f3grid dumped once per model):
+flac3d>;     <MODL>_zf_s<CUR>.txt : id state pp visc      (zone: plastic state bitmask, pore pressure,
+flac3d>;                            maxwell viscosity -> Python: creep zone if visc>0, ACTIVE if <1e50)
+flac3d>;     <MODL>_gf_s<CUR>.txt : id ux uy uz           (gridpoint displacement)
+flac3d>;   Proven intrinsics only: zone.id/state(z,1)/pp/prop, gp.id/disp (smoke_export_probe 07-10).
+flac3d>fish define dump_zf
+   Def>    local f = MODL+'_zf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id state pp visc'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        ; null zones (excavated tunnel) have no properties -> zone.prop THROWS on model null
+   Def>        local vv = 0.0
+   Def>        if zone.model(z) # 'null' then
+   Def>            vv = zone.prop(z,'viscosity-maxwell')
+   Def>        end_if
+   Def>        a(1) = string(zone.id(z))+' '+string(zone.state(z,1))+' '+string(zone.pp(z))+' '+string(vv)
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-Z '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_gf
+   Def>    local f = MODL+'_gf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id ux uy uz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        a(1) = string(gp.id(g))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-G '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_zf]
+DUMP-Z sm_zf_s06.txt n=1433466
+0 (integer)
+flac3d>[dump_gf]
+DUMP-G sm_gf_s06.txt n=269452
+0 (integer)
+flac3d>[io.out('EXPF-DONE '+MODL+' s'+CUR)]
+EXPF-DONE sm s06
+0 (integer)
+flac3d>call 'ray_dump_body.f3dat'
+flac3d>; ray_dump_body.f3dat -- small-model radial stress rays for FIG 5-14 (07-10, v2 null-guarded).
+flac3d>;   Call AFTER restore + globals CUR set. Tunnel centre (1297, y885, z1747.5), global coords.
+flac3d>;   Crown ray: vertical +z column above crown; Springline ray: horizontal +x from right wall.
+flac3d>;   Columns: x y z sxx syy szz sxy sxz syz pp  (full tensor -> sigma_r/sigma_theta in Python)
+flac3d>;   Null zones (excavated interior) skipped: no properties/meaningful stress.
+flac3d>fish define dump_ray_crown
+   Def>    local f = 'sm_ray_crown_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(xx-1297.0) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if zz > 1747.0 then
+   Def>                        if zz < 1800.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYC '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_ray_spring
+   Def>    local f = 'sm_ray_spring_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(zz-1747.5) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if xx > 1300.0 then
+   Def>                        if xx < 1347.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYS '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_ray_crown]
+DUMP-RAYC sm_ray_crown_s06.txt n=8774
+0 (integer)
+flac3d>[dump_ray_spring]
+DUMP-RAYS sm_ray_spring_s06.txt n=12546
+0 (integer)
+flac3d>[io.out('RAY-DONE s'+CUR)]
+RAY-DONE s06
+0 (integer)
+flac3d>
+flac3d>model restore '../output/ss_09'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週五 七月 3 12:46:26 2026
+Total Cycles: 69140  Super Cycles: 69140
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '09']
+flac3d>[global MODL = 'sm']
+flac3d>call 'field_dump_body.f3dat'
+flac3d>; field_dump_body.f3dat -- per-stage full-model field dump (07-10, thesis Ch5 figures).
+flac3d>;   Call AFTER each `model restore` (restore wipes FISH). Driver sets globals CUR/MODL first.
+flac3d>;   Outputs (keyed by id; geometry comes from <MODL>_geom.f3grid dumped once per model):
+flac3d>;     <MODL>_zf_s<CUR>.txt : id state pp visc      (zone: plastic state bitmask, pore pressure,
+flac3d>;                            maxwell viscosity -> Python: creep zone if visc>0, ACTIVE if <1e50)
+flac3d>;     <MODL>_gf_s<CUR>.txt : id ux uy uz           (gridpoint displacement)
+flac3d>;   Proven intrinsics only: zone.id/state(z,1)/pp/prop, gp.id/disp (smoke_export_probe 07-10).
+flac3d>fish define dump_zf
+   Def>    local f = MODL+'_zf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id state pp visc'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        ; null zones (excavated tunnel) have no properties -> zone.prop THROWS on model null
+   Def>        local vv = 0.0
+   Def>        if zone.model(z) # 'null' then
+   Def>            vv = zone.prop(z,'viscosity-maxwell')
+   Def>        end_if
+   Def>        a(1) = string(zone.id(z))+' '+string(zone.state(z,1))+' '+string(zone.pp(z))+' '+string(vv)
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-Z '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_gf
+   Def>    local f = MODL+'_gf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id ux uy uz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        a(1) = string(gp.id(g))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-G '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_zf]
+DUMP-Z sm_zf_s09.txt n=1433466
+0 (integer)
+flac3d>[dump_gf]
+DUMP-G sm_gf_s09.txt n=269452
+0 (integer)
+flac3d>[io.out('EXPF-DONE '+MODL+' s'+CUR)]
+EXPF-DONE sm s09
+0 (integer)
+flac3d>call 'ray_dump_body.f3dat'
+flac3d>; ray_dump_body.f3dat -- small-model radial stress rays for FIG 5-14 (07-10, v2 null-guarded).
+flac3d>;   Call AFTER restore + globals CUR set. Tunnel centre (1297, y885, z1747.5), global coords.
+flac3d>;   Crown ray: vertical +z column above crown; Springline ray: horizontal +x from right wall.
+flac3d>;   Columns: x y z sxx syy szz sxy sxz syz pp  (full tensor -> sigma_r/sigma_theta in Python)
+flac3d>;   Null zones (excavated interior) skipped: no properties/meaningful stress.
+flac3d>fish define dump_ray_crown
+   Def>    local f = 'sm_ray_crown_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(xx-1297.0) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if zz > 1747.0 then
+   Def>                        if zz < 1800.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYC '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_ray_spring
+   Def>    local f = 'sm_ray_spring_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(zz-1747.5) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if xx > 1300.0 then
+   Def>                        if xx < 1347.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYS '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_ray_crown]
+DUMP-RAYC sm_ray_crown_s09.txt n=8774
+0 (integer)
+flac3d>[dump_ray_spring]
+DUMP-RAYS sm_ray_spring_s09.txt n=12546
+0 (integer)
+flac3d>[io.out('RAY-DONE s'+CUR)]
+RAY-DONE s09
+0 (integer)
+flac3d>
+flac3d>model restore '../output/ss_11'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週五 七月 3 13:56:28 2026
+Total Cycles: 82434  Super Cycles: 82434
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '11']
+flac3d>[global MODL = 'sm']
+flac3d>call 'field_dump_body.f3dat'
+flac3d>; field_dump_body.f3dat -- per-stage full-model field dump (07-10, thesis Ch5 figures).
+flac3d>;   Call AFTER each `model restore` (restore wipes FISH). Driver sets globals CUR/MODL first.
+flac3d>;   Outputs (keyed by id; geometry comes from <MODL>_geom.f3grid dumped once per model):
+flac3d>;     <MODL>_zf_s<CUR>.txt : id state pp visc      (zone: plastic state bitmask, pore pressure,
+flac3d>;                            maxwell viscosity -> Python: creep zone if visc>0, ACTIVE if <1e50)
+flac3d>;     <MODL>_gf_s<CUR>.txt : id ux uy uz           (gridpoint displacement)
+flac3d>;   Proven intrinsics only: zone.id/state(z,1)/pp/prop, gp.id/disp (smoke_export_probe 07-10).
+flac3d>fish define dump_zf
+   Def>    local f = MODL+'_zf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id state pp visc'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        ; null zones (excavated tunnel) have no properties -> zone.prop THROWS on model null
+   Def>        local vv = 0.0
+   Def>        if zone.model(z) # 'null' then
+   Def>            vv = zone.prop(z,'viscosity-maxwell')
+   Def>        end_if
+   Def>        a(1) = string(zone.id(z))+' '+string(zone.state(z,1))+' '+string(zone.pp(z))+' '+string(vv)
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-Z '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_gf
+   Def>    local f = MODL+'_gf_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id ux uy uz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        a(1) = string(gp.id(g))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-G '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_zf]
+DUMP-Z sm_zf_s11.txt n=1433466
+0 (integer)
+flac3d>[dump_gf]
+DUMP-G sm_gf_s11.txt n=269452
+0 (integer)
+flac3d>[io.out('EXPF-DONE '+MODL+' s'+CUR)]
+EXPF-DONE sm s11
+0 (integer)
+flac3d>call 'ray_dump_body.f3dat'
+flac3d>; ray_dump_body.f3dat -- small-model radial stress rays for FIG 5-14 (07-10, v2 null-guarded).
+flac3d>;   Call AFTER restore + globals CUR set. Tunnel centre (1297, y885, z1747.5), global coords.
+flac3d>;   Crown ray: vertical +z column above crown; Springline ray: horizontal +x from right wall.
+flac3d>;   Columns: x y z sxx syy szz sxy sxz syz pp  (full tensor -> sigma_r/sigma_theta in Python)
+flac3d>;   Null zones (excavated interior) skipped: no properties/meaningful stress.
+flac3d>fish define dump_ray_crown
+   Def>    local f = 'sm_ray_crown_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(xx-1297.0) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if zz > 1747.0 then
+   Def>                        if zz < 1800.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYC '+f+' n='+string(n))
+   Def>end
+flac3d>fish define dump_ray_spring
+   Def>    local f = 'sm_ray_spring_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z sxx syy szz sxy sxz syz pp'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        if zone.model(z) # 'null' then
+   Def>            local p = zone.pos(z)
+   Def>            local xx = comp.x(p)
+   Def>            local yy = comp.y(p)
+   Def>            local zz = comp.z(p)
+   Def>            if math.abs(zz-1747.5) < 2.0 then
+   Def>                if math.abs(yy-885.0) < 3.0 then
+   Def>                    if xx > 1300.0 then
+   Def>                        if xx < 1347.0 then
+   Def>                            a(1) = string(xx)+' '+string(yy)+' '+string(zz)+' '+string(zone.stress.xx(z))+' '+string(zone.stress.yy(z))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xy(z))+' '+string(zone.stress.xz(z))+' '+string(zone.stress.yz(z))+' '+string(zone.pp(z))
+   Def>                            st = file.write(a,1)
+   Def>                            n = n + 1
+   Def>                        end_if
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-RAYS '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_ray_crown]
+DUMP-RAYC sm_ray_crown_s11.txt n=8774
+0 (integer)
+flac3d>[dump_ray_spring]
+DUMP-RAYS sm_ray_spring_s11.txt n=12546
+0 (integer)
+flac3d>[io.out('RAY-DONE s'+CUR)]
+RAY-DONE s11
+0 (integer)
+flac3d>
+flac3d>; --- shell geometry (once; positions at s11 fine for the MODEL figure) ---
+flac3d>fish define dump_shells
+   Def>    local st = file.open('sm_shells.txt',1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'sid x1 y1 z1 x2 y2 z2 x3 y3 z3'
+   Def>    local w = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local s struct.list
+   Def>        if struct.type(s) = 'shell' then
+   Def>            local p1 = struct.node.pos(struct.node(s,1))
+   Def>            local p2 = struct.node.pos(struct.node(s,2))
+   Def>            local p3 = struct.node.pos(struct.node(s,3))
+   Def>            a(1) = string(struct.id(s))+' '+string(comp.x(p1))+' '+string(comp.y(p1))+' '+string(comp.z(p1))+' '+string(comp.x(p2))+' '+string(comp.y(p2))+' '+string(comp.z(p2))+' '+string(comp.x(p3))+' '+string(comp.y(p3))+' '+string(comp.z(p3))
+   Def>            w = file.write(a,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    w = file.close
+   Def>    io.out('SM-SHELLS n='+string(n))
+   Def>end
+flac3d>[dump_shells]
+SM-SHELLS n=69828
+0 (integer)
+flac3d>
+flac3d>[io.out('SM-CHAIN-DONE')]
+SM-CHAIN-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週五 七月 10 13:24:35 2026
+**********************************************

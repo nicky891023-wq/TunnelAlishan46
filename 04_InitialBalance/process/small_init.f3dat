@@ -142,7 +142,7 @@ end
 ; --- datum (260529: zero displacement at day0) + save ---
 zone gridpoint initialize velocity 0 0 0
 zone gridpoint initialize displacement 0 0 0
-model save 'Small_Initial'
+model save 'output/Small_Initial'
 [io.out('SI-8 saved Small_Initial (260529-method + null-lining + 2-stage elastic shell)')]
 program log off
 program quit

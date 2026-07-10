@@ -1,0 +1,19 @@
+; balldisp_body.f3dat -- call AFTER each restore (restore wipes FISH). Global CUR set first.
+fish define dump_bd
+    local f = 'cp_balldisp_s'+CUR+'.txt'
+    local st = file.open(f,1,1)
+    local a = array.create(1)
+    a(1) = 'id x y z dx dy dz'
+    st = file.write(a,1)
+    local n = 0
+    loop foreach local b ball.list
+        local p = ball.pos(b)
+        local d = ball.disp(b)
+        a(1) = string(ball.id(b))+' '+string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+        st = file.write(a,1)
+        n = n + 1
+    end_loop
+    st = file.close
+    io.out('DUMP-BD '+f+' n='+string(n))
+end
+[dump_bd]

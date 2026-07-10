@@ -1,0 +1,27 @@
+; cp_chain.f3dat -- COUPLED model contact-force export chain (07-10): cs_01/06/11 (only
+;   existing checkpoints). PFC modules per proven dump_cracknormals template.
+;   Verify via THIS log: 3x CF-DONE + CP-CHAIN-DONE.
+program log-file 'export_cp_chain.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+
+model restore '../output/cs_01'
+fish automatic-create on
+[io.out('CPC restored cs_01 balls='+string(ball.num))]
+[global CUR = '01']
+call 'contact_dump_body.f3dat'
+
+model restore '../output/cs_06'
+fish automatic-create on
+[global CUR = '06']
+call 'contact_dump_body.f3dat'
+
+model restore '../output/cs_11'
+fish automatic-create on
+[global CUR = '11']
+call 'contact_dump_body.f3dat'
+
+[io.out('CP-CHAIN-DONE')]
+program log off
+program quit

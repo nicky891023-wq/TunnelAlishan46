@@ -1,0 +1,125 @@
+; ============================================================================
+; couple_stepG_diag.f3dat -- SHORT-TEST diagnosis of the STEP G G1 runaway.
+;   Failed run: solve ran 9,474 cycles at ratio ~1.6e-1 (never converging,
+;   sustained motion) then "*** Illegal geometry in zone 260648".
+;   Hypothesis H-apply: servo-era `zone face apply stress-normal [ovb]` on the
+;   cavity-crown band (servo v6:149/156) survives in the save with a nonzero
+;   residual -> constant force driver on zero-stress compliant rock -> runaway.
+;   D0: locate zone 260648 (which region failed?)
+;   D1: reproduce G1 setup, cycle 100+400, track argmax gp/ball + spread counts
+;   D2: zone face apply-remove (ALL), re-datum, cycle 100+400+1500 -> quiet?
+;   NO SAVE. cwd = this dir, bare filename.
+; ============================================================================
+program log-file 'couple_stepG_diag.log'
+program log on
+program load module 'pfc'
+program load module 'wallzone'
+model restore '../../output/Couple_Initial'
+model largestrain on
+model mechanical timestep scale
+fish automatic-create on
+
+fish define locate_zone(zid)
+    local z = zone.find(zid)
+    if z # null then
+        local p = zone.pos(z)
+        io.out('DIAG-Z zone '+string(zid)+' pos=('+string(comp.x(p))+','+string(comp.y(p))+','+string(comp.z(p))+')')
+    else
+        io.out('DIAG-Z zone '+string(zid)+' NOT FOUND')
+    end_if
+end
+[locate_zone(260648)]
+
+fish define report_max(tag)
+    local dmg = 0.0
+    local pgx = 0.0
+    local pgy = 0.0
+    local pgz = 0.0
+    local n1mm = 0
+    local n10mm = 0
+    loop foreach local g gp.list
+        local d1 = gp.disp(g)
+        local m1 = math.sqrt(comp.x(d1)^2+comp.y(d1)^2+comp.z(d1)^2)
+        if m1 > 0.001 then
+            n1mm = n1mm + 1
+        end_if
+        if m1 > 0.01 then
+            n10mm = n10mm + 1
+        end_if
+        if m1 > dmg then
+            dmg = m1
+            local pg = gp.pos(g)
+            pgx = comp.x(pg)
+            pgy = comp.y(pg)
+            pgz = comp.z(pg)
+        end_if
+    end_loop
+    local dmb = 0.0
+    local pbx = 0.0
+    local pby = 0.0
+    local pbz = 0.0
+    loop foreach local b ball.list
+        local d2 = ball.disp(b)
+        local m2 = math.sqrt(comp.x(d2)^2+comp.y(d2)^2+comp.z(d2)^2)
+        if m2 > dmb then
+            dmb = m2
+            local pb = ball.pos(b)
+            pbx = comp.x(pb)
+            pby = comp.y(pb)
+            pbz = comp.z(pb)
+        end_if
+    end_loop
+    io.out('DIAG '+tag+' gp_dmax='+string(dmg*1000.0)+'mm at ('+string(pgx)+','+string(pgy)+','+string(pgz)+') n>1mm='+string(n1mm)+' n>10mm='+string(n10mm))
+    io.out('DIAG '+tag+' ball_dmax='+string(dmb*1000.0)+'mm at ('+string(pbx)+','+string(pby)+','+string(pbz)+')')
+end
+
+fish define zero_zone_stress
+    loop foreach local z zone.list
+        zone.stress.xx(z) = 0.0
+        zone.stress.yy(z) = 0.0
+        zone.stress.zz(z) = 0.0
+        zone.stress.xy(z) = 0.0
+        zone.stress.xz(z) = 0.0
+        zone.stress.yz(z) = 0.0
+    end_loop
+    io.out('   zone stresses zeroed')
+end
+
+; ---- datum + G1 setup (same as failed run) ----
+ball attribute displacement multiply 0.0
+zone gridpoint initialize displacement (0,0,0)
+zone gridpoint initialize velocity (0,0,0)
+model calm
+[zero_zone_stress]
+zone initialize density 1.0
+zone gridpoint free velocity
+zone gridpoint initialize velocity (0,0,0)
+zone gridpoint fix velocity range position-x 1276.7 1277.3
+zone gridpoint fix velocity range position-x 1316.7 1317.3
+zone gridpoint fix velocity range position-y 859.7 860.3
+zone gridpoint fix velocity range position-y 909.7 910.3
+zone gridpoint fix velocity range position-z 1727.7 1728.3
+zone gridpoint fix velocity range position-z 1767.7 1768.3
+
+; ---- D1: reproduce (short) ----
+model cycle 100
+[report_max('D1-c100')]
+model cycle 400
+[report_max('D1-c500')]
+
+; ---- D2: remove ALL applied face conditions -> pure displacement transmitter ----
+zone face apply-remove
+[io.out('DIAG-D2 all zone face applies REMOVED')]
+zone gridpoint initialize displacement (0,0,0)
+ball attribute displacement multiply 0.0
+zone gridpoint initialize velocity (0,0,0)
+model calm
+model cycle 100
+[report_max('D2-c100')]
+model cycle 400
+[report_max('D2-c500')]
+model cycle 1500
+[report_max('D2-c2000')]
+[io.out('DIAG-DONE (no save)')]
+program log off
+program quit

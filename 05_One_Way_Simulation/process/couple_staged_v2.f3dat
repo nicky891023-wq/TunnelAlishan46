@@ -1,7 +1,7 @@
 ; ============================================================================
 ; couple_staged_v2.f3dat -- COUPLED model 11-stage lining response (Phase C, 2026-07-03).
-;   Restores Couple_Initial_free (v6: single elastic rock E_eq, feet anchored, FREE
-;   inner face, w_860/w_910 platens kept), then per stage k = 1..11:
+;   Restores Couple_Initial_G (STEP G: incremental-elastic rock with FREE interior,
+;   feet anchored, FREE inner face, end platens DELETED), then per stage k = 1..11:
 ;     (1) read cpl_resid_sNN.txt (small-model couple-box boundary residual, Kabsch-
 ;         cleaned, strain-gate-passed) -> IDW targets on 'driven' outer-boundary gps
 ;     (2) RAMP: NSUB x NCYC velocity increments + model calm (SleevedTriaxial rampUp
@@ -15,19 +15,24 @@
 ;   crack_shear DFNs). Checkpoint saves: stage 1 (dry), 6 (wet peak), 11 (final).
 ;   cwd = 05 root.  Runtime est. 12-18 hr.
 ; ============================================================================
-program log-file 'process/couple_staged_v2.log'
+program log-file 'couple_staged_v2.log'
 program log on
 program load module 'pfc'
 program load module 'wallzone'
-model restore '../04_InitialBalance/process/couple_solve/Couple_Initial_free'
+model restore '../../04_InitialBalance/output/Couple_Initial_G4'   ; G4 = STEP I v2 (07-07): STRESS-FREE cast lining at bedded geometry (0g re-cast: all lin+pb forces zeroed, fresh D7 bonds, bf glue = bf_couple group only), gravity ramped back 0.1->1.0g, E_eq=1.6 GPa (Wade-approved, l4 layer) + interface consistency BAKED IN. Ring carries self-weight only -- stage cracks are now PHYSICS, not installation-artifact harvesting (evidence: _diag_prestress_harvest_0707/). History: launch1 free2=frozen rock; launch2 G=interface instability; launch3/4 G3 f=0.25/0.05 = lock-in tail harvesting. See RUN_STATUS one-pager.
 model largestrain on
 model mechanical timestep scale
 fish automatic-create on
-call 'process/fracture_track_v2.fis'
-call 'process/couple_qa_v2.fis'
+call 'fracture_track_v3.fis'   ; v3: no fragment ops (v2's fragment register = ~28min hang; fragment compute/50-cracks = per-stage crawl). Crack DFNs unchanged.
+call 'couple_qa_v2.fis'
 [global NSUB = 10]
 [global NCYC = 150]
-[io.out('CS-0 restored Couple_Initial_free: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num))]
+[global DRIVE_SCALE = 0.25]   ; G4-era first calibration point. On the STRESS-FREE ring the earlier
+;   f-catastrophes don't apply (they were lock-in tail harvesting, gone by construction). 0.25 x
+;   stage drive => imposed cavity deformation ~1.2-1.85 mm ~ concrete cracking threshold: expect
+;   moderate springline cracking growing with wet stages. In-flight rule at CS-CHK stg1:
+;   shatter (>>10k) -> kill & halve f; near-zero -> raise f. Materials NOT touched (baked in G4).
+[io.out('CS-0 restored Couple_Initial_G4 (stress-free ring, E_eq 1.6 baked) DRIVE_SCALE=0.25: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num))]
 
 ; ---- crack tracking on (resets DFNs, registers bond_break callback) ----
 [track_init]
@@ -142,14 +147,19 @@ fish define set_targets(radius)
                 end_if
                 i = i + 1
             end_loop
+            ; DRIVE_SCALE (Option A, 2026-07-06): reduce imposed deformation to keep the
+            ; discrete lining in the crack-DEVELOPMENT regime (not fragmentation). f=0.25
+            ; calibrated by couple_load_diag (1.2mm->~100 cracks; 2.4mm->shatter). Materials
+            ; unchanged (rock E_eq 2.31, lining D7 ft4). Magnitudes are scaled TREND, pattern
+            ; and stage-to-stage relative behavior preserved.
             if sw > 0.0 then
-                gp.extra(g,1) = sux/sw
-                gp.extra(g,2) = suy/sw
-                gp.extra(g,3) = suz/sw
+                gp.extra(g,1) = DRIVE_SCALE*sux/sw
+                gp.extra(g,2) = DRIVE_SCALE*suy/sw
+                gp.extra(g,3) = DRIVE_SCALE*suz/sw
             else
-                gp.extra(g,1) = uxdat(inear)
-                gp.extra(g,2) = uydat(inear)
-                gp.extra(g,3) = uzdat(inear)
+                gp.extra(g,1) = DRIVE_SCALE*uxdat(inear)
+                gp.extra(g,2) = DRIVE_SCALE*uydat(inear)
+                gp.extra(g,3) = DRIVE_SCALE*uzdat(inear)
             end_if
         end_if
     end_loop
@@ -183,6 +193,17 @@ fish define ball_dmax
     end_loop
     ball_dmax = dm
 end
+fish define gp_dmax
+    local dm = 0.0
+    loop foreach local g gp.list
+        local d = gp.disp(g)
+        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m > dm then
+            dm = m
+        end_if
+    end_loop
+    gp_dmax = dm
+end
 
 ; ---- per-stage driver ----
 fish define cs_stage(stg, fname)
@@ -199,9 +220,12 @@ fish define cs_stage(stg, fname)
     end_loop
     hold_driven
     command
-        model solve ratio-average 1e-4 or cycles 8000
+        ; calm-cadenced settle (official 'cycle N calm M' idiom) -- bare windows
+        ; >1000 cyc grow interface oscillation; keep ratio check window short
+        model cycle 2400 calm 300
+        model solve ratio-average 1e-4 or cycles 800
     endcommand
-    local pfx = 'process/cs_s'+string(stg)
+    local pfx = 'cs_s'+string(stg)
     dump_cracks(pfx)
     qa_walls(pfx, stg)
     mid_wall_force(pfx, 870.0, 900.0)
@@ -209,7 +233,9 @@ fish define cs_stage(stg, fname)
     crack_sectors(pfx)
     export_pmap(pfx+'_pmap.txt')
     export_cwall(pfx+'_cwall.txt')
-    io.out('CS-CHK stg'+string(stg)+' cracks_t='+string(ncr_t)+' cracks_s='+string(ncr_s)+' ball_dmax='+string(ball_dmax))
+    io.out('CS-CHK stg'+string(stg)+' cracks_t='+string(ncr_t)+' cracks_s='+string(ncr_s)+' ball_dmax='+string(ball_dmax)+' gp_dmax='+string(gp_dmax))
+    ; gp_dmax must be ~drive scale (mm) every stage -- if it sits at 0 the rock
+    ; transmitter is not deforming (frozen-rock artifact, see _diag_frozenrock_0704)
 end
 
 ; ============================================================================
@@ -229,27 +255,28 @@ end
 model cycle 150
 model calm
 [hold_driven]
-model solve ratio-average 1e-4 or cycles 3000
-[dump_cracks('process/cs_control0')]
+model cycle 1500 calm 300
+model solve ratio-average 1e-4 or cycles 800
+[dump_cracks('cs_control0')]
 [io.out('CS-CONTROL0 GATE: cracks='+string(ncr_t+ncr_s)+' (must be 0) ball_drift='+string(ball_dmax)+' m (must be <5e-4)')]
 
 ; ============================================================================
 ; 11 stages (cumulative residual targets from the small model)
 ; ============================================================================
-[cs_stage(1,'process/cpl_resid_s01.txt')]
-model save 'output/cs_01'
-[cs_stage(2,'process/cpl_resid_s02.txt')]
-[cs_stage(3,'process/cpl_resid_s03.txt')]
-[cs_stage(4,'process/cpl_resid_s04.txt')]
-[cs_stage(5,'process/cpl_resid_s05.txt')]
-[cs_stage(6,'process/cpl_resid_s06.txt')]
-model save 'output/cs_06'
-[cs_stage(7,'process/cpl_resid_s07.txt')]
-[cs_stage(8,'process/cpl_resid_s08.txt')]
-[cs_stage(9,'process/cpl_resid_s09.txt')]
-[cs_stage(10,'process/cpl_resid_s10.txt')]
-[cs_stage(11,'process/cpl_resid_s11.txt')]
-model save 'output/cs_11'
+[cs_stage(1,'cpl_resid_s01.txt')]
+model save '../output/cs_01'
+[cs_stage(2,'cpl_resid_s02.txt')]
+[cs_stage(3,'cpl_resid_s03.txt')]
+[cs_stage(4,'cpl_resid_s04.txt')]
+[cs_stage(5,'cpl_resid_s05.txt')]
+[cs_stage(6,'cpl_resid_s06.txt')]
+model save '../output/cs_06'
+[cs_stage(7,'cpl_resid_s07.txt')]
+[cs_stage(8,'cpl_resid_s08.txt')]
+[cs_stage(9,'cpl_resid_s09.txt')]
+[cs_stage(10,'cpl_resid_s10.txt')]
+[cs_stage(11,'cpl_resid_s11.txt')]
+model save '../output/cs_11'
 [io.out('CS-DONE 11-stage coupled lining response complete')]
 program log off
 program quit

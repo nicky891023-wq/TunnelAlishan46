@@ -1,0 +1,39 @@
+program log-file 'couple_export_bnd_v4.log'
+program log on
+fish automatic-create on
+model restore '../output/ss_01'
+[global CUR='01']
+call 'exp_body.f3dat'
+model restore '../output/ss_02'
+[global CUR='02']
+call 'exp_body.f3dat'
+model restore '../output/ss_03'
+[global CUR='03']
+call 'exp_body.f3dat'
+model restore '../output/ss_04'
+[global CUR='04']
+call 'exp_body.f3dat'
+model restore '../output/ss_05'
+[global CUR='05']
+call 'exp_body.f3dat'
+model restore '../output/ss_06'
+[global CUR='06']
+call 'exp_body.f3dat'
+model restore '../output/ss_07'
+[global CUR='07']
+call 'exp_body.f3dat'
+model restore '../output/ss_08'
+[global CUR='08']
+call 'exp_body.f3dat'
+model restore '../output/ss_09'
+[global CUR='09']
+call 'exp_body.f3dat'
+model restore '../output/ss_10'
+[global CUR='10']
+call 'exp_body.f3dat'
+model restore '../output/ss_11'
+[global CUR='11']
+call 'exp_body.f3dat'
+[io.out('CEB-DONE 11 stages')]
+program log off
+program quit

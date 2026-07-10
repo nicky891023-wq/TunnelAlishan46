@@ -1,0 +1,575 @@
+**********************************************
+* Logging started at 週二 七月 7 12:00:49 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../output/Couple_Initial_G3'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 七月 5 23:51:18 2026
+Total Cycles: 48405  Super Cycles: 48405
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>model largestrain on
+flac3d>model mechanical timestep scale
+--- density scaling activated in mechanical process with a target timestep of 1.
+flac3d>fish automatic-create on
+flac3d>call '../../parameter.f3dat'
+flac3d>; ============================================================================
+flac3d>; parameter.f3dat -- Alishan #46 UNIFIED material parameters (Wade-ruled, 2026-06-22)
+flac3d>; Large(4-layer) / Small(6-layer) rock + lining(D7) + coupled PFC(D7 calib).
+flac3d>;
+flac3d>; Unification rulings (Wade):
+flac3d>;   * nu = 0.25 single value (static MC + creep bulk same source).
+flac3d>;   * E is PER-LAYER (not uniform): lithology-based within Hoek-Diederichs
+flac3d>;     rock-mass range (sandstone 3-8, sandshale 1-3 GPa; colluvium/weathered soft).
+flac3d>;     -> GSI/E have NO field data: per-layer E are documented-range central
+flac3d>;        judgements, GSI-basis TODO (D3). c/phi are GSI-reduced placeholders.
+flac3d>;   * Burgers creep: shear-maxwell = shear-kelvin = the layer ELASTIC G,
+flac3d>;     bulk = the layer elastic K  (instantaneous static==creep, no spurious soften).
+flac3d>;   * viscosity-maxwell eta_m = 6.0e15 Pa.s ; viscosity-kelvin eta_k = 2.4e13 Pa.s.
+flac3d>;   * creep threshold ratio = 0.6 :  q_th = 0.6*(c*cos(phi)+p'*sin(phi)).
+flac3d>;   * creep timestep = 600 s (fixed).
+flac3d>;   * layer4 sandshale(WET): c = 100 kPa, phi = 30 deg (Wade).
+flac3d>; Units: SI (Pa, kg/m3, deg, m, Pa.s).  Sign: compression negative.
+flac3d>; ============================================================================
+flac3d>
+flac3d>; ---------- global / environment ----------
+flac3d>[global nu     = 0.25]            ; single Poisson, all rock layers
+flac3d>[global K0     = 0.7]             ; lateral stress ratio (placeholder, no field basis)
+flac3d>[global grav   = 9.81]            ; m/s2
+flac3d>[global poro   = 0.1]             ; porosity n
+flac3d>[global satr   = 0.1]             ; saturation S
+flac3d>[global rho_w  = 1000.0]          ; water density kg/m3
+flac3d>[global pmb    = 1.0e-5]          ; FLAC mobility coeff m2/(Pa.s); near-tunnel x100
+flac3d>[global ten_r  = 1.0e5]           ; rock tension cutoff 100 kPa (all layers)
+flac3d>
+flac3d>; ---------- elastic helpers (nu=0.25 -> G=E/2.5, K=E/1.5) ----------
+flac3d>fish define _gk(ee)
+   Def>    _gk = ee / (2.0*(1.0+nu))     ; shear  G
+   Def>end
+flac3d>fish define _bk(ee)
+   Def>    _bk = ee / (3.0*(1.0-2.0*nu)) ; bulk   K
+   Def>end
+flac3d>
+flac3d>; ====================== LARGE model : 4 layers ======================
+flac3d>; layer1 colluvium / layer2 ssh / layer3 bedrock / layer4 basement
+flac3d>[global E_L_1 = 0.5e9 ]
+flac3d>[global co_L_1 = 1.9e5]
+flac3d>[global fr_L_1 = 29.1]
+flac3d>[global den_L_1 = 2150.0]
+flac3d>[global E_L_2 = 2.0e9 ]
+flac3d>[global co_L_2 = 2.9e5]
+flac3d>[global fr_L_2 = 35.1]
+flac3d>[global den_L_2 = 2630.0]
+flac3d>[global E_L_3 = 5.0e9 ]
+flac3d>[global co_L_3 = 4.7e5]
+flac3d>[global fr_L_3 = 44.3]
+flac3d>[global den_L_3 = 2600.0]
+flac3d>[global E_L_4 = 7.0e9 ]
+flac3d>[global co_L_4 = 8.0e5]
+flac3d>[global fr_L_4 = 51.5]
+flac3d>[global den_L_4 = 2600.0]
+flac3d>
+flac3d>; ====================== SMALL model : 6 layers ======================
+flac3d>; l1 weathered-ss / l2 ss+sandshale / l3 ss+shale / l4 sandshale(WET) / l5 sandshale / l6 basement
+flac3d>[global E_S_1 = 1.0e9 ]
+flac3d>[global co_S_1 = 1.9e5 ]
+flac3d>[global fr_S_1 = 29.1]
+flac3d>[global den_S_1 = 2600.0]
+flac3d>[global E_S_2 = 2.0e9 ]
+flac3d>[global co_S_2 = 2.9e5 ]
+flac3d>[global fr_S_2 = 35.1]
+flac3d>[global den_S_2 = 2630.0]
+flac3d>[global E_S_3 = 3.5e9 ]
+flac3d>[global co_S_3 = 4.7e5 ]
+flac3d>[global fr_S_3 = 44.3]
+flac3d>[global den_S_3 = 2630.0]
+flac3d>[global E_S_4 = 1.5e9 ]
+flac3d>[global co_S_4 = 1.0e5 ]   ; WET, Wade c100/phi30
+flac3d>[global fr_S_4 = 30.0]
+flac3d>[global den_S_4 = 2630.0]
+flac3d>[global E_S_5 = 3.0e9 ]
+flac3d>[global co_S_5 = 8.0e5 ]
+flac3d>[global fr_S_5 = 51.5]
+flac3d>[global den_S_5 = 2630.0]
+flac3d>[global E_S_6 = 7.0e9 ]
+flac3d>[global co_S_6 = 20.6e5]
+flac3d>[global fr_S_6 = 56.3]
+flac3d>[global den_S_6 = 2600.0]
+flac3d>
+flac3d>; ---------- creep (Burgers-Mohr) : per-layer G_m=G_k=G(E,nu), bulk=K(E,nu) ----------
+flac3d>[global eta_m = 1.2e15]           ; viscosity-maxwell (Wade 2026-07-02: 6e15 -> 1.2e15 = 260529 n_m value)
+flac3d>[global eta_k = 2.4e13]           ; viscosity-kelvin (proven)
+flac3d>[global crp_threshold = 0.8]      ; q_th = T*(c*cosphi + p'*sinphi). Wade 2026-07-02: T=0.8 UNIFIED
+flac3d>                                  ; (all stages, large+small). 0.6 gave 77% active at DRY W-110 ->
+flac3d>                                  ; "low-water flat" physically impossible + interior creep runaway.
+flac3d>                                  ; 0.8 validated flat-then-onset (track E 06-27).
+flac3d>[global crp_dt = 600.0]           ; creep timestep (s) (Wade)
+flac3d>
+flac3d>; ---------- lining (R.C. continuum, D7 DECIDED) ----------
+flac3d>[global shot_E   = 25e9]
+flac3d>[global shot_v   = 0.2]
+flac3d>[global shot_t   = 0.40]
+flac3d>[global shot_den = 2400.0]
+flac3d>[global shot_fc  = 41.2e6]
+flac3d>[global shot_ft  = 4.12e6]
+flac3d>
+flac3d>; ---------- coupled PFC lining BPM micro (D7 FINAL_CALIB) ----------
+flac3d>[global pfc_emod    = 9.65e9]     ; linear deformability
+flac3d>[global pfc_kratio  = 1.0]
+flac3d>[global pfc_pb_emod = 5.88e9]     ; parallel-bond deformability
+flac3d>[global pfc_pb_krat = 0.6]
+flac3d>[global pfc_pb_ten  = 2.10e6]     ; Pa
+flac3d>[global pfc_pb_coh  = 2.30e7]     ; Pa
+flac3d>[global pfc_pb_fa   = 25.0]       ; deg
+flac3d>[global pfc_bondgap = 0.03]       ; m  (= cmat proximity)
+flac3d>[global pfc_ball_den  = 2400.0]
+flac3d>[global pfc_ball_damp = 0.7]
+flac3d>[global pfc_fric      = 0.5]
+flac3d>[global pfc_bf_strong = 1.0e20]   ; ball-facet pb (unbreakable coupling, NOT material)
+flac3d>
+flac3d>[io.out('=== parameter.f3dat loaded : nu='+string(nu)+' K0='+string(K0)+' eta_m='+string(eta_m)+' crp_dt='+string(crp_dt)+' ===')]
+=== parameter.f3dat loaded : nu=0.25 K0=0.7 eta_m=1.2e+15 crp_dt=600 ===
+flac3d>[global grav_i = 9.81]
+flac3d>
+flac3d>; ---- QA helpers (proven set) ----
+flac3d>fish define n_intact
+   Def>    local n = 0
+   Def>    loop foreach local c contact.list('ball-ball')
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_state') = 3 then
+   Def>                n = n + 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    n_intact = n
+   Def>end
+flac3d>fish define bdmax
+   Def>    local dm = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local d = ball.disp(b)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    bdmax = dm
+   Def>end
+flac3d>fish define gpdmax
+   Def>    local dm = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    gpdmax = dm
+   Def>end
+flac3d>fish define midconv
+   Def>    local s = 0.0
+   Def>    local n = 0
+   Def>    local mx = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local yy = comp.y(p)
+   Def>        if yy > 870.0 then
+   Def>        if yy < 900.0 then
+   Def>            local rx = comp.x(p) - 1297.0
+   Def>            local rz = comp.z(p) - 1747.5
+   Def>            local rr = math.sqrt(rx*rx + rz*rz)
+   Def>            if rr > 1.35 then
+   Def>            if rr < 2.05 then
+   Def>                local d = ball.disp(b)
+   Def>                local ur = (comp.x(d)*rx + comp.z(d)*rz)/rr
+   Def>                s = s + ur
+   Def>                n = n + 1
+   Def>                if math.abs(ur) > mx then
+   Def>                    mx = math.abs(ur)
+   Def>                end_if
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    global mc_mean = s/float(n)
+   Def>    global mc_max = mx
+   Def>    global mc_n = n
+   Def>    midconv = mc_mean
+   Def>end
+flac3d>fish define zero_zone_stress
+   Def>    loop foreach local z zone.list
+   Def>        zone.stress.xx(z) = 0.0
+   Def>        zone.stress.yy(z) = 0.0
+   Def>        zone.stress.zz(z) = 0.0
+   Def>        zone.stress.xy(z) = 0.0
+   Def>        zone.stress.xz(z) = 0.0
+   Def>        zone.stress.yz(z) = 0.0
+   Def>    end_loop
+   Def>    io.out('   zone stresses zeroed')
+   Def>end
+flac3d>fish define relax_legs(tagpfx, nlegs)
+   Def>    local ileg = 0
+   Def>    local dry = 0
+   Def>    loop while ileg < nlegs
+   Def>        ileg = ileg + 1
+   Def>        if dry < 2 then
+   Def>            command
+   Def>                model cycle 600
+   Def>            endcommand
+   Def>            global ndeb = 0
+   Def>            loop foreach local b ball.list
+   Def>                local d = ball.disp(b)
+   Def>                local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>                if m > 0.010 then
+   Def>                    ball.group(b,'debris') = 'debris'
+   Def>                    ndeb = ndeb + 1
+   Def>                end_if
+   Def>            end_loop
+   Def>            command
+   Def>                ball delete range group 'debris'
+   Def>                model calm
+   Def>            endcommand
+   Def>            if ndeb = 0 then
+   Def>                dry = dry + 1
+   Def>            else
+   Def>                dry = 0
+   Def>            end_if
+   Def>            io.out(tagpfx+' leg'+string(ileg)+' swept='+string(ndeb)+' dry='+string(dry)+' gp_dmax='+string(gpdmax)+'m ball_dmax='+string(bdmax)+'m intact='+string(n_intact))
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>
+flac3d>; ---- datum ----
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456218 ball(s).
+flac3d>zone gridpoint initialize displacement (0,0,0)
+--- displacement modified in 441728 gridpoints.
+flac3d>zone gridpoint initialize velocity (0,0,0)
+--- velocity modified in 441728 gridpoints.
+flac3d>model calm
+flac3d>[global ni0 = n_intact]
+flac3d>[io.out('STEPI-0 start: balls='+string(ball.num)+' walls='+string(wall.num)+' intact0='+string(ni0))]
+STEPI-0 start: balls=456218 walls=1 intact0=2267255
+flac3d>
+flac3d>; ---- E: bake in Wade-approved E_eq=1.6 GPa + interface consistency ----
+flac3d>zone property young 1.6e9
+--- Property young set in 424908 zones using the elastic model.
+flac3d>contact method deformability emod 1.6e9 kratio 1.0 range contact type 'ball-facet'
+--- Method deformability applied to 377610 contacts in range.
+flac3d>contact method pb_deform emod 1.6e9 kratio 1.0 range contact type 'ball-facet'
+--- Method pb_deformability applied to 377610 contacts in range.
+flac3d>cmat default type 'ball-facet' model linearpbond method deformability emod 1.6e9 kratio 1.0 proximity 0.03 property fric 0.5
+flac3d>[io.out('STEPI-E E_eq=1.6GPa (Wade-approved, l4 layer) + interface 1.6 baked in')]
+STEPI-E E_eq=1.6GPa (Wade-approved, l4 layer) + interface 1.6 baked in
+flac3d>
+flac3d>; ---- I1: zero gravity ----
+flac3d>model gravity 0 0 0
+--- Gravity has been set to: ( 0.0e+00 0.0e+00 0.0e+00).
+flac3d>[io.out('STEPI-1 gravity OFF')]
+STEPI-1 gravity OFF
+0 (integer)
+flac3d>
+flac3d>; ---- I2: stress-free re-cast at bedded geometry ----
+flac3d>contact method unbond range contact type 'ball-ball'
+--- Method unbond applied to 4357869 contacts in range.
+flac3d>contact method unbond range contact type 'ball-facet'
+--- Method unbond applied to 377610 contacts in range.
+flac3d>contact property lin_force 0.0 0.0 0.0 lin_mode 1
+--- Property lin_mode set in 4735479 contacts in range.
+--- Property lin_force set in 4735479 contacts in range.
+flac3d>[zero_zone_stress]
+   zone stresses zeroed
+0 (integer)
+flac3d>zone gridpoint initialize velocity (0,0,0)
+--- velocity modified in 441728 gridpoints.
+flac3d>model calm
+flac3d>contact method bond gap [pfc_bondgap] range contact type 'ball-ball'
+--- Method bond applied to 4357869 contacts in range.
+flac3d>contact method pb_deform emod [pfc_pb_emod] kratio [pfc_pb_krat] range contact type 'ball-ball'
+--- Method pb_deformability applied to 4357869 contacts in range.
+flac3d>contact property pb_ten [pfc_pb_ten] pb_coh [pfc_pb_coh] pb_fa [pfc_pb_fa] range contact type 'ball-ball'
+--- Property pb_coh set in 4357869 contacts in range.
+--- Property pb_fa set in 4357869 contacts in range.
+--- Property pb_ten set in 4357869 contacts in range.
+flac3d>contact property pb_ten [pfc_bf_strong] pb_coh [pfc_bf_strong] range contact type 'ball-ball' position-z 1740.0 1745.30
+--- Property pb_coh set in 350225 contacts in range.
+--- Property pb_ten set in 350225 contacts in range.
+flac3d>; v2 FIX (07-07 12:3x): ball-facet re-bond restricted to the ORIGINAL bf_couple
+flac3d>; glue group (62,556 contacts) -- v1 bonded type-wide (377,610 = 6x, multi-edge
+flac3d>; secondaries included). Six rotational-stiffness pb bonds per surface ball
+flac3d>; re-tripped the wall-zone integration instability (docs: rotational stiffness
+flac3d>; must be accounted in gp mass scaling; multi-edge contact "significantly
+flac3d>; stiffer"); zero-force state is an unstable fixed point -> roundoff e-folded
+flac3d>; to Illegal geometry zone 260104 (right foot, densest facets) at cycle 313.
+flac3d>; All previously-stable configs (v6/G3/A') used bf_couple-group glue only.
+flac3d>contact method bond gap [pfc_bondgap] range contact group 'bf_couple'
+--- Method bond applied to 62556 contacts in range.
+flac3d>contact method pb_deform emod 1.6e9 kratio 1.0 range contact group 'bf_couple'
+--- Method pb_deformability applied to 62556 contacts in range.
+flac3d>contact property pb_ten [pfc_bf_strong] pb_coh [pfc_bf_strong] pb_fa [pfc_pb_fa] range contact group 'bf_couple'
+--- Property pb_coh set in 62556 contacts in range.
+--- Property pb_fa set in 62556 contacts in range.
+--- Property pb_ten set in 62556 contacts in range.
+flac3d>[global ni_rc = n_intact]
+flac3d>[io.out('STEPI-R re-cast complete: intact '+string(ni0)+' -> '+string(ni_rc)+' (all lin+pb forces zeroed at 0g, fresh D7 bonds, bf glue = bf_couple group only)')]
+STEPI-R re-cast complete: intact 2267255 -> 2268301 (all lin+pb forces zeroed at 0g, fresh D7 bonds, bf glue = bf_couple group only)
+flac3d>
+flac3d>; ---- I2b: built-in self-diagnosis (zero-force state MUST be dead) ----
+flac3d>fish define maxcf_scan(tag)
+   Def>    local mx = 0.0
+   Def>    local px = 0.0
+   Def>    local py = 0.0
+   Def>    local pz = 0.0
+   Def>    loop foreach local c contact.list
+   Def>        local f = contact.force.global(c)
+   Def>        local m = math.sqrt(comp.x(f)^2+comp.y(f)^2+comp.z(f)^2)
+   Def>        if m > mx then
+   Def>            mx = m
+   Def>            local p = contact.pos(c)
+   Def>            px = comp.x(p)
+   Def>            py = comp.y(p)
+   Def>            pz = comp.z(p)
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('STEPI-CF '+tag+' max|F|='+string(mx)+'N at ('+string(px)+','+string(py)+','+string(pz)+')')
+   Def>end
+flac3d>fish define maxvel_scan(tag)
+   Def>    local mv = 0.0
+   Def>    local px = 0.0
+   Def>    local py = 0.0
+   Def>    local pz = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local v = ball.vel(b)
+   Def>        local m = math.sqrt(comp.x(v)^2+comp.y(v)^2+comp.z(v)^2)
+   Def>        if m > mv then
+   Def>            mv = m
+   Def>            local p = ball.pos(b)
+   Def>            px = comp.x(p)
+   Def>            py = comp.y(p)
+   Def>            pz = comp.z(p)
+   Def>        end_if
+   Def>    end_loop
+   Def>    local mg = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        local vg = gp.vel(g)
+   Def>        local m2 = math.sqrt(comp.x(vg)^2+comp.y(vg)^2+comp.z(vg)^2)
+   Def>        if m2 > mg then
+   Def>            mg = m2
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('STEPI-VEL '+tag+' ball_vmax='+string(mv)+'@('+string(px)+','+string(py)+','+string(pz)+') gp_vmax='+string(mg))
+   Def>end
+flac3d>[maxcf_scan('post-recast')]
+STEPI-CF post-recast max|F|=306936N at (1299.74,902.345,1748.44)
+0 (integer)
+flac3d>model cycle 100
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      48505 00:00:02:12       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-07 12:05:03
+flac3d>[maxvel_scan('c100')]
+STEPI-VEL c100 ball_vmax=2.51697e-05@(1299.7,902.282,1748.57) gp_vmax=2.17973e-05
+0 (integer)
+flac3d>model calm
+flac3d>model cycle 100
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      48605 00:00:02:06       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-07 12:07:11
+flac3d>[maxvel_scan('c200')]
+STEPI-VEL c200 ball_vmax=3.79383e-06@(1299.72,902.185,1748.35) gp_vmax=6.80309e-06
+0 (integer)
+flac3d>model calm
+flac3d>model cycle 100
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      100      48705 00:00:02:07       100                        
+--- Global cycle limit of 100 met.
+--- Cycling ended at: 2026-07-07 12:09:20
+flac3d>[maxvel_scan('c300')]
+STEPI-VEL c300 ball_vmax=1.1756e-05@(1299.74,902.069,1748.34) gp_vmax=2.84464e-06
+0 (integer)
+flac3d>model calm
+flac3d>
+flac3d>; ---- I3: 0g verification (must be dead silent) ----
+flac3d>[relax_legs('STEPI-V0G', 1)]
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      49305 00:00:12:32       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-07 12:21:53
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPI-V0G leg1 swept=0 dry=1 gp_dmax=0.000896595m ball_dmax=0.00803218m intact=2267546
+0 (integer)
+flac3d>
+flac3d>; ---- I4: gravity ramp with swept legs ----
+flac3d>model gravity 0 0 [-grav_i*0.10]
+--- Gravity has been set to: ( 0.0e+00 0.0e+00 -9.8e-01).
+flac3d>[relax_legs('STEPI-G10', 2)]
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      49905 00:00:12:33       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-07 12:34:45
+flac3d>ball delete range group 'debris'
+--- 29 balls deleted.
+flac3d>model calm
+STEPI-G10 leg1 swept=29 dry=0 gp_dmax=0.0011253m ball_dmax=0.009294m intact=2265292
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      50505 00:00:13:08       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-07 12:48:12
+flac3d>ball delete range group 'debris'
+--- 5 balls deleted.
+flac3d>model calm
+STEPI-G10 leg2 swept=5 dry=0 gp_dmax=0.000676066m ball_dmax=0.00929512m intact=2264988
+0 (integer)
+flac3d>model gravity 0 0 [-grav_i*0.25]
+--- Gravity has been set to: ( 0.0e+00 0.0e+00 -2.5e+00).
+flac3d>[relax_legs('STEPI-G25', 1)]
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      51105 00:00:13:26       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-07 13:01:57
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPI-G25 leg1 swept=0 dry=1 gp_dmax=0.000619364m ball_dmax=0.00942808m intact=2264877
+0 (integer)
+flac3d>model gravity 0 0 [-grav_i*0.50]
+--- Gravity has been set to: ( 0.0e+00 0.0e+00 -4.9e+00).
+flac3d>[relax_legs('STEPI-G50', 2)]
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      51705 00:00:13:47       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-07 13:16:04
+flac3d>ball delete range group 'debris'
+--- 11 balls deleted.
+flac3d>model calm
+STEPI-G50 leg1 swept=11 dry=0 gp_dmax=0.00144073m ball_dmax=0.009748m intact=2263960
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      52305 00:00:12:26       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-07 13:28:49
+flac3d>ball delete range group 'debris'
+--- 2 balls deleted.
+flac3d>model calm
+STEPI-G50 leg2 swept=2 dry=0 gp_dmax=0.00103358m ball_dmax=0.00974875m intact=2263699
+0 (integer)
+flac3d>model gravity 0 0 [-grav_i*0.75]
+--- Gravity has been set to: ( 0.0e+00 0.0e+00 -7.4e+00).
+flac3d>[relax_legs('STEPI-G75', 1)]
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      52905 00:00:13:43       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-07 13:42:52
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPI-G75 leg1 swept=0 dry=1 gp_dmax=0.00430843m ball_dmax=0.00978997m intact=2263163
+0 (integer)
+flac3d>model gravity 0 0 [-grav_i]
+--- Gravity has been set to: ( 0.0e+00 0.0e+00 -9.8e+00).
+flac3d>[relax_legs('STEPI-G100', 4)]
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      53505 00:00:12:58       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-07 13:56:08
+flac3d>ball delete range group 'debris'
+--- 5 balls deleted.
+flac3d>model calm
+STEPI-G100 leg1 swept=5 dry=0 gp_dmax=0.00372927m ball_dmax=0.0098111m intact=2262840
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      54105 00:00:13:26       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-07 14:09:54
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPI-G100 leg2 swept=0 dry=1 gp_dmax=0.00371058m ball_dmax=0.00983564m intact=2262250
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      54705 00:00:12:57       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-07 14:23:09
+flac3d>ball delete range group 'debris'
+--- 4 balls deleted.
+flac3d>model calm
+STEPI-G100 leg3 swept=4 dry=0 gp_dmax=0.00370522m ball_dmax=0.00985463m intact=2262030
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      55305 00:00:12:41       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-07 14:36:11
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPI-G100 leg4 swept=0 dry=1 gp_dmax=0.00370422m ball_dmax=0.00986946m intact=2262013
+0 (integer)
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+      800      56105 2.1810e-03 00:00:16:37       800            1.0000e-04             
+--- Global cycle limit of 800 met.
+--- Cycling ended at: 2026-07-07 14:53:06
+flac3d>[relax_legs('STEPI-F', 1)]
+flac3d>model cycle 600
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      56705 00:00:12:22       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-07 15:05:30
+flac3d>ball delete range group 'debris'
+--- 0 balls deleted.
+flac3d>model calm
+STEPI-F leg1 swept=0 dry=1 gp_dmax=0.00370397m ball_dmax=0.00991325m intact=2261924
+0 (integer)
+flac3d>[global ni1 = n_intact]
+flac3d>[midconv]
+-4.1e-07 (real)
+flac3d>[io.out('STEPI GATE: broken_since_recast='+string(ni_rc-ni1)+' (expect ~tens) ball_dmax='+string(bdmax)+'m gp_dmax='+string(gpdmax)+'m | midband ur mean='+string(mc_mean*1000.0)+'mm max='+string(mc_max*1000.0)+'mm n='+string(mc_n)+' balls='+string(ball.num))]
+STEPI GATE: broken_since_recast=6377 (expect ~tens) ball_dmax=0.00991325m gp_dmax=0.00370397m | midband ur mean=-0.000414889mm max=4.63606mm n=41138 balls=456162
+flac3d>
+flac3d>model save '../../output/Couple_Initial_G4'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/04_InitialBalance/output/Couple_Initial_G4.f3sav.
+flac3d>[io.out('STEPI-DONE saved Couple_Initial_G4 (stress-free cast lining, self-weight only, E_eq 1.6)')]
+STEPI-DONE saved Couple_Initial_G4 (stress-free cast lining, self-weight only, E_eq 1.6)
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週二 七月 7 15:06:26 2026
+**********************************************
