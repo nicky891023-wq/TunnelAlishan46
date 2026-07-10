@@ -74,3 +74,14 @@ python make_result_figs.py
   ②斷鍵=微損傷、裂縫=損傷帶、f=0.25=縮尺趨勢 ③E_eq=1.6GPa（Wade 核准）、T=0.8 統一
 - 鐵則：console 裸檔名/65s 間隔/以腳本自身 log 驗證；restore 清 FISH；timestep scale 禁自由墜落體；
   >800cyc 無 calm 窗口禁止；勿 blanket kill flac；電源「永不睡眠」
+
+---
+## 2026-07-10 清理備註（Claude）
+- 已刪除的試錯/過時檔（git 歷史皆可找回，commit 93afe38 之前）：
+  smoke_* 探針、exp_fields_body 舊版、export_fields_lg/sm_11、ray_dump_body v1＋舊極點射線資料、
+  make_crack_evolution_gif（紅色版）、analyze_cracknormals、plot_crack_orientation_map、
+  closeout_chain*、00_Document/revise_ch5+tracked（追蹤修訂舊產線）、HANDOFF_20260705、
+  05/result 舊版 FIG_*（論文版在 00_Document/result）
+- 現役產線：圖表=05/process 各 render/plot 腳本＋tunnel_frame；論文=00_Document 三步
+  （assemble_thesis→transplant_math→finalize_thesis，冪等可重跑）；規劃=THESIS_PLAN/WRITING_BRIEF/FIGURE_STATUS
+- 大型 dump 重生：lg_chain/sm_chain/cp_chain/cp_balldisp .f3dat（單 console、65s 間隔）
