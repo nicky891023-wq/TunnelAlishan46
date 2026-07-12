@@ -78,8 +78,16 @@ TT 為基底＋摘要換老師五段版＋英文摘要改寫對齊＋Ch5 回填 
 （照TT編號）＋圖5-21掛新獨立累積圖＋新增圖5-22三維演化。
 合稿管線=00_Document/merge_260712.py（冪等，從TT原檔一鍵重建；換圖時清該繪圖srcRect、
 其他章刻意裁切不動）。⚠️教訓：全域刪srcRect會毀檔，必須只動換圖的繪圖元素。
-21:36 已排 Codex(gpt-5.6-sol ultra) 合稿審（任務書=TTW/_REVIEW_TASK_260712.md，
-全文匯出=TTW/_260712_fulltext.md，報告將落 TTW/_CODEX_REVIEW_260712.md）。
+21:38 Codex(gpt-5.6-sol ultra) 合稿審完成（報告=TTW/_CODEX_REVIEW_260712.md）：
+初判 NO-GO（1 blocker＋13 major）→ **全數修畢**（22:xx）：裂縫排序 blocker（TT 原生）、
+s1 舊敘事、7.0 合成註記、密度分母 208 萬、130 日時程、增量載入說明、6.1 主詞、1.3 章名對齊、
+術語全域統一（跨尺度/坡地/隧道尺度/資料傳遞）、圖目錄同步（5-22/4-15 入列）、
+年份修正（盧碧颱風=2021，與 Codex 建議方向相反、以領域事實為準）、τ-p 與驗證措辭降階、
+EN 三處、錯字六處。定版 99 頁；本文/圖目錄殘留掃描全 NONE；數學段 16/表 20/圖 84 完整。
+⚠️ 慘痛教訓（已固化）：docx 內含 SEQ/REF 欄位的段落**不可用 set_text 或全文重排**——
+會毀欄位（圖表號消失/目錄掉項）。安全作法=逐 w:t 替換（wt_replace）；跨 run 邊界殘留
+用 fix_260712_fields.py（無欄位段才整段重寫；Caption 用鄰近複製保 SEQ）。
+產線定版：merge_260712.py → fix_260712_fields.py → Word COM 欄位更新。
 
 ## 金蟬交接須知（Wade：Fable 額度緊時由 GPT5.6 SOL ULTRA 接手）
 
