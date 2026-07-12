@@ -1,0 +1,1868 @@
+**********************************************
+* Logging started at 週六 七月 11 12:40:17 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../../04_InitialBalance/output/Couple_Initial_G4'   ; G4 = STEP I v2 (07-07): STRESS-FREE cast lining at bedded geometry (0g re-cast: all lin+pb forces zeroed, fresh D7 bonds, bf glue = bf_couple group only), gravity ramped back 0.1->1.0g, E_eq=1.6 GPa (Wade-approved, l4 layer) + interface consistency BAKED IN. Ring carries self-weight only -- stage cracks are now PHYSICS, not installation-artifact harvesting (evidence: _diag_prestress_harvest_0707/). History: launch1 free2=frozen rock; launch2 G=interface instability; launch3/4 G3 f=0.25/0.05 = lock-in tail harvesting. See RUN_STATUS one-pager.
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週二 七月 7 15:06:06 2026
+Total Cycles: 56705  Super Cycles: 56705
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>model largestrain on
+flac3d>model mechanical timestep scale
+--- density scaling activated in mechanical process with a target timestep of 1.
+flac3d>fish automatic-create on
+flac3d>call 'fracture_track_v3.fis'   ; v3: no fragment ops (v2's fragment register = ~28min hang; fragment compute/50-cracks = per-stage crawl). Crack DFNs unchanged.
+flac3d>; fracture_track_v3.fis -- crack DFN tracker for the coupled BPM (2026-07-06).
+flac3d>;   v3 change (performance): REMOVES all fragment operations that crippled v2 on
+flac3d>;   this 456k-ball / 2.27M-bond model:
+flac3d>;     - track_init no longer does `fragment register ball-ball` (v2 line 102 was
+flac3d>;       a ~28-min single-threaded startup on this model).
+flac3d>;     - add_crack no longer calls `fragment compute` every 50 cracks (v2 lines
+flac3d>;       52-58 recomputed connectivity over ALL 456k balls per 50 cracks -> each
+flac3d>;       staged stage crawled).
+flac3d>;   The fragment system was used ONLY to cosmetically re-sync crack DFN
+flac3d>;   positions after large-strain ball motion. At the mm-scale motion here the
+flac3d>;   creation position == current position to <1 mm, so this is dropped with no
+flac3d>;   meaningful loss. The crack_tension / crack_shear DFNs are still created per
+flac3d>;   bond break (fracture.create), so dump_cracks / crack_sectors work unchanged.
+flac3d>; ============================================================================
+flac3d>fish define add_crack(entries)
+   Def>    local contact    = entries(1)
+   Def>    local mode       = entries(2)    ; slot2 = failure mode {1=tension, 2=shear}
+   Def>    local frac_pos   = contact.pos(contact)
+   Def>    local norm       = contact.normal(contact)
+   Def>    local dfn_label  = 'crack'
+   Def>    local bp1 = contact.end1(contact)
+   Def>    local bp2 = contact.end2(contact)
+   Def>    local frac_size = math.min(ball.radius(bp1), ball.radius(bp2))
+   Def>    local arg = array.create(5)
+   Def>    arg(1) = 'disk'
+   Def>    arg(2) = frac_pos
+   Def>    arg(3) = frac_size
+   Def>    arg(4) = math.dip.from.normal(norm)/math.degrad
+   Def>    arg(5) = math.ddir.from.normal(norm)/math.degrad
+   Def>    if arg(5) < 0.0
+   Def>        arg(5) = 360.0+arg(5)
+   Def>    end_if
+   Def>    global crack_num
+   Def>    crack_num = crack_num + 1
+   Def>    if mode = 1 then
+   Def>        dfn_label = dfn_label + '_tension'
+   Def>    else if mode = 2 then
+   Def>        dfn_label = dfn_label + '_shear'
+   Def>    endif
+   Def>    global dfn = dfn.find(dfn_label)
+   Def>    if dfn = null then
+   Def>        dfn = dfn.create(dfn_label)
+   Def>    endif
+   Def>    local fnew = fracture.create(dfn,arg)
+   Def>    fracture.prop(fnew,'age')  = mech.time.total
+   Def>    fracture.extra(fnew,1) = bp1
+   Def>    fracture.extra(fnew,2) = bp2
+   Def>    crack_accum += 1
+   Def>end
+flac3d>
+flac3d>fish define track_init
+   Def>    command
+   Def>        fracture delete
+   Def>        model results clear-map
+   Def>    endcommand
+   Def>    command
+   Def>        fish callback remove add_crack event bond_break
+   Def>        fish callback add add_crack event bond_break
+   Def>    endcommand
+   Def>    global crack_accum = 0
+   Def>    global crack_num = 0
+   Def>    global track_time0 = mech.time.total
+   Def>end
+flac3d>call 'couple_qa_v2.fis'
+flac3d>; couple_qa_funcs.fis -- Visual QA extraction for coupled stages (call AFTER each restore).
+flac3d>;   dump_cracks(pfx): write <pfx>_cracks.txt (x y z type diam age) for crack_tension + crack_shear DFNs.
+flac3d>;   qa_walls(pfx,stg): io.out wz_outter / w_inner net contact force per stage.
+flac3d>;   crack_sectors(pfx): bin tension+shear crack count by circumferential sector (12 x 30deg) + axial band.
+flac3d>;   tunnel axis along y, centre (cx,cz)=(1297,1747.5).
+flac3d>fish define dump_cracks(pfx)
+   Def>    local fname = pfx+'_cracks.txt'
+   Def>    local st = file.open(fname,1,1)
+   Def>    local buf = array.create(1)
+   Def>    buf(1) = 'x y z type diam age'
+   Def>    file.write(buf,1)
+   Def>    global ncr_t = 0
+   Def>    global ncr_s = 0
+   Def>    local ii = 0
+   Def>    loop while ii < 2
+   Def>        local nm = 'crack_tension'
+   Def>        local ty = 1
+   Def>        if ii = 1 then
+   Def>            nm = 'crack_shear'
+   Def>            ty = 2
+   Def>        end_if
+   Def>        local d = dfn.find(nm)
+   Def>        if d # null then
+   Def>            loop foreach local fr dfn.fracturelist(d)
+   Def>                local p = fracture.pos(fr)
+   Def>                local dm = fracture.diameter(fr)
+   Def>                local ag = fracture.prop(fr,'age')
+   Def>                buf(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(ty)+' '+string(dm)+' '+string(ag)
+   Def>                file.write(buf,1)
+   Def>                if ty = 1 then
+   Def>                    ncr_t = ncr_t + 1
+   Def>                else
+   Def>                    ncr_s = ncr_s + 1
+   Def>                end_if
+   Def>            end_loop
+   Def>        end_if
+   Def>        ii = ii + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('QA-CRACKS '+pfx+' tension='+string(ncr_t)+' shear='+string(ncr_s)+' total='+string(ncr_t+ncr_s)+' -> '+fname)
+   Def>end
+flac3d>fish define qa_walls(pfx, stg)
+   Def>    loop foreach local w wall.list
+   Def>        local fc = wall.force.contact(w)
+   Def>        local m = math.sqrt(comp.x(fc)*comp.x(fc)+comp.y(fc)*comp.y(fc)+comp.z(fc)*comp.z(fc))/1e6
+   Def>        if wall.name(w) = 'wz_outter' then
+   Def>            io.out('QA-WALL '+pfx+' s'+string(stg)+' wz_outter='+string(m)+'MN ('+string(comp.x(fc)/1e6)+','+string(comp.y(fc)/1e6)+','+string(comp.z(fc)/1e6)+')')
+   Def>        end_if
+   Def>        if wall.name(w) = 'w_inner' then
+   Def>            io.out('QA-WALL '+pfx+' s'+string(stg)+' w_inner='+string(m)+'MN')
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>; mid-band only wz_outter reaction: integrate bf_couple ball-facet contact forces over y in [y0,y1]
+flac3d>;   (total wall.force.contact is end-contaminated; this isolates the mid-tunnel lining reaction)
+flac3d>fish define mid_wall_force(pfx, y0, y1)
+   Def>    global fmid_sum = 0.0      ; signed sum of normal force (compression>0 per PFC convention varies)
+   Def>    global fmid_abs = 0.0      ; sum |normal force| = contact-load magnitude proxy
+   Def>    global nmid_c = 0
+   Def>    ; coupling (ball-facet on wz_outter) = linearpbond unbreakable pb_ten>=1e10 (cb_control0 has NO
+   Def>    ;   'bf_couple' group; identify by pb_ten instead verified 62556 coupling contacts, 47806 in mid)
+   Def>    loop foreach local c contact.list
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_ten') >= 1.0e10 then
+   Def>                local p = contact.pos(c)
+   Def>                local yy = comp.y(p)
+   Def>                if yy >= y0 then
+   Def>                    if yy <= y1 then
+   Def>                        local fn = contact.force.normal(c)
+   Def>                        fmid_sum = fmid_sum + fn
+   Def>                        local af = fn
+   Def>                        if af < 0.0 then
+   Def>                            af = -af
+   Def>                        end_if
+   Def>                        fmid_abs = fmid_abs + af
+   Def>                        nmid_c = nmid_c + 1
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('MID-WALL '+pfx+' y['+string(y0)+','+string(y1)+'] bf_couple_n='+string(nmid_c)+' sum_normal='+string(fmid_sum/1e6)+'MN abs_normal='+string(fmid_abs/1e6)+'MN')
+   Def>end
+flac3d>; mid-band tunnel-wall convergence (Codex Q2 2nd proof): lining-ball radial-inward displacement in
+flac3d>;   y[y0,y1]. ball.disp tracks drive-induced motion (datum reset zeroed it). reports mean/max + inner-band.
+flac3d>fish define mid_convergence(pfx, y0, y1)
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    ; INNER-WALL (r 1.35-2.0m) radial convergence, split by region (Codex): blue-line load region
+   Def>    ;   (ang NOT in 250-320deg = sidewalls+crown) vs fixed-corner band (ang 250-320 = artifact).
+   Def>    global cv_blue = 0.0
+   Def>    global mx_blue = 0.0
+   Def>    global nb_blue = 0
+   Def>    global cv_corner = 0.0
+   Def>    global mx_corner = 0.0
+   Def>    global nb_corner = 0
+   Def>    local sblue = 0.0
+   Def>    local scorner = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local yy = comp.y(p)
+   Def>        if yy >= y0 then
+   Def>        if yy <= y1 then
+   Def>            local rx = comp.x(p) - cx
+   Def>            local rz = comp.z(p) - cz
+   Def>            local rr = math.sqrt(rx*rx + rz*rz)
+   Def>            if rr >= 1.35 then
+   Def>            if rr <= 2.0 then
+   Def>                local ang = math.atan2(rz, rx)/math.degrad
+   Def>                if ang < 0.0 then
+   Def>                    ang = 360.0 + ang
+   Def>                end_if
+   Def>                local d = ball.disp(b)
+   Def>                local ri = -(comp.x(d)*rx/rr + comp.z(d)*rz/rr)
+   Def>                local iscorner = 0
+   Def>                if ang >= 250.0 then
+   Def>                    if ang <= 320.0 then
+   Def>                        iscorner = 1
+   Def>                    end_if
+   Def>                end_if
+   Def>                if iscorner = 1 then
+   Def>                    scorner = scorner + ri
+   Def>                    nb_corner = nb_corner + 1
+   Def>                    if ri > mx_corner then
+   Def>                        mx_corner = ri
+   Def>                    end_if
+   Def>                else
+   Def>                    sblue = sblue + ri
+   Def>                    nb_blue = nb_blue + 1
+   Def>                    if ri > mx_blue then
+   Def>                        mx_blue = ri
+   Def>                    end_if
+   Def>                end_if
+   Def>            end_if
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    if nb_blue > 0 then
+   Def>        cv_blue = sblue/float(nb_blue)
+   Def>    end_if
+   Def>    if nb_corner > 0 then
+   Def>        cv_corner = scorner/float(nb_corner)
+   Def>    end_if
+   Def>    io.out('MID-CONV '+pfx+' INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n='+string(nb_blue)+' radial_inward mean='+string(cv_blue*1000.0)+'mm max='+string(mx_blue*1000.0)+'mm | fixed-corner n='+string(nb_corner)+' mean='+string(cv_corner*1000.0)+'mm max='+string(mx_corner*1000.0)+'mm')
+   Def>end
+flac3d>fish define crack_sectors(pfx)
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    local sect = array.create(12)
+   Def>    local kk = 1
+   Def>    loop while kk <= 12
+   Def>        sect(kk) = 0
+   Def>        kk = kk + 1
+   Def>    end_loop
+   Def>    local ii = 0
+   Def>    loop while ii < 2
+   Def>        local nm = 'crack_tension'
+   Def>        if ii = 1 then
+   Def>            nm = 'crack_shear'
+   Def>        end_if
+   Def>        local d = dfn.find(nm)
+   Def>        if d # null then
+   Def>            loop foreach local fr dfn.fracturelist(d)
+   Def>                local p = fracture.pos(fr)
+   Def>                local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+   Def>                if ang < 0.0 then
+   Def>                    ang = 360.0 + ang
+   Def>                end_if
+   Def>                local s = int(ang/30.0) + 1
+   Def>                if s > 12 then
+   Def>                    s = 12
+   Def>                end_if
+   Def>                sect(s) = sect(s) + 1
+   Def>            end_loop
+   Def>        end_if
+   Def>        ii = ii + 1
+   Def>    end_loop
+   Def>    io.out('QA-SECTORS '+pfx+' (30deg bins 0..360): '+string(sect(1))+' '+string(sect(2))+' '+string(sect(3))+' '+string(sect(4))+' '+string(sect(5))+' '+string(sect(6))+' '+string(sect(7))+' '+string(sect(8))+' '+string(sect(9))+' '+string(sect(10))+' '+string(sect(11))+' '+string(sect(12)))
+   Def>end
+flac3d>
+flac3d>; ---- v2 additions (2026-07-03): p(theta,y) map + coupled bore-wall disp export ----
+flac3d>fish define export_pmap(fname)
+   Def>    ; bin bf_couple (pb_ten>=1e10 ball-facet) contact normal forces: 24 x 15deg sectors x 5 y-bands
+   Def>    local cx = 1297.0
+   Def>    local cz = 1747.5
+   Def>    local nsec = 24
+   Def>    local acc = array.create(nsec,5)
+   Def>    local cnt = array.create(nsec,5)
+   Def>    local i = 1
+   Def>    loop while i <= nsec
+   Def>        local j = 1
+   Def>        loop while j <= 5
+   Def>            acc(i,j) = 0.0
+   Def>            cnt(i,j) = 0
+   Def>            j = j + 1
+   Def>        end_loop
+   Def>        i = i + 1
+   Def>    end_loop
+   Def>    loop foreach local c contact.list
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            if contact.prop(c,'pb_ten') >= 1.0e10 then
+   Def>                local p = contact.pos(c)
+   Def>                local yy = comp.y(p)
+   Def>                if yy >= 860.0 then
+   Def>                if yy <= 910.0 then
+   Def>                    local jb = int((yy-860.0)/10.0) + 1
+   Def>                    if jb > 5 then
+   Def>                        jb = 5
+   Def>                    end_if
+   Def>                    local ang = math.atan2(comp.z(p)-cz, comp.x(p)-cx)/math.degrad
+   Def>                    if ang < 0.0 then
+   Def>                        ang = 360.0 + ang
+   Def>                    end_if
+   Def>                    local ib = int(ang/15.0) + 1
+   Def>                    if ib > nsec then
+   Def>                        ib = nsec
+   Def>                    end_if
+   Def>                    acc(ib,jb) = acc(ib,jb) + contact.force.normal(c)
+   Def>                    cnt(ib,jb) = cnt(ib,jb) + 1
+   Def>                end_if
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    local st = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'sector_deg yband sum_fn_N n_contacts'
+   Def>    st = file.write(a,1)
+   Def>    i = 1
+   Def>    loop while i <= nsec
+   Def>        local j2 = 1
+   Def>        loop while j2 <= 5
+   Def>            a(1) = string((i-1)*15)+' '+string(j2)+' '+string(acc(i,j2))+' '+string(cnt(i,j2))
+   Def>            st = file.write(a,1)
+   Def>            j2 = j2 + 1
+   Def>        end_loop
+   Def>        i = i + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('QA-PMAP -> '+fname)
+   Def>end
+flac3d>fish define export_cwall(fname)
+   Def>    ; coupled rock bore-wall gp displacements (G2 vs small model cpl_wall_sNN)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z dx dy dz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local yy = comp.y(p)
+   Def>        if yy > 860.0 then
+   Def>        if yy < 910.0 then
+   Def>            local rx = comp.x(p) - 1297.0
+   Def>            local rz = comp.z(p) - 1747.5
+   Def>            if rx*rx + rz*rz < 8.41 then
+   Def>                local d = gp.disp(g)
+   Def>                a(1) = string(comp.x(p))+' '+string(yy)+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>                st = file.write(a,1)
+   Def>                n = n + 1
+   Def>            end_if
+   Def>        end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('QA-CWALL n='+string(n)+' -> '+fname)
+   Def>end
+flac3d>[global NSUB = 10]
+flac3d>[global NCYC = 150]
+flac3d>[global DRIVE_SCALE = 0.25]   ; G4-era first calibration point. On the STRESS-FREE ring the earlier
+flac3d>;   f-catastrophes don't apply (they were lock-in tail harvesting, gone by construction). 0.25 x
+flac3d>;   stage drive => imposed cavity deformation ~1.2-1.85 mm ~ concrete cracking threshold: expect
+flac3d>;   moderate springline cracking growing with wet stages. In-flight rule at CS-CHK stg1:
+flac3d>;   shatter (>>10k) -> kill & halve f; near-zero -> raise f. Materials NOT touched (baked in G4).
+flac3d>[io.out('CS-0 restored Couple_Initial_G4 (stress-free ring, E_eq 1.6 baked) DRIVE_SCALE=0.25: zones='+string(zone.num)+' balls='+string(ball.num)+' walls='+string(wall.num))]
+CS-0 restored Couple_Initial_G4 (stress-free ring, E_eq 1.6 baked) DRIVE_SCALE=0.25: zones=424908 balls=456162 walls=1
+flac3d>
+flac3d>; ============================================================================
+flac3d>; ANCHOR RE-BAND (Wade 07-10, staged v3): grade-following feet strip.
+flac3d>;   Old band = constant z<=1745.30 (flat-rim assumption) but the ring climbs a 3.74%
+flac3d>;   grade (rim 1743.97@y860 -> 1745.83@y910): south feet over-anchored ~0.9 m,
+flac3d>;   y>893 feet UNANCHORED -> north end-ring cracking + the 5-19 wedge artifact.
+flac3d>;   New band: z <= rim(y)+0.41 with rim(y)=1743.97+0.0372*(y-860)  (0.41 m strip,
+flac3d>;   identical to the old band at y=885). Previously-anchored contacts outside the
+flac3d>;   new band revert to D7 breakable strength (pb_ten 2.10e6 / pb_coh 2.30e7).
+flac3d>; ============================================================================
+flac3d>; ============================================================================
+flac3d>; ANCHOR RE-BAND v4 (Wade 07-10/11): grade-following feet strip with ANNEALED release.
+flac3d>;   v3 lesson (CONTROL-0 fail: 1,982 cracks, 79mm drift): one-step release of the south
+flac3d>;   over-anchored wedge = leg bending redistributes in one shot -> cascade. Per the
+flac3d>;   STEP-G-v4 house rule, constraint softening must be annealed: wedge strength steps
+flac3d>;   1000x -> 100x -> 30x -> 10x -> 3x -> 1x D7 with calm absorption between steps.
+flac3d>;   New band z <= rim(y)+0.41, rim(y)=1743.97+0.0372*(y-860). Conditioning happens
+flac3d>;   BEFORE track_init (breaks not counted as cracks); afterwards drifting balls are
+flac3d>;   removed and displacements zeroed so CONTROL-0 measures a fresh state.
+flac3d>; ============================================================================
+flac3d>fish define reband_strengthen
+   Def>    local n_new = 0
+   Def>    loop foreach local c contact.list('ball-ball')
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            local p = contact.pos(c)
+   Def>            local rimz = 1743.97 + 0.0372*(comp.y(p)-860.0)
+   Def>            if comp.z(p) <= rimz+0.41 then
+   Def>                contact.prop(c,'pb_ten') = 1e100
+   Def>                contact.prop(c,'pb_coh') = 1e100
+   Def>                n_new = n_new + 1
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('CS-REBAND-A anchored(new band)='+string(n_new))
+   Def>end
+flac3d>fish define wedge_setstrength
+   Def>    ; wedge = old constant band, outside new band; factor set via global wfac
+   Def>    local n_w = 0
+   Def>    loop foreach local c contact.list('ball-ball')
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            local p = contact.pos(c)
+   Def>            local zz = comp.z(p)
+   Def>            local rimz = 1743.97 + 0.0372*(comp.y(p)-860.0)
+   Def>            if zz > rimz+0.41 then
+   Def>                if zz <= 1745.30 then
+   Def>                    contact.prop(c,'pb_ten') = wfac*2.10e6
+   Def>                    contact.prop(c,'pb_coh') = wfac*2.30e7
+   Def>                    n_w = n_w + 1
+   Def>                end_if
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('CS-REBAND-W wedge strength = '+string(wfac)+'x D7 on '+string(n_w)+' contacts')
+   Def>end
+flac3d>fish define drift_cleanup
+   Def>    local ndel = 0
+   Def>    loop foreach local b ball.list
+   Def>        local d = ball.disp(b)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dthr then
+   Def>            ball.delete(b)
+   Def>            ndel = ndel + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('CS-REBAND-CLEAN thr='+string(dthr)+' deleted drifters='+string(ndel))
+   Def>end
+flac3d>[reband_strengthen]
+CS-REBAND-A anchored(new band)=177797
+0 (integer)
+flac3d>[global wfac = 1000.0]
+flac3d>[wedge_setstrength]
+CS-REBAND-W wedge strength = 1000x D7 on 77494 contacts
+0 (integer)
+flac3d>model cycle 600 calm 50
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      57305 00:00:12:26       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-11 12:53:30
+flac3d>[global wfac = 100.0]
+flac3d>[wedge_setstrength]
+CS-REBAND-W wedge strength = 100x D7 on 77494 contacts
+0 (integer)
+flac3d>model cycle 600 calm 50
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      57905 00:00:12:29       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-11 13:06:02
+flac3d>[global wfac = 30.0]
+flac3d>[wedge_setstrength]
+CS-REBAND-W wedge strength = 30x D7 on 77494 contacts
+0 (integer)
+flac3d>model cycle 600 calm 50
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      58505 00:00:12:31       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-11 13:18:38
+flac3d>[global wfac = 10.0]
+flac3d>[wedge_setstrength]
+CS-REBAND-W wedge strength = 10x D7 on 77488 contacts
+0 (integer)
+flac3d>model cycle 600 calm 50
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      59105 00:00:12:45       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-11 13:31:26
+flac3d>[global wfac = 3.0]
+flac3d>[wedge_setstrength]
+CS-REBAND-W wedge strength = 3x D7 on 77273 contacts
+0 (integer)
+flac3d>model cycle 600 calm 50
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      600      59705 00:00:12:37       600                        
+--- Global cycle limit of 600 met.
+--- Cycling ended at: 2026-07-11 13:44:08
+flac3d>[global wfac = 1.0]
+flac3d>[wedge_setstrength]
+CS-REBAND-W wedge strength = 1x D7 on 77078 contacts
+0 (integer)
+flac3d>model cycle 2000 calm 50
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2000      61705 00:00:37:57      2000                        
+--- Global cycle limit of 2000 met.
+--- Cycling ended at: 2026-07-11 14:22:08
+flac3d>[global dthr = 0.02]
+flac3d>[drift_cleanup]
+CS-REBAND-CLEAN thr=0.02 deleted drifters=6
+0 (integer)
+flac3d>model cycle 3000 calm 50
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     3000      64705 00:01:00:14      3000                        
+--- Global cycle limit of 3000 met.
+--- Cycling ended at: 2026-07-11 15:22:24
+flac3d>[global dthr = 0.01]
+flac3d>[drift_cleanup]
+CS-REBAND-CLEAN thr=0.01 deleted drifters=20
+0 (integer)
+flac3d>model cycle 3000 calm 50
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     3000      67705 00:00:59:41      3000                        
+--- Global cycle limit of 3000 met.
+--- Cycling ended at: 2026-07-11 16:22:07
+flac3d>[global dthr = 0.005]
+flac3d>[drift_cleanup]
+CS-REBAND-CLEAN thr=0.005 deleted drifters=120
+0 (integer)
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456016 ball(s).
+flac3d>; quiet verification window: post-conditioning residual motion must be sub-mm
+flac3d>model cycle 1500 calm 50
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     1500      69205 00:00:31:40      1500                        
+--- Global cycle limit of 1500 met.
+--- Cycling ended at: 2026-07-11 16:53:50
+flac3d>fish define quiet_check
+   Def>    local dm = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local d = ball.disp(b)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('CS-REBAND-QUIET ball_dmax over 1500cyc = '+string(dm)+' m (want <1e-3)')
+   Def>end
+flac3d>[quiet_check]
+CS-REBAND-QUIET ball_dmax over 1500cyc = 0.00296594 m (want <1e-3)
+0 (integer)
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456016 ball(s).
+flac3d>[io.out('CS-REBAND-DONE (annealed v6, seam-shifted drives)')]
+CS-REBAND-DONE (annealed v6, seam-shifted drives)
+0 (integer)
+flac3d>
+flac3d>; ---- crack tracking on (resets DFNs, registers bond_break callback) ----
+flac3d>[track_init]
+flac3d>fracture delete
++++ No fractures found in range.
+flac3d>model results clear-map
+flac3d>fish callback remove add_crack event bond_break
+flac3d>fish callback add add_crack event bond_break
+0 (integer)
+flac3d>; datum: ball + gp displacements zeroed at staged-run start
+flac3d>ball attribute displacement multiply 0.0
+--- Attribute displacement initialized in 456016 ball(s).
+flac3d>zone gridpoint initialize displacement (0,0,0)
+--- displacement modified in 441728 gridpoints.
+flac3d>
+flac3d>; ---- tag + fix the driven outer-boundary gps (6 couple-box faces, +-0.3 m) ----
+flac3d>fish define tag_cpl_driven
+   Def>    global ndriven = 0
+   Def>    loop foreach local g gp.list
+   Def>        local p = gp.pos(g)
+   Def>        local x = comp.x(p)
+   Def>        local y = comp.y(p)
+   Def>        local z = comp.z(p)
+   Def>        local onb = 0
+   Def>        if math.abs(x-1277.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(x-1317.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(y-860.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(y-910.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(z-1728.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if math.abs(z-1768.0) < 0.3 then
+   Def>            onb = 1
+   Def>        end_if
+   Def>        if onb = 1 then
+   Def>            gp.group(g,'drive') = 'driven'
+   Def>            gp.vel(g) = vector(0.0,0.0,0.0)
+   Def>            gp.fix(g) = vector(1,1,1)
+   Def>            ndriven = ndriven + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    io.out('CS-driven outer-boundary gps tagged+fixed='+string(ndriven))
+   Def>end
+flac3d>[tag_cpl_driven]
+CS-driven outer-boundary gps tagged+fixed=20648
+0 (integer)
+flac3d>
+flac3d>; ---- drive-file reader (x y z dx dy dz, 1 header line) ----
+flac3d>fish define read_drive(fname)
+   Def>    local arr = array.create(1)
+   Def>    local st = file.open(fname,0,1)
+   Def>    ndata = 0
+   Def>    st = file.read(arr,1)
+   Def>    st = file.read(arr,1)
+   Def>    loop while st = 0
+   Def>        ndata = ndata + 1
+   Def>        st = file.read(arr,1)
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    xdat  = array.create(ndata)
+   Def>    ydat  = array.create(ndata)
+   Def>    zdat  = array.create(ndata)
+   Def>    uxdat = array.create(ndata)
+   Def>    uydat = array.create(ndata)
+   Def>    uzdat = array.create(ndata)
+   Def>    st = file.open(fname,0,1)
+   Def>    st = file.read(arr,1)
+   Def>    local i = 0
+   Def>    st = file.read(arr,1)
+   Def>    loop while st = 0
+   Def>        i = i + 1
+   Def>        local ln = arr(1)
+   Def>        xdat(i)  = string.token(ln,1)
+   Def>        ydat(i)  = string.token(ln,2)
+   Def>        zdat(i)  = string.token(ln,3)
+   Def>        uxdat(i) = string.token(ln,4)
+   Def>        uydat(i) = string.token(ln,5)
+   Def>        uzdat(i) = string.token(ln,6)
+   Def>        st = file.read(arr,1)
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('   CS-read '+fname+' ndata='+string(ndata))
+   Def>end
+flac3d>
+flac3d>; ---- store per-gp IDW targets in gp.extra(1..3) (radius 6 m, 1/d^2, nearest fallback) ----
+flac3d>fish define set_targets(radius)
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            local p = gp.pos(g)
+   Def>            local x = comp.x(p)
+   Def>            local y = comp.y(p)
+   Def>            local z = comp.z(p)
+   Def>            local sw = 0.0
+   Def>            local sux = 0.0
+   Def>            local suy = 0.0
+   Def>            local suz = 0.0
+   Def>            local dmin = 1e30
+   Def>            local i = 1
+   Def>            loop while i <= ndata
+   Def>                local dx = x - xdat(i)
+   Def>                local dy = y - ydat(i)
+   Def>                local dz = z - zdat(i)
+   Def>                local d2 = dx*dx + dy*dy + dz*dz
+   Def>                if d2 <= radius*radius then
+   Def>                    local w = 1.0/math.max(d2,1e-10)
+   Def>                    sw = sw + w
+   Def>                    sux = sux + uxdat(i)*w
+   Def>                    suy = suy + uydat(i)*w
+   Def>                    suz = suz + uzdat(i)*w
+   Def>                end_if
+   Def>                if d2 < dmin then
+   Def>                    dmin = d2
+   Def>                    global inear = i
+   Def>                end_if
+   Def>                i = i + 1
+   Def>            end_loop
+   Def>            ; DRIVE_SCALE (Option A, 2026-07-06): reduce imposed deformation to keep the
+   Def>            ; discrete lining in the crack-DEVELOPMENT regime (not fragmentation). f=0.25
+   Def>            ; calibrated by couple_load_diag (1.2mm->~100 cracks; 2.4mm->shatter). Materials
+   Def>            ; unchanged (rock E_eq 2.31, lining D7 ft4). Magnitudes are scaled TREND, pattern
+   Def>            ; and stage-to-stage relative behavior preserved.
+   Def>            if sw > 0.0 then
+   Def>                gp.extra(g,1) = DRIVE_SCALE*sux/sw
+   Def>                gp.extra(g,2) = DRIVE_SCALE*suy/sw
+   Def>                gp.extra(g,3) = DRIVE_SCALE*suz/sw
+   Def>            else
+   Def>                gp.extra(g,1) = DRIVE_SCALE*uxdat(inear)
+   Def>                gp.extra(g,2) = DRIVE_SCALE*uydat(inear)
+   Def>                gp.extra(g,3) = DRIVE_SCALE*uzdat(inear)
+   Def>            end_if
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>
+flac3d>; ---- one ramp substep: vel = remaining_delta / (subs_left * NCYC * dt=1) ----
+flac3d>fish define set_sub_vel(subs_left)
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            local d = gp.disp(g)
+   Def>            local den = float(subs_left)*float(NCYC)
+   Def>            gp.vel(g) = vector((gp.extra(g,1)-comp.x(d))/den, (gp.extra(g,2)-comp.y(d))/den, (gp.extra(g,3)-comp.z(d))/den)
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>fish define hold_driven
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            gp.vel(g) = vector(0.0,0.0,0.0)
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>fish define ball_dmax
+   Def>    local dm = 0.0
+   Def>    loop foreach local b ball.list
+   Def>        local d = ball.disp(b)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    ball_dmax = dm
+   Def>end
+flac3d>fish define gp_dmax
+   Def>    local dm = 0.0
+   Def>    loop foreach local g gp.list
+   Def>        local d = gp.disp(g)
+   Def>        local m = math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+   Def>        if m > dm then
+   Def>            dm = m
+   Def>        end_if
+   Def>    end_loop
+   Def>    gp_dmax = dm
+   Def>end
+flac3d>
+flac3d>; ---- per-stage driver ----
+flac3d>fish define cs_stage(stg, fname)
+   Def>    read_drive(fname)
+   Def>    set_targets(6.0)
+   Def>    local isub = 0
+   Def>    loop while isub < NSUB
+   Def>        isub = isub + 1
+   Def>        set_sub_vel(NSUB - isub + 1)
+   Def>        command
+   Def>            model cycle [NCYC]
+   Def>            model calm
+   Def>        endcommand
+   Def>    end_loop
+   Def>    hold_driven
+   Def>    command
+   Def>        ; calm-cadenced settle (official 'cycle N calm M' idiom) -- bare windows
+   Def>        ; >1000 cyc grow interface oscillation; keep ratio check window short
+   Def>        model cycle 2400 calm 300
+   Def>        model solve ratio-average 1e-4 or cycles 800
+   Def>    endcommand
+   Def>    local pfx = 'cs_s'+string(stg)
+   Def>    dump_cracks(pfx)
+   Def>    qa_walls(pfx, stg)
+   Def>    mid_wall_force(pfx, 870.0, 900.0)
+   Def>    mid_convergence(pfx, 870.0, 900.0)
+   Def>    crack_sectors(pfx)
+   Def>    export_pmap(pfx+'_pmap.txt')
+   Def>    export_cwall(pfx+'_cwall.txt')
+   Def>    io.out('CS-CHK stg'+string(stg)+' cracks_t='+string(ncr_t)+' cracks_s='+string(ncr_s)+' ball_dmax='+string(ball_dmax)+' gp_dmax='+string(gp_dmax))
+   Def>    ; gp_dmax must be ~drive scale (mm) every stage -- if it sits at 0 the rock
+   Def>    ; transmitter is not deforming (frozen-rock artifact, see _diag_frozenrock_0704)
+   Def>end
+flac3d>
+flac3d>; ============================================================================
+flac3d>; CONTROL-0 (gate G5): zero-target ramp -> must give 0 cracks + ~0 drift
+flac3d>; ============================================================================
+flac3d>fish define zero_targets
+   Def>    loop foreach local g gp.list
+   Def>        if gp.group(g,'drive') = 'driven' then
+   Def>            gp.extra(g,1) = 0.0
+   Def>            gp.extra(g,2) = 0.0
+   Def>            gp.extra(g,3) = 0.0
+   Def>        end_if
+   Def>    end_loop
+   Def>end
+flac3d>[zero_targets]
+0 (integer)
+flac3d>[set_sub_vel(2)]
+0 (integer)
+flac3d>model cycle 150
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      69355 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 16:57:13
+flac3d>model calm
+flac3d>[hold_driven]
+0 (integer)
+flac3d>model cycle 1500 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     1500      70855 00:00:32:42      1500                        
+--- Global cycle limit of 1500 met.
+--- Cycling ended at: 2026-07-11 17:29:57
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+      800      71655 2.0165e-04 00:00:17:46       800            1.0000e-04             
+--- Global cycle limit of 800 met.
+--- Cycling ended at: 2026-07-11 17:47:44
+flac3d>[dump_cracks('cs_control0')]
+QA-CRACKS cs_control0 tension=28 shear=0 total=28 -> cs_control0_cracks.txt
+0 (integer)
+flac3d>[io.out('CS-CONTROL0 GATE: cracks='+string(ncr_t+ncr_s)+' (must be 0) ball_drift='+string(ball_dmax)+' m (must be <5e-4)')]
+CS-CONTROL0 GATE: cracks=28 (must be 0) ball_drift=0.00314065 m (must be <5e-4)
+flac3d>
+flac3d>; ============================================================================
+flac3d>; 11 stages (cumulative residual targets from the small model)
+flac3d>; ============================================================================
+flac3d>[cs_stage(1,'cpl_resid_s01.txt')]
+   CS-read cpl_resid_s01.txt ndata=10109
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      71805 00:00:03:06       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 17:53:00
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      71955 00:00:03:05       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 17:56:06
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      72105 00:00:03:02       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 17:59:10
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      72255 00:00:03:02       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 18:02:13
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      72405 00:00:03:01       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 18:05:16
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      72555 00:00:03:01       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 18:08:18
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      72705 00:00:03:06       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 18:11:26
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      72855 00:00:03:02       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 18:14:30
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      73005 00:00:03:03       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 18:17:35
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      73155 00:00:03:03       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 18:20:40
+flac3d>model calm
+flac3d>;
+flac3d>;
+flac3d>model cycle 2400 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2400      75555 00:00:48:25      2400                        
+--- Global cycle limit of 2400 met.
+--- Cycling ended at: 2026-07-11 19:09:07
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+      800      76355 2.9455e-04 00:00:16:04       800            1.0000e-04             
+--- Global cycle limit of 800 met.
+--- Cycling ended at: 2026-07-11 19:25:11
+QA-CRACKS cs_s1 tension=2715 shear=36 total=2751 -> cs_s1_cracks.txt
+QA-WALL cs_s1 s1 wz_outter=2.74598MN (0.00196944,0.0201943,-2.74591)
+MID-WALL cs_s1 y[870,900] bf_couple_n=144142 sum_normal=60.7987MN abs_normal=99.2309MN
+MID-CONV cs_s1 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33972 radial_inward mean=0.0518835mm max=0.366144mm | fixed-corner n=4360 mean=0.0758143mm max=0.125019mm
+QA-SECTORS cs_s1 (30deg bins 0..360): 286 1071 226 0 11 9 1 0 0 0 445 702
+QA-PMAP -> cs_s1_pmap.txt
+QA-CWALL n=22530 -> cs_s1_cwall.txt
+CS-CHK stg1 cracks_t=2715 cracks_s=36 ball_dmax=0.0102251 gp_dmax=0.00100786
+0 (integer)
+flac3d>model save '../output/cs_01'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/output/cs_01.f3sav.
+flac3d>[cs_stage(2,'cpl_resid_s02.txt')]
+   CS-read cpl_resid_s02.txt ndata=10109
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      76505 00:00:03:00       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 19:31:21
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      76655 00:00:03:00       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 19:34:22
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      76805 00:00:03:03       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 19:37:27
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      76955 00:00:03:02       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 19:40:30
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      77105 00:00:03:01       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 19:43:33
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      77255 00:00:02:59       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 19:46:34
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      77405 00:00:03:04       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 19:49:39
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      77555 00:00:03:00       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 19:52:41
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      77705 00:00:03:05       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 19:55:48
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      77855 00:00:03:02       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 19:58:51
+flac3d>model calm
+flac3d>;
+flac3d>;
+flac3d>model cycle 2400 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2400      80255 00:00:48:41      2400                        
+--- Global cycle limit of 2400 met.
+--- Cycling ended at: 2026-07-11 20:47:33
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+      800      81055 6.8665e-04 00:00:16:21       800            1.0000e-04             
+--- Global cycle limit of 800 met.
+--- Cycling ended at: 2026-07-11 21:03:56
+QA-CRACKS cs_s2 tension=5707 shear=65 total=5772 -> cs_s2_cracks.txt
+QA-WALL cs_s2 s2 wz_outter=3.22015MN (-0.24189,-0.150366,-3.20753)
+MID-WALL cs_s2 y[870,900] bf_couple_n=144141 sum_normal=82.2564MN abs_normal=117.883MN
+MID-CONV cs_s2 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33974 radial_inward mean=-0.0145227mm max=1.03246mm | fixed-corner n=4359 mean=0.132338mm max=0.191225mm
+QA-SECTORS cs_s2 (30deg bins 0..360): 1314 1100 231 0 22 172 1530 119 2 0 460 822
+QA-PMAP -> cs_s2_pmap.txt
+QA-CWALL n=22530 -> cs_s2_cwall.txt
+CS-CHK stg2 cracks_t=5707 cracks_s=65 ball_dmax=0.045865 gp_dmax=0.00137096
+0 (integer)
+flac3d>[cs_stage(3,'cpl_resid_s03.txt')]
+   CS-read cpl_resid_s03.txt ndata=10109
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      81205 00:00:03:08       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 21:09:52
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      81355 00:00:03:04       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 21:12:58
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      81505 00:00:03:04       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 21:16:04
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      81655 00:00:03:02       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 21:19:07
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      81805 00:00:03:03       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 21:22:12
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      81955 00:00:03:02       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 21:25:16
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      82105 00:00:03:00       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 21:28:17
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      82255 00:00:03:03       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 21:31:22
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      82405 00:00:03:04       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 21:34:27
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      82555 00:00:03:05       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 21:37:34
+flac3d>model calm
+flac3d>;
+flac3d>;
+flac3d>model cycle 2400 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2400      84955 00:00:49:19      2400                        
+--- Global cycle limit of 2400 met.
+--- Cycling ended at: 2026-07-11 22:26:55
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+      800      85755 4.8690e-04 00:00:18:10       800            1.0000e-04             
+--- Global cycle limit of 800 met.
+--- Cycling ended at: 2026-07-11 22:45:07
+QA-CRACKS cs_s3 tension=10961 shear=109 total=11070 -> cs_s3_cracks.txt
+QA-WALL cs_s3 s3 wz_outter=2.52505MN (-0.0640401,0.329159,-2.50269)
+MID-WALL cs_s3 y[870,900] bf_couple_n=144139 sum_normal=65.8918MN abs_normal=130.665MN
+MID-CONV cs_s3 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33968 radial_inward mean=0.0864267mm max=11.3197mm | fixed-corner n=4362 mean=0.163343mm max=0.218083mm
+QA-SECTORS cs_s3 (30deg bins 0..360): 1605 3813 2069 283 48 173 1579 127 2 0 460 911
+QA-PMAP -> cs_s3_pmap.txt
+QA-CWALL n=22533 -> cs_s3_cwall.txt
+CS-CHK stg3 cracks_t=10961 cracks_s=109 ball_dmax=0.0691843 gp_dmax=0.000938485
+0 (integer)
+flac3d>[cs_stage(4,'cpl_resid_s04.txt')]
+   CS-read cpl_resid_s04.txt ndata=10109
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      85905 00:00:03:25       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 22:51:15
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      86055 00:00:03:23       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 22:54:40
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      86205 00:00:03:24       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 22:58:06
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      86355 00:00:03:22       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 23:01:29
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      86505 00:00:03:22       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 23:04:53
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      86655 00:00:03:23       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 23:08:18
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      86805 00:00:03:22       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 23:11:42
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      86955 00:00:03:23       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 23:15:07
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      87105 00:00:03:22       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 23:18:30
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      87255 00:00:03:22       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-11 23:21:54
+flac3d>model calm
+flac3d>;
+flac3d>;
+flac3d>model cycle 2400 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2400      89655 00:00:53:51      2400                        
+--- Global cycle limit of 2400 met.
+--- Cycling ended at: 2026-07-12 00:15:46
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+      788      90443 9.9195e-05 00:00:17:27       800            1.0000e-04             
+--- Limit ratio-average of 1.0000e-04 met in process(es): mech Zone Main (8.8410e-05),mech Struct Main (8.8410e-05),mech Ball (9.9195e-05),mech Clump (0.0000e+00).
+--- Cycling ended at: 2026-07-12 00:33:14
+QA-CRACKS cs_s4 tension=17649 shear=189 total=17838 -> cs_s4_cracks.txt
+QA-WALL cs_s4 s4 wz_outter=2.99648MN (0.119005,0.00397872,-2.99412)
+MID-WALL cs_s4 y[870,900] bf_couple_n=144140 sum_normal=70.0768MN abs_normal=144.143MN
+MID-CONV cs_s4 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33968 radial_inward mean=0.0475759mm max=11.4777mm | fixed-corner n=4363 mean=0.246403mm max=0.28974mm
+QA-SECTORS cs_s4 (30deg bins 0..360): 2816 3865 2112 346 1799 570 2981 909 86 0 1431 923
+QA-PMAP -> cs_s4_pmap.txt
+QA-CWALL n=22533 -> cs_s4_cwall.txt
+CS-CHK stg4 cracks_t=17649 cracks_s=189 ball_dmax=0.073138 gp_dmax=0.00149575
+0 (integer)
+flac3d>[cs_stage(5,'cpl_resid_s05.txt')]
+   CS-read cpl_resid_s05.txt ndata=10109
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      90593 00:00:03:22       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 00:39:20
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      90743 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 00:42:41
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      90893 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 00:46:03
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      91043 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 00:49:25
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      91193 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 00:52:47
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      91343 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 00:56:09
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      91493 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 00:59:31
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      91643 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 01:02:53
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      91793 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 01:06:15
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      91943 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 01:09:37
+flac3d>model calm
+flac3d>;
+flac3d>;
+flac3d>model cycle 2400 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2400      94343 00:00:53:14      2400                        
+--- Global cycle limit of 2400 met.
+--- Cycling ended at: 2026-07-12 02:02:53
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+      800      95143 1.1121e-04 00:00:17:40       800            1.0000e-04             
+--- Global cycle limit of 800 met.
+--- Cycling ended at: 2026-07-12 02:20:34
+QA-CRACKS cs_s5 tension=20193 shear=198 total=20391 -> cs_s5_cracks.txt
+QA-WALL cs_s5 s5 wz_outter=2.71216MN (-0.0309286,0.0878907,-2.71056)
+MID-WALL cs_s5 y[870,900] bf_couple_n=144140 sum_normal=76.9972MN abs_normal=161.769MN
+MID-CONV cs_s5 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33969 radial_inward mean=0.0693653mm max=11.627mm | fixed-corner n=4363 mean=0.23212mm max=0.303057mm
+QA-SECTORS cs_s5 (30deg bins 0..360): 3645 4257 2112 353 1809 572 3208 1716 86 0 1446 1187
+QA-PMAP -> cs_s5_pmap.txt
+QA-CWALL n=22534 -> cs_s5_cwall.txt
+CS-CHK stg5 cracks_t=20193 cracks_s=198 ball_dmax=0.0733999 gp_dmax=0.00130041
+0 (integer)
+flac3d>[cs_stage(6,'cpl_resid_s06.txt')]
+   CS-read cpl_resid_s06.txt ndata=10109
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      95293 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 02:26:37
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      95443 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 02:29:59
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      95593 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 02:33:21
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      95743 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 02:36:43
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      95893 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 02:40:05
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      96043 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 02:43:27
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      96193 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 02:46:49
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      96343 00:00:03:23       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 02:50:14
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      96493 00:00:03:25       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 02:53:41
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      96643 00:00:03:23       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 02:57:05
+flac3d>model calm
+flac3d>;
+flac3d>;
+flac3d>model cycle 2400 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2400      99043 00:00:54:21      2400                        
+--- Global cycle limit of 2400 met.
+--- Cycling ended at: 2026-07-12 03:51:27
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+      800      99843 4.5061e-04 00:00:17:56       800            1.0000e-04             
+--- Global cycle limit of 800 met.
+--- Cycling ended at: 2026-07-12 04:09:25
+QA-CRACKS cs_s6 tension=34713 shear=248 total=34961 -> cs_s6_cracks.txt
+QA-WALL cs_s6 s6 wz_outter=2.60885MN (-0.244957,0.831788,-2.46054)
+MID-WALL cs_s6 y[870,900] bf_couple_n=144140 sum_normal=116.558MN abs_normal=292.211MN
+MID-CONV cs_s6 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33963 radial_inward mean=0.156283mm max=11.7645mm | fixed-corner n=4373 mean=0.447748mm max=0.60255mm
+QA-SECTORS cs_s6 (30deg bins 0..360): 9191 4978 2780 941 2084 945 4407 2759 128 10 1714 5024
+QA-PMAP -> cs_s6_pmap.txt
+QA-CWALL n=22538 -> cs_s6_cwall.txt
+CS-CHK stg6 cracks_t=34713 cracks_s=248 ball_dmax=0.0736409 gp_dmax=0.00289933
+0 (integer)
+flac3d>model save '../output/cs_06'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/output/cs_06.f3sav.
+flac3d>[cs_stage(7,'cpl_resid_s07.txt')]
+   CS-read cpl_resid_s07.txt ndata=10109
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150      99993 00:00:03:22       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 04:15:47
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     100143 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 04:19:09
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     100293 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 04:22:30
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     100443 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 04:25:51
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     100593 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 04:29:12
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     100743 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 04:32:34
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     100893 00:00:03:18       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 04:35:54
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     101043 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 04:39:15
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     101193 00:00:03:22       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 04:42:38
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     101343 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 04:46:00
+flac3d>model calm
+flac3d>;
+flac3d>;
+flac3d>model cycle 2400 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2400     103743 00:00:53:02      2400                        
+--- Global cycle limit of 2400 met.
+--- Cycling ended at: 2026-07-12 05:39:04
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+        1     103744 7.1326e-05 00:00:00:03       800            1.0000e-04             
+--- Limit ratio-average of 1.0000e-04 met in process(es): mech Zone Main (2.6398e-05),mech Struct Main (2.6398e-05),mech Ball (7.1326e-05),mech Clump (0.0000e+00).
+--- Cycling ended at: 2026-07-12 05:39:09
+QA-CRACKS cs_s7 tension=36222 shear=248 total=36470 -> cs_s7_cracks.txt
+QA-WALL cs_s7 s7 wz_outter=2.76395MN (0.255108,0.33163,-2.7321)
+MID-WALL cs_s7 y[870,900] bf_couple_n=144141 sum_normal=115.868MN abs_normal=293.183MN
+MID-CONV cs_s7 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33963 radial_inward mean=0.155827mm max=11.8487mm | fixed-corner n=4372 mean=0.431949mm max=0.599326mm
+QA-SECTORS cs_s7 (30deg bins 0..360): 9760 5064 2797 954 2121 956 4414 2761 128 10 1733 5772
+QA-PMAP -> cs_s7_pmap.txt
+QA-CWALL n=22539 -> cs_s7_cwall.txt
+CS-CHK stg7 cracks_t=36222 cracks_s=248 ball_dmax=0.0737887 gp_dmax=0.00292484
+0 (integer)
+flac3d>[cs_stage(8,'cpl_resid_s08.txt')]
+   CS-read cpl_resid_s08.txt ndata=10109
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     103894 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 05:45:10
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     104044 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 05:48:30
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     104194 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 05:51:51
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     104344 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 05:55:11
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     104494 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 05:58:32
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     104644 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 06:01:53
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     104794 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 06:05:15
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     104944 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 06:08:36
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     105094 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 06:11:57
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     105244 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 06:15:17
+flac3d>model calm
+flac3d>;
+flac3d>;
+flac3d>model cycle 2400 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2400     107644 00:00:52:52      2400                        
+--- Global cycle limit of 2400 met.
+--- Cycling ended at: 2026-07-12 07:08:11
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+        1     107645 8.5841e-05 00:00:00:03       800            1.0000e-04             
+--- Limit ratio-average of 1.0000e-04 met in process(es): mech Zone Main (2.1595e-05),mech Struct Main (2.1595e-05),mech Ball (8.5841e-05),mech Clump (0.0000e+00).
+--- Cycling ended at: 2026-07-12 07:08:16
+QA-CRACKS cs_s8 tension=36775 shear=248 total=37023 -> cs_s8_cracks.txt
+QA-WALL cs_s8 s8 wz_outter=2.82839MN (-0.161415,-0.0746767,-2.82279)
+MID-WALL cs_s8 y[870,900] bf_couple_n=144141 sum_normal=117.46MN abs_normal=298.752MN
+MID-CONV cs_s8 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33962 radial_inward mean=0.16034mm max=11.9202mm | fixed-corner n=4373 mean=0.433883mm max=0.601039mm
+QA-SECTORS cs_s8 (30deg bins 0..360): 10066 5147 2797 962 2123 965 4421 2763 128 10 1745 5896
+QA-PMAP -> cs_s8_pmap.txt
+QA-CWALL n=22539 -> cs_s8_cwall.txt
+CS-CHK stg8 cracks_t=36775 cracks_s=248 ball_dmax=0.0739141 gp_dmax=0.00290594
+0 (integer)
+flac3d>[cs_stage(9,'cpl_resid_s09.txt')]
+   CS-read cpl_resid_s09.txt ndata=10109
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     107795 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 07:14:18
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     107945 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 07:17:40
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     108095 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 07:21:02
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     108245 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 07:24:24
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     108395 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 07:27:45
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     108545 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 07:31:07
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     108695 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 07:34:29
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     108845 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 07:37:49
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     108995 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 07:41:11
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     109145 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 07:44:31
+flac3d>model calm
+flac3d>;
+flac3d>;
+flac3d>model cycle 2400 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2400     111545 00:00:53:03      2400                        
+--- Global cycle limit of 2400 met.
+--- Cycling ended at: 2026-07-12 08:37:35
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+        1     111546 6.2205e-05 00:00:00:03       800            1.0000e-04             
+--- Limit ratio-average of 1.0000e-04 met in process(es): mech Zone Main (1.1475e-05),mech Struct Main (1.1475e-05),mech Ball (6.2205e-05),mech Clump (0.0000e+00).
+--- Cycling ended at: 2026-07-12 08:37:39
+QA-CRACKS cs_s9 tension=37254 shear=249 total=37503 -> cs_s9_cracks.txt
+QA-WALL cs_s9 s9 wz_outter=2.83612MN (-0.0856161,0.0121343,-2.83481)
+MID-WALL cs_s9 y[870,900] bf_couple_n=144141 sum_normal=117.854MN abs_normal=299.891MN
+MID-CONV cs_s9 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33962 radial_inward mean=0.16297mm max=11.9917mm | fixed-corner n=4373 mean=0.432727mm max=0.601432mm
+QA-SECTORS cs_s9 (30deg bins 0..360): 10336 5243 2809 980 2123 965 4421 2763 128 10 1755 5970
+QA-PMAP -> cs_s9_pmap.txt
+QA-CWALL n=22539 -> cs_s9_cwall.txt
+CS-CHK stg9 cracks_t=37254 cracks_s=249 ball_dmax=0.0740396 gp_dmax=0.00290968
+0 (integer)
+flac3d>[cs_stage(10,'cpl_resid_s10.txt')]
+   CS-read cpl_resid_s10.txt ndata=10109
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     111696 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 08:43:40
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     111846 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 08:47:01
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     111996 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 08:50:22
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     112146 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 08:53:44
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     112296 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 08:57:05
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     112446 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 09:00:25
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     112596 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 09:03:48
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     112746 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 09:07:09
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     112896 00:00:03:17       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 09:10:28
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     113046 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 09:13:49
+flac3d>model calm
+flac3d>;
+flac3d>;
+flac3d>model cycle 2400 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2400     115446 00:00:53:00      2400                        
+--- Global cycle limit of 2400 met.
+--- Cycling ended at: 2026-07-12 10:06:51
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+        1     115447 3.6293e-05 00:00:00:03       800            1.0000e-04             
+--- Limit ratio-average of 1.0000e-04 met in process(es): mech Zone Main (8.2834e-06),mech Struct Main (8.2834e-06),mech Ball (3.6293e-05),mech Clump (0.0000e+00).
+--- Cycling ended at: 2026-07-12 10:06:55
+QA-CRACKS cs_s10 tension=37643 shear=249 total=37892 -> cs_s10_cracks.txt
+QA-WALL cs_s10 s10 wz_outter=2.94986MN (0.0328861,0.00442702,-2.94967)
+MID-WALL cs_s10 y[870,900] bf_couple_n=144141 sum_normal=118.216MN abs_normal=299.895MN
+MID-CONV cs_s10 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33962 radial_inward mean=0.162481mm max=12.0632mm | fixed-corner n=4373 mean=0.435244mm max=0.605mm
+QA-SECTORS cs_s10 (30deg bins 0..360): 10558 5381 2809 980 2125 973 4426 2766 128 10 1758 5978
+QA-PMAP -> cs_s10_pmap.txt
+QA-CWALL n=22539 -> cs_s10_cwall.txt
+CS-CHK stg10 cracks_t=37643 cracks_s=249 ball_dmax=0.0741652 gp_dmax=0.0029143
+0 (integer)
+flac3d>[cs_stage(11,'cpl_resid_s11.txt')]
+   CS-read cpl_resid_s11.txt ndata=10109
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     115597 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 10:12:57
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     115747 00:00:03:18       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 10:16:17
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     115897 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 10:19:39
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     116047 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 10:23:02
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     116197 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 10:26:23
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     116347 00:00:03:19       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 10:29:44
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     116497 00:00:03:21       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 10:33:06
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     116647 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 10:36:28
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     116797 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 10:39:49
+flac3d>model calm
+flac3d>model cycle [NCYC]
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+      150     116947 00:00:03:20       150                        
+--- Global cycle limit of 150 met.
+--- Cycling ended at: 2026-07-12 10:43:10
+flac3d>model calm
+flac3d>;
+flac3d>;
+flac3d>model cycle 2400 calm 300
+    Cycle      Total       Clock
+--------- ---------- ----------- 
+     2400     119347 00:00:52:53      2400                        
+--- Global cycle limit of 2400 met.
+--- Cycling ended at: 2026-07-12 11:36:05
+flac3d>model solve ratio-average 1e-4 or cycles 800
+    Cycle      Total Ratio-aver       Clock
+--------- ---------- ---------- ----------- 
+        1     119348 5.0028e-05 00:00:00:04       800            1.0000e-04             
+--- Limit ratio-average of 1.0000e-04 met in process(es): mech Zone Main (9.9012e-06),mech Struct Main (9.9012e-06),mech Ball (5.0028e-05),mech Clump (0.0000e+00).
+--- Cycling ended at: 2026-07-12 11:36:10
+QA-CRACKS cs_s11 tension=37731 shear=249 total=37980 -> cs_s11_cracks.txt
+QA-WALL cs_s11 s11 wz_outter=2.82548MN (-0.0396495,0.03561,-2.82498)
+MID-WALL cs_s11 y[870,900] bf_couple_n=144141 sum_normal=118.462MN abs_normal=300.62MN
+MID-CONV cs_s11 INNERWALL(r1.35-2) BLUELINE(sidewall+crown) n=33962 radial_inward mean=0.165285mm max=12.1348mm | fixed-corner n=4373 mean=0.431634mm max=0.601952mm
+QA-SECTORS cs_s11 (30deg bins 0..360): 10567 5439 2809 980 2125 973 4426 2766 128 10 1761 5996
+QA-PMAP -> cs_s11_pmap.txt
+QA-CWALL n=22539 -> cs_s11_cwall.txt
+CS-CHK stg11 cracks_t=37731 cracks_s=249 ball_dmax=0.0742909 gp_dmax=0.00291202
+0 (integer)
+flac3d>model save '../output/cs_11'
+--- Model saved to file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/output/cs_11.f3sav.
+flac3d>[io.out('CS-DONE 11-stage coupled lining response complete')]
+CS-DONE 11-stage coupled lining response complete
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週日 七月 12 11:37:08 2026
+**********************************************

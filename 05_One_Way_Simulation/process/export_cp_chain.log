@@ -159,3 +159,164 @@ flac3d>program log off
 **********************************************
 * Logging ended at 週五 七月 10 13:19:12 2026
 **********************************************
+**********************************************
+* Logging started at 週日 七月 12 11:42:30 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>
+flac3d>model restore '../output/cs_01'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 七月 11 19:25:50 2026
+Total Cycles: 76355  Super Cycles: 76355
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('CPC restored cs_01 balls='+string(ball.num))]
+CPC restored cs_01 balls=456016
+flac3d>[global CUR = '01']
+flac3d>call 'contact_dump_body.f3dat'
+flac3d>; contact_dump_body.f3dat -- coupled-model ball-ball contact dump (07-10, lining INTERNAL forces).
+flac3d>;   Call AFTER restore + global CUR set. Template = dump_cracknormals.f3dat (proven intrinsics:
+flac3d>;   contact.list('ball-ball'), contact.model, contact.prop pb_state, contact.pos/normal,
+flac3d>;   contact.force.global).
+flac3d>;   Output cp_cforce_s<CUR>.txt : x y z fx fy fz nx ny nz pbstate
+flac3d>;   pbstate: 3=bonded (carries internal force), 1/2=broken (tension/shear).
+flac3d>fish define dump_cf
+   Def>    local f = 'cp_cforce_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z fx fy fz nx ny nz pbstate'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local c contact.list('ball-ball')
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            local p = contact.pos(c)
+   Def>            local fg = contact.force.global(c)
+   Def>            local nm = contact.normal(c)
+   Def>            local ps = contact.prop(c,'pb_state')
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(fg))+' '+string(comp.y(fg))+' '+string(comp.z(fg))+' '+string(comp.x(nm))+' '+string(comp.y(nm))+' '+string(comp.z(nm))+' '+string(ps)
+   Def>            st = file.write(a,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-CF '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_cf]
+DUMP-CF cp_cforce_s01.txt n=2259423
+0 (integer)
+flac3d>[io.out('CF-DONE s'+CUR)]
+CF-DONE s01
+0 (integer)
+flac3d>
+flac3d>model restore '../output/cs_06'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 七月 12 04:10:01 2026
+Total Cycles: 99843  Super Cycles: 99843
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '06']
+flac3d>call 'contact_dump_body.f3dat'
+flac3d>; contact_dump_body.f3dat -- coupled-model ball-ball contact dump (07-10, lining INTERNAL forces).
+flac3d>;   Call AFTER restore + global CUR set. Template = dump_cracknormals.f3dat (proven intrinsics:
+flac3d>;   contact.list('ball-ball'), contact.model, contact.prop pb_state, contact.pos/normal,
+flac3d>;   contact.force.global).
+flac3d>;   Output cp_cforce_s<CUR>.txt : x y z fx fy fz nx ny nz pbstate
+flac3d>;   pbstate: 3=bonded (carries internal force), 1/2=broken (tension/shear).
+flac3d>fish define dump_cf
+   Def>    local f = 'cp_cforce_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z fx fy fz nx ny nz pbstate'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local c contact.list('ball-ball')
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            local p = contact.pos(c)
+   Def>            local fg = contact.force.global(c)
+   Def>            local nm = contact.normal(c)
+   Def>            local ps = contact.prop(c,'pb_state')
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(fg))+' '+string(comp.y(fg))+' '+string(comp.z(fg))+' '+string(comp.x(nm))+' '+string(comp.y(nm))+' '+string(comp.z(nm))+' '+string(ps)
+   Def>            st = file.write(a,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-CF '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_cf]
+DUMP-CF cp_cforce_s06.txt n=2238325
+0 (integer)
+flac3d>[io.out('CF-DONE s'+CUR)]
+CF-DONE s06
+0 (integer)
+flac3d>
+flac3d>model restore '../output/cs_11'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 七月 12 11:36:49 2026
+Total Cycles: 119348  Super Cycles: 119348
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '11']
+flac3d>call 'contact_dump_body.f3dat'
+flac3d>; contact_dump_body.f3dat -- coupled-model ball-ball contact dump (07-10, lining INTERNAL forces).
+flac3d>;   Call AFTER restore + global CUR set. Template = dump_cracknormals.f3dat (proven intrinsics:
+flac3d>;   contact.list('ball-ball'), contact.model, contact.prop pb_state, contact.pos/normal,
+flac3d>;   contact.force.global).
+flac3d>;   Output cp_cforce_s<CUR>.txt : x y z fx fy fz nx ny nz pbstate
+flac3d>;   pbstate: 3=bonded (carries internal force), 1/2=broken (tension/shear).
+flac3d>fish define dump_cf
+   Def>    local f = 'cp_cforce_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z fx fy fz nx ny nz pbstate'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local c contact.list('ball-ball')
+   Def>        if contact.model(c) = 'linearpbond' then
+   Def>            local p = contact.pos(c)
+   Def>            local fg = contact.force.global(c)
+   Def>            local nm = contact.normal(c)
+   Def>            local ps = contact.prop(c,'pb_state')
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(fg))+' '+string(comp.y(fg))+' '+string(comp.z(fg))+' '+string(comp.x(nm))+' '+string(comp.y(nm))+' '+string(comp.z(nm))+' '+string(ps)
+   Def>            st = file.write(a,1)
+   Def>            n = n + 1
+   Def>        end_if
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-CF '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_cf]
+DUMP-CF cp_cforce_s11.txt n=2236430
+0 (integer)
+flac3d>[io.out('CF-DONE s'+CUR)]
+CF-DONE s11
+0 (integer)
+flac3d>
+flac3d>[io.out('CP-CHAIN-DONE')]
+CP-CHAIN-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週日 七月 12 11:46:32 2026
+**********************************************

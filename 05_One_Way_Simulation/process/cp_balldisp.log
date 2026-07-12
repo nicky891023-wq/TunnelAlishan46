@@ -193,3 +193,122 @@ flac3d>program log off
 **********************************************
 * Logging ended at 週五 七月 10 13:56:44 2026
 **********************************************
+**********************************************
+* Logging started at 週日 七月 12 11:47:56 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>model restore '../output/cs_01'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 七月 11 19:25:50 2026
+Total Cycles: 76355  Super Cycles: 76355
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '01']
+flac3d>call 'balldisp_body.f3dat'
+flac3d>; balldisp_body.f3dat -- call AFTER each restore (restore wipes FISH). Global CUR set first.
+flac3d>fish define dump_bd
+   Def>    local f = 'cp_balldisp_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id x y z dx dy dz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local d = ball.disp(b)
+   Def>        a(1) = string(ball.id(b))+' '+string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-BD '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_bd]
+DUMP-BD cp_balldisp_s01.txt n=456016
+0 (integer)
+flac3d>model restore '../output/cs_06'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 七月 12 04:10:01 2026
+Total Cycles: 99843  Super Cycles: 99843
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '06']
+flac3d>call 'balldisp_body.f3dat'
+flac3d>; balldisp_body.f3dat -- call AFTER each restore (restore wipes FISH). Global CUR set first.
+flac3d>fish define dump_bd
+   Def>    local f = 'cp_balldisp_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id x y z dx dy dz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local d = ball.disp(b)
+   Def>        a(1) = string(ball.id(b))+' '+string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-BD '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_bd]
+DUMP-BD cp_balldisp_s06.txt n=456016
+0 (integer)
+flac3d>model restore '../output/cs_11'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 七月 12 11:36:49 2026
+Total Cycles: 119348  Super Cycles: 119348
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[global CUR = '11']
+flac3d>call 'balldisp_body.f3dat'
+flac3d>; balldisp_body.f3dat -- call AFTER each restore (restore wipes FISH). Global CUR set first.
+flac3d>fish define dump_bd
+   Def>    local f = 'cp_balldisp_s'+CUR+'.txt'
+   Def>    local st = file.open(f,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'id x y z dx dy dz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local b ball.list
+   Def>        local p = ball.pos(b)
+   Def>        local d = ball.disp(b)
+   Def>        a(1) = string(ball.id(b))+' '+string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(d))+' '+string(comp.y(d))+' '+string(comp.z(d))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('DUMP-BD '+f+' n='+string(n))
+   Def>end
+flac3d>[dump_bd]
+DUMP-BD cp_balldisp_s11.txt n=456016
+0 (integer)
+flac3d>[io.out('BD-CHAIN-DONE')]
+BD-CHAIN-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週日 七月 12 11:50:07 2026
+**********************************************

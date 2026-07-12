@@ -1,0 +1,181 @@
+**********************************************
+* Logging started at 週五 七月 10 23:17:40 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>
+flac3d>fish define sweep_T(tag)
+   Def>    local tlist = array.create(5)
+   Def>    tlist(1) = 0.80
+   Def>    tlist(2) = 0.85
+   Def>    tlist(3) = 0.90
+   Def>    tlist(4) = 0.95
+   Def>    tlist(5) = 1.00
+   Def>    local k = 0
+   Def>    loop k (1,5)
+   Def>        local tt = tlist(k)
+   Def>        local na = 0
+   Def>        local nr = 0
+   Def>        loop foreach local z zone.list
+   Def>            if zone.model(z) # 'null' then
+   Def>                local s1 = -zone.stress.prin.x(z)
+   Def>                local s3 = -zone.stress.prin.z(z)
+   Def>                local pore = zone.pp(z)
+   Def>                local pmean = (s1 + s3)/2.0 - pore
+   Def>                local q = (s1 - s3)/2.0
+   Def>                local c = zone.prop(z,'cohesion')
+   Def>                local phi = zone.prop(z,'friction')
+   Def>                local q_th = tt*(c*math.cos(phi*math.degrad) + pmean*math.sin(phi*math.degrad))
+   Def>                nr = nr + 1
+   Def>                if q >= q_th then
+   Def>                    na = na + 1
+   Def>                end_if
+   Def>            end_if
+   Def>        end_loop
+   Def>        io.out('T1SWEEP '+tag+' T='+string(tt)+' active='+string(na)+' of '+string(nr))
+   Def>    end_loop
+   Def>end
+flac3d>
+flac3d>model restore '../../04_InitialBalance/output/Large_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 12:48:52 2026
+Total Cycles: 6958  Super Cycles: 6958
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('T1SWEEP restored Large_Initial')]
+T1SWEEP restored Large_Initial
+0 (integer)
+flac3d>[sweep_T('LARGE')]
+*** Fish: Arguments provided but not used.
+    From line 44 of source C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/process/diag_T1_sweep.f3dat.
+    While processing line 43 of file C:/Users/Wade/Desktop/Tunnel_TX/05_One_Way_Simulation/process/diag_T1_sweep.f3dat.
+**********************************************
+* Logging started at 週五 七月 10 23:22:35 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>
+flac3d>
+flac3d>model restore '../../04_InitialBalance/output/Large_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 12:48:52 2026
+Total Cycles: 6958  Super Cycles: 6958
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('T1SWEEP restored Large_Initial')]
+T1SWEEP restored Large_Initial
+0 (integer)
+flac3d>[global swtag = 'LARGE']
+flac3d>call 'sweep_body.f3dat'
+flac3d>fish define sweep_T
+   Def>    local tlist = array.create(5)
+   Def>    tlist(1) = 0.80
+   Def>    tlist(2) = 0.85
+   Def>    tlist(3) = 0.90
+   Def>    tlist(4) = 0.95
+   Def>    tlist(5) = 1.00
+   Def>    local k = 0
+   Def>    loop k (1,5)
+   Def>        local tt = tlist(k)
+   Def>        local na = 0
+   Def>        local nr = 0
+   Def>        loop foreach local z zone.list
+   Def>            if zone.model(z) # 'null' then
+   Def>                local s1 = -zone.stress.prin.x(z)
+   Def>                local s3 = -zone.stress.prin.z(z)
+   Def>                local pore = zone.pp(z)
+   Def>                local pmean = (s1 + s3)/2.0 - pore
+   Def>                local q = (s1 - s3)/2.0
+   Def>                local c = zone.prop(z,'cohesion')
+   Def>                local phi = zone.prop(z,'friction')
+   Def>                local q_th = tt*(c*math.cos(phi*math.degrad) + pmean*math.sin(phi*math.degrad))
+   Def>                nr = nr + 1
+   Def>                if q >= q_th then
+   Def>                    na = na + 1
+   Def>                end_if
+   Def>            end_if
+   Def>        end_loop
+   Def>        io.out('T1SWEEP '+swtag+' T='+string(tt)+' active='+string(na)+' of '+string(nr))
+   Def>    end_loop
+   Def>end
+flac3d>[sweep_T]
+T1SWEEP LARGE T=0.8 active=117323 of 511988
+T1SWEEP LARGE T=0.85 active=91358 of 511988
+T1SWEEP LARGE T=0.9 active=65615 of 511988
+T1SWEEP LARGE T=0.95 active=42388 of 511988
+T1SWEEP LARGE T=1 active=6371 of 511988
+0 (integer)
+flac3d>
+flac3d>model restore '../../04_InitialBalance/output/Small_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 15:44:02 2026
+Total Cycles: 23278  Super Cycles: 23278
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('T1SWEEP restored Small_Initial')]
+T1SWEEP restored Small_Initial
+0 (integer)
+flac3d>[global swtag = 'SMALL']
+flac3d>call 'sweep_body.f3dat'
+flac3d>fish define sweep_T
+   Def>    local tlist = array.create(5)
+   Def>    tlist(1) = 0.80
+   Def>    tlist(2) = 0.85
+   Def>    tlist(3) = 0.90
+   Def>    tlist(4) = 0.95
+   Def>    tlist(5) = 1.00
+   Def>    local k = 0
+   Def>    loop k (1,5)
+   Def>        local tt = tlist(k)
+   Def>        local na = 0
+   Def>        local nr = 0
+   Def>        loop foreach local z zone.list
+   Def>            if zone.model(z) # 'null' then
+   Def>                local s1 = -zone.stress.prin.x(z)
+   Def>                local s3 = -zone.stress.prin.z(z)
+   Def>                local pore = zone.pp(z)
+   Def>                local pmean = (s1 + s3)/2.0 - pore
+   Def>                local q = (s1 - s3)/2.0
+   Def>                local c = zone.prop(z,'cohesion')
+   Def>                local phi = zone.prop(z,'friction')
+   Def>                local q_th = tt*(c*math.cos(phi*math.degrad) + pmean*math.sin(phi*math.degrad))
+   Def>                nr = nr + 1
+   Def>                if q >= q_th then
+   Def>                    na = na + 1
+   Def>                end_if
+   Def>            end_if
+   Def>        end_loop
+   Def>        io.out('T1SWEEP '+swtag+' T='+string(tt)+' active='+string(na)+' of '+string(nr))
+   Def>    end_loop
+   Def>end
+flac3d>[sweep_T]
+T1SWEEP SMALL T=0.8 active=422854 of 1098455
+T1SWEEP SMALL T=0.85 active=366191 of 1098455
+T1SWEEP SMALL T=0.9 active=302108 of 1098455
+T1SWEEP SMALL T=0.95 active=224854 of 1098455
+T1SWEEP SMALL T=1 active=1 of 1098455
+0 (integer)
+flac3d>
+flac3d>[io.out('T1SWEEP-DONE')]
+T1SWEEP-DONE
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週五 七月 10 23:23:08 2026
+**********************************************

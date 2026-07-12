@@ -100,16 +100,21 @@ for t, lw, z in ((0, 2.4, 5), (1, 3.0, 6), (2, 3.0, 6)):
                  solid_capstyle="round")
 for ylo, yhi in ((862, 865.5), (904.5, 908)):
     axA.axhspan(ylo, yhi, color="0.75", alpha=0.18, zorder=1, hatch="//")
-# anchored feet band (z <= 1745.30, unbreakable by design; grade makes it taper north)
+# anchored feet band (v6 grade-following: z <= rim(y)+0.41, rim = 1743.97+0.0372(y-860));
+# tracks the grade, so it maps to a constant-width strip on the developed lining
 yb = np.linspace(862, 908, 120)
-s_anc = np.clip(tf.QUART + (tf.z0_of(yb) - 1745.30), None, tf.SFOOT)
+z_top = 1743.97 + 0.0372 * (yb - 860) + 0.41
+s_anc = np.clip(tf.QUART + (tf.z0_of(yb) - z_top), None, tf.SFOOT)
 for sgn in (1, -1):
     axA.fill_betweenx(yb, sgn * s_anc, sgn * tf.SFOOT, color="0.55", alpha=0.25,
                       hatch="xx", lw=0, zorder=2)
-axA.text(5.62, 871.5, "anchored\n(unbreakable)", fontsize=14, color="0.25",
-         rotation=90, va="center", style="italic")
-axA.text(-6.6, 906.2, "end-affected", fontsize=15, color="0.35", style="italic")
-axA.text(-6.6, 863.2, "end-affected", fontsize=15, color="0.35", style="italic")
+axA.text(6.47, 885.0, "anchored (unbreakable)", fontsize=13, color="0.25",
+         rotation=90, va="center", ha="center", style="italic",
+         bbox=dict(fc="white", alpha=0.7, lw=0, pad=1.2))
+axA.text(-6.6, 906.2, "end-affected", fontsize=15, color="0.35", style="italic",
+         bbox=dict(fc="white", alpha=0.7, lw=0, pad=1.2))
+axA.text(2.3, 863.2, "end-affected", fontsize=15, color="0.35", style="italic",
+         bbox=dict(fc="white", alpha=0.7, lw=0, pad=1.2))
 axA.axvline(0, color="0.4", ls="--", lw=1.2)
 axA.axvline(tf.QUART, color="0.55", ls=":", lw=1.1)
 axA.axvline(-tf.QUART, color="0.55", ls=":", lw=1.1)
@@ -167,6 +172,11 @@ axC.set_xticks(ks)
 axC.set_xlabel("Stage"); axC.set_ylabel("Total crack trace length (m)")
 axC.set_title("(c) Crack length by class vs stage", loc="left", fontsize=23)
 axC.legend(fontsize=16, loc="center left")
+axC.text(0.985, 0.02, "traces re-classified independently per stage;\n"
+         "class totals may fluctuate slightly as traces grow",
+         transform=axC.transAxes, ha="right", va="bottom", fontsize=13,
+         color="0.4", style="italic",
+         bbox=dict(fc="white", alpha=0.8, lw=0, pad=1.5))
 fig.suptitle("Lining crack development and classification (water-cycle-induced, s1 baseline "
              "excluded; 2 m driven-end bands trimmed)", y=1.01)
 fig.savefig(OUT / "圖5-19_襯砌裂縫發展與分類.png", dpi=180, bbox_inches="tight")

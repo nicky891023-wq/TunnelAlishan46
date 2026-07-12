@@ -25,6 +25,9 @@ OUT = TS.RESULT
 TARGET = np.array([1298.0, 893.0, 1747.0])
 
 def band_hist():
+    # seam-closed series (07-11): s1 = NEW T1=1.0 rerun; s2-11 = original run shifted by
+    # (new s1 end - old s1 end) so stage INCREMENTS are exactly the original ones and the
+    # old-s1 conditioning transient is excluded from the reported window.
     us = []
     for k in range(1, 12):
         d = np.loadtxt(HERE / f"lg_disp_s{k:02d}.txt", skiprows=1, ndmin=2)
@@ -33,7 +36,12 @@ def band_hist():
             pt = d[i, :3]
         i = np.argmin(np.linalg.norm(d[:, :3] - pt, axis=1))
         us.append(d[i, 3:6])
-    return pt, np.array(us)
+    us = np.array(us)
+    dold = np.loadtxt(HERE / "_backup_T08run" / "lg_disp_s01.txt", skiprows=1, ndmin=2)
+    j = np.argmin(np.linalg.norm(dold[:, :3] - pt, axis=1))
+    shift = us[0] - dold[j, 3:6]
+    us[1:] += shift
+    return pt, us
 
 pt, U = band_hist()
 fig, (a1, a2) = plt.subplots(1, 2, figsize=(24, 9))
@@ -75,7 +83,9 @@ for s in SS:
 COLS3 = {"x = 1300 m (anomaly curve)": "#c0392b", "x = 1000 m (mid-slope)": "0.35",
          "x = 700 m (west section)": "#7fb3d5"}
 for nm, i in IDX.items():
-    wx = [-CU[s][i, 0] * 1000 for s in SS]
+    # re-zeroed at s1 end (old-s1 conditioning excluded); new-s1 increment ~0 by design
+    base = CU[1][i, 0]
+    wx = [0.0] + [-(CU[s][i, 0] - base) * 1000 for s in SS if s != 1]
     a2.plot(SS, wx, "-o", color=COLS3[nm], lw=3.2, ms=10, label=nm)
 a2.axvspan(5.5, 6.5, color="#c0392b", alpha=0.10)
 a2.set_xticks(SS)

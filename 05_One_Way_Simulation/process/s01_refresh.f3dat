@@ -1,0 +1,26 @@
+; s01_refresh.f3dat -- re-export s1 fields+rays from the NEW T1=1.0 rerun saves (07-12).
+;   lgs_01 -> lg_zf_s01/lg_gf_s01 ; ss_01 -> sm_zf_s01/sm_gf_s01 + crown/spring rays.
+;   Geometry f3grids unchanged (same meshes) -- not re-exported.
+;   Pattern = lg_chain / sm_chain / sm_rays_redump stage-01 blocks verbatim.
+;   Verify via THIS log: 2x EXPF-DONE + RAY-DONE + S01-REFRESH-DONE.
+program log-file 's01_refresh.log'
+program log on
+
+model restore '../output/lgs_01'
+fish automatic-create on
+[io.out('S01R restored lgs_01 zones='+string(zone.num))]
+[global CUR = '01']
+[global MODL = 'lg']
+call 'field_dump_body.f3dat'
+
+model restore '../output/ss_01'
+fish automatic-create on
+[io.out('S01R restored ss_01 zones='+string(zone.num))]
+[global CUR = '01']
+[global MODL = 'sm']
+call 'field_dump_body.f3dat'
+call 'ray_dump_body2.f3dat'
+
+[io.out('S01-REFRESH-DONE')]
+program log off
+program quit

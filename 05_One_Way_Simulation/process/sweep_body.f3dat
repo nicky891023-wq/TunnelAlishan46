@@ -1,0 +1,32 @@
+fish define sweep_T
+    local tlist = array.create(5)
+    tlist(1) = 0.80
+    tlist(2) = 0.85
+    tlist(3) = 0.90
+    tlist(4) = 0.95
+    tlist(5) = 1.00
+    local k = 0
+    loop k (1,5)
+        local tt = tlist(k)
+        local na = 0
+        local nr = 0
+        loop foreach local z zone.list
+            if zone.model(z) # 'null' then
+                local s1 = -zone.stress.prin.x(z)
+                local s3 = -zone.stress.prin.z(z)
+                local pore = zone.pp(z)
+                local pmean = (s1 + s3)/2.0 - pore
+                local q = (s1 - s3)/2.0
+                local c = zone.prop(z,'cohesion')
+                local phi = zone.prop(z,'friction')
+                local q_th = tt*(c*math.cos(phi*math.degrad) + pmean*math.sin(phi*math.degrad))
+                nr = nr + 1
+                if q >= q_th then
+                    na = na + 1
+                end_if
+            end_if
+        end_loop
+        io.out('T1SWEEP '+swtag+' T='+string(tt)+' active='+string(na)+' of '+string(nr))
+    end_loop
+end
+[sweep_T]

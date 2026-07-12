@@ -5,7 +5,8 @@ plot_sm_rays.py -- 圖5-14 隧道周圍徑向有效應力分布 + tau-p 門檻�
 Data: sm_ray_crown/spring_s01/06.txt (x y z sxx..syz pp per zone in a thin ray corridor).
 (a) crown ray (+z):  sigma_r' ~ szz+pp, sigma_theta' ~ sxx+pp  vs height above crown
 (b) springline ray (+x): sigma_r' ~ sxx+pp, sigma_theta' ~ szz+pp vs distance from wall
-(c) tau-p plot of ray zones vs the reduced MC threshold envelope (lambda=0.6):
+(c) tau-p plot of ray zones vs the reduced MC threshold envelope (lambda=0.8, stage
+    threshold s2-11; s1 initial T=1.0 coincides with the MC line):
     wet stage points migrate LEFT (p' drops at ~constant q) across the threshold line.
 Sign: FLAC compression negative -> plot compression positive. Effective = total + pp.
 """
@@ -95,7 +96,7 @@ for ax, ray, rwall, ttl in ((axs[0], "crown", R_WALL_C,
     rng = vis_hi - vis_lo
     ax.set_ylim(vis_lo - 0.05 * rng, vis_hi + 0.04 * rng)
     loc = "lower left" if ray == "crown" else "lower right"
-    ax.legend(fontsize=20, ncol=1, loc=loc, borderaxespad=0.4,
+    ax.legend(fontsize=20, ncol=1, loc=loc, borderaxespad=0.4, framealpha=0.85,
               handlelength=1.6, labelspacing=0.35, borderpad=0.35)
 
 # ---- (c) tau-p vs the REAL layer-4 threshold, with FLAC's own ON flag ----
@@ -118,7 +119,7 @@ def zone_lookup(stage, xyz):
     return lay, ((visc > 0) & (visc < 1e50))
 
 ax = axs[2]
-lam = 0.6
+lam = 0.8                                    # stage threshold (s2-11); s1 initial uses T=1.0 (=MC line)
 c0, phi0 = 0.10, np.radians(30.0)            # layer-4 MC (MPa, rad)
 means = {}
 for s in (1, 6):
@@ -137,9 +138,10 @@ ax.annotate("cloud capped by\nMC envelope (yield)",
             arrowprops=dict(arrowstyle="->", color="0.2", lw=2.2))
 pgrid = np.linspace(0, 2.2, 50)
 q_mc = pgrid * np.sin(phi0) + c0 * np.cos(phi0)
-ax.plot(pgrid, q_mc, color="0.15", lw=3, label="MC envelope (layer 4)")
+ax.plot(pgrid, q_mc, color="0.15", lw=3,
+        label="MC envelope (layer 4) = s1 threshold, T=1.0")
 ax.plot(pgrid, lam * q_mc, color="#0b5394", lw=3, ls="--",
-        label=r"threshold $\lambda\cdot$MC, $\lambda$=0.6")
+        label=r"viscous boundary $\lambda\cdot$MC, $\lambda$=0.8 (s2-11)")
 ax.set_xlabel(r"$p'=(\sigma_1'+\sigma_3')/2$ (MPa)")
 ax.set_ylabel(r"$q=(\sigma_1'-\sigma_3')/2$ (MPa)")
 ax.set_title("(c) Stress state vs threshold (springline ray, layer 4)", loc="left")

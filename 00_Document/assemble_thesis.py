@@ -21,7 +21,7 @@ from docx.shared import Pt, Cm, RGBColor
 HERE = Path(__file__).parent
 DRAFT = HERE / "draft"
 RESULT = HERE / "result"
-OUT = HERE / "260710 碩論_全文改寫_claude.docx"
+OUT = HERE / "260711_TX碩論_Wade.docx"
 
 doc = docx.Document()
 st = doc.styles["Normal"]

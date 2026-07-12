@@ -1,0 +1,10 @@
+; cpl_export_s01.f3dat -- re-export couple-box boundary drive from the NEW ss_01 only
+; (s1 rerun chain; s02-11 exports unchanged). Pattern = couple_export_bnd_v4 stage 1.
+program log-file 'cpl_export_s01.log'
+program log on
+model restore '../output/ss_01'
+[global CUR='01']
+call 'exp_body.f3dat'
+[io.out('CPL-EXPORT-S01-DONE')]
+program log off
+program quit

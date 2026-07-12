@@ -92,7 +92,7 @@ def fig_states():
         nact = int(((dall > 0) & (dall < 1e50)).sum())
         ttl = f"s{s}  {SWATER[s]}\n{SPHASE[s]}"
         if s == 1:
-            ttl = f"s{s}  {SWATER[s]}\ndry (initial transient)"
+            ttl = f"s{s}  {SWATER[s]}\ndry (initial)"
         ax.set_title(ttl, fontsize=26)
         ax.text(0.03, 0.05, f"active = {nact:,}", transform=ax.transAxes,
                 fontsize=23, bbox=dict(fc="white", ec="0.3", boxstyle="round,pad=0.25"))

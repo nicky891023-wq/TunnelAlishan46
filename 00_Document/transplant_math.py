@@ -21,7 +21,7 @@ from docx.oxml.ns import qn
 
 HERE = Path(__file__).parent
 SRC = HERE / "260707 碩論_營運中隧道結構受地下水位變化引致圍岩依時變形影響(初稿6)_Ch4-5.docx"
-TGT = HERE / "260710 碩論_全文改寫_claude.docx"
+TGT = HERE / "260711_TX碩論_Wade.docx"
 
 M = qn("m:oMath")
 W_P = qn("w:p")

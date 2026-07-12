@@ -1,0 +1,23 @@
+; diag_T1_sweep.f3dat -- stage-1 threshold sweep (Wade 07-10: s1 activation too wide).
+;   At the INITIAL states (= exact s1 starting stress), count would-be active zones for
+;   T = 0.80/0.85/0.90/0.95/1.00 using the staged gate formula verbatim.
+;   Read-only: no cycling, no saves. Output: T1SWEEP lines in this log.
+program log-file 'diag_T1_sweep.log'
+program log on
+
+
+model restore '../../04_InitialBalance/output/Large_Initial'
+fish automatic-create on
+[io.out('T1SWEEP restored Large_Initial')]
+[global swtag = 'LARGE']
+call 'sweep_body.f3dat'
+
+model restore '../../04_InitialBalance/output/Small_Initial'
+fish automatic-create on
+[io.out('T1SWEEP restored Small_Initial')]
+[global swtag = 'SMALL']
+call 'sweep_body.f3dat'
+
+[io.out('T1SWEEP-DONE')]
+program log off
+program quit

@@ -121,7 +121,7 @@ def fig_states():
         setax(ax)
         ttl = f"s{s}  {SWATER[s]}\n{SPHASE[s]}"
         if s == 1:
-            ttl = f"s{s}  {SWATER[s]}\ndry (initial transient)"
+            ttl = f"s{s}  {SWATER[s]}\ndry (initial)"
         ax.set_title(ttl, fontsize=26)
         # counts within the zoom window
         na = int(active.sum()); ny = int(ynow.sum())

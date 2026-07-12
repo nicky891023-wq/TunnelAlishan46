@@ -118,3 +118,123 @@ flac3d>program log off
 **********************************************
 * Logging ended at 週三 七月 8 11:25:36 2026
 **********************************************
+**********************************************
+* Logging started at 週日 七月 12 11:51:37 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>program load module 'pfc'
+flac3d>program load module 'contact'
+--- module3d plugin ContactModule3D loaded.
+--- module3d plugin PFC3D loaded.
+flac3d>program load module 'wallzone'
+--- module3d plugin WallZone3D loaded.
+flac3d>fish automatic-create on
+flac3d>model restore '../output/cs_01'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週六 七月 11 19:25:50 2026
+Total Cycles: 76355  Super Cycles: 76355
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>[global CUR = '01']
+flac3d>call 'exp_pf_body.f3dat'
+flac3d>; exp_pf_body.f3dat -- per-contact ball-facet force dump (fine pressure maps).
+flac3d>;   Call AFTER each restore (restore wipes FISH). Global CUR set by driver.
+flac3d>;   Output: pf_s<CUR>.txt  columns: x y z fx fy fz   (all ball-facet contacts on wz_outter)
+flac3d>fish define exp_pf(fname)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z fx fy fz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local c contact.list('ball-facet')
+   Def>        local p = contact.pos(c)
+   Def>        local f = contact.force.global(c)
+   Def>        a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(f))+' '+string(comp.y(f))+' '+string(comp.z(f))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('EXPPF '+fname+' n='+string(n))
+   Def>end
+flac3d>[exp_pf('pf_s'+CUR+'.txt')]
+EXPPF pf_s01.txt n=62652
+0 (integer)
+flac3d>model restore '../output/cs_06'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 七月 12 04:10:01 2026
+Total Cycles: 99843  Super Cycles: 99843
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>[global CUR = '06']
+flac3d>call 'exp_pf_body.f3dat'
+flac3d>; exp_pf_body.f3dat -- per-contact ball-facet force dump (fine pressure maps).
+flac3d>;   Call AFTER each restore (restore wipes FISH). Global CUR set by driver.
+flac3d>;   Output: pf_s<CUR>.txt  columns: x y z fx fy fz   (all ball-facet contacts on wz_outter)
+flac3d>fish define exp_pf(fname)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z fx fy fz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local c contact.list('ball-facet')
+   Def>        local p = contact.pos(c)
+   Def>        local f = contact.force.global(c)
+   Def>        a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(f))+' '+string(comp.y(f))+' '+string(comp.z(f))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('EXPPF '+fname+' n='+string(n))
+   Def>end
+flac3d>[exp_pf('pf_s'+CUR+'.txt')]
+EXPPF pf_s06.txt n=62779
+0 (integer)
+flac3d>model restore '../output/cs_11'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週日 七月 12 11:36:49 2026
+Total Cycles: 119348  Super Cycles: 119348
+Title: Alishan #46 COUPLED mb3 -- structured hex rock(40x40, L2..6) + PFC lining
+Customer: 
+        : 
+********************************************
+flac3d>[global CUR = '11']
+flac3d>call 'exp_pf_body.f3dat'
+flac3d>; exp_pf_body.f3dat -- per-contact ball-facet force dump (fine pressure maps).
+flac3d>;   Call AFTER each restore (restore wipes FISH). Global CUR set by driver.
+flac3d>;   Output: pf_s<CUR>.txt  columns: x y z fx fy fz   (all ball-facet contacts on wz_outter)
+flac3d>fish define exp_pf(fname)
+   Def>    local st = file.open(fname,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x y z fx fy fz'
+   Def>    st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local c contact.list('ball-facet')
+   Def>        local p = contact.pos(c)
+   Def>        local f = contact.force.global(c)
+   Def>        a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(comp.x(f))+' '+string(comp.y(f))+' '+string(comp.z(f))
+   Def>        st = file.write(a,1)
+   Def>        n = n + 1
+   Def>    end_loop
+   Def>    st = file.close
+   Def>    io.out('EXPPF '+fname+' n='+string(n))
+   Def>end
+flac3d>[exp_pf('pf_s'+CUR+'.txt')]
+EXPPF pf_s11.txt n=62784
+0 (integer)
+flac3d>[io.out('EXPPF-DONE 3 checkpoints')]
+EXPPF-DONE 3 checkpoints
+0 (integer)
+flac3d>program log off
+**********************************************
+* Logging ended at 週日 七月 12 11:53:41 2026
+**********************************************

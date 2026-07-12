@@ -63,9 +63,12 @@ P0, _ = ring_line(1)
 ax0.plot(P0[:, 0], P0[:, 1], color="0.65", lw=2.8, label="original")
 for k, c, ls in ((6, "#c0392b", "-"), (11, "#2e6da4", "--")):
     _, PD = ring_line(k)
-    ax0.plot(PD[:, 0], PD[:, 1], color=c, lw=2.8, ls=ls, label=f"s{k} (u x{MAG})")
+    lw, dashes = (3.4, None) if k == 6 else (2.2, (4, 3))
+    ln = ax0.plot(PD[:, 0], PD[:, 1], color=c, lw=lw, ls=ls, label=f"s{k} (u x{MAG})")
+    if dashes:
+        ln[0].set_dashes(dashes)
 ax0.annotate("ring leans west (racking);\ns6 = s11 (frozen)", xy=(1300.4, 1748.9),
-             xytext=(1297.3, 1745.4), fontsize=19, color="#7a1d12",
+             xytext=(1297.15, 1746.9), fontsize=19, color="#7a1d12",
              arrowprops=dict(arrowstyle="->", color="#7a1d12", lw=2.0))
 ax0.set_aspect("equal")
 ax0.set_xlabel("x (m)"); ax0.set_ylabel("z (m)")
@@ -114,13 +117,14 @@ for j, (nm, (lo, hi, c)) in enumerate(REG.items()):
     ax2.bar(np.arange(3) + (j - 1) * W, vals, W, color=c, edgecolor="k", lw=0.8,
             label=nm)
     for i, v in enumerate(vals):
-        ax2.text(i + (j - 1) * W, v + (0.02 if v >= 0 else -0.055),
+        ax2.text(i + (j - 1) * W, v + (0.006 if v >= 0 else -0.006),
                  f"{v:.2f}", ha="center", fontsize=18,
                  va="bottom" if v >= 0 else "top")
 ax2.axhline(0, color="0.3", lw=1.2)
 ax2.set_xticks(range(3))
 ax2.set_xticklabels([STG[k] for k in (1, 6, 11)], fontsize=20)
 ax2.margins(y=0.18)
+ax2.set_ylim(bottom=min(ax2.get_ylim()[0], -0.045))
 ax2.set_ylabel("Mean $u_r$ (mm, inward +)")
 ax2.set_title("(c) Regional mean $u_r$ at checkpoints", loc="left", fontsize=21)
 ax2.legend(fontsize=19)

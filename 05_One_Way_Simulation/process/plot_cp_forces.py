@@ -79,8 +79,9 @@ for k, c in ((1, "0.25"), (6, "#c0392b"), (11, "#2e6da4")):
     t_hat = np.stack([r[:, 1], -r[:, 0]], axis=1)         # rotate -90deg
     fh = np.abs(p[:, 3] * t_hat[:, 0] + p[:, 5] * t_hat[:, 1]) / 1e3   # kN
     H, _ = np.histogram(th, bins=TH_BINS, weights=fh)
-    axp.plot(thc, H / (2 * YB), color=c, lw=3.0, label=STG[k][0])
-axp.set_xlabel("Perimeter station from crown (m)")
+    lw, ls = (3.4, "-") if k != 11 else (2.2, "--")
+    axp.plot(thc, H / (2 * YB), color=c, lw=lw, ls=ls, label=STG[k][0])
+axp.set_xlabel("Position along lining perimeter")
 axp.set_ylabel("Hoop-projected bonded force (kN per m axial)")
 axp.set_title("(d) Hoop thrust profile (y = 885$\\pm$5 m)", loc="left", fontsize=23)
 tp_, tl_ = tf.ticks()
@@ -88,7 +89,13 @@ axp.set_xticks(tp_)
 axp.set_xticklabels(tl_, fontsize=20)
 axp.axvline(tf.QUART, color="0.7", ls=":", lw=1.5)
 axp.axvline(-tf.QUART, color="0.7", ls=":", lw=1.5)
-axp.legend(fontsize=22)
+axp.annotate("L-shoulder peak $\\approx$1,030 kN/m\n(s6 $\\approx$ s11, locked in)",
+             xy=(-2.06, 1030), xytext=(-5.5, 1180), fontsize=18, color="#7a1d12",
+             arrowprops=dict(arrowstyle="->", color="#7a1d12", lw=1.8))
+axp.annotate("anchor reaction\n(boundary artifact)",
+             xy=(6.58, 1500), xytext=(2.6, 1420), fontsize=18, color="0.35",
+             arrowprops=dict(arrowstyle="->", color="0.35", lw=1.8))
+axp.legend(fontsize=22, loc="center left")
 fig.suptitle("Lining internal forces: bonded contact-force network and hoop thrust "
              "through the water cycle", y=1.01)
 fig.savefig(OUT / "圖5-17_襯砌內力分布.png", dpi=180, bbox_inches="tight")

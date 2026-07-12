@@ -36,13 +36,17 @@ ax.bar(ks, [dN[k] for k in ks],
        color=[PHASE_C[TS.PHASE[k-1]] for k in ks], edgecolor="k", lw=0.8)
 ax.set_xlabel("Stage (water level)")
 ax.set_ylabel(r"Damage increment $\Delta N$ (bond breaks)")
-ax.set_xticks(ks)
-ax.set_xticklabels([f"{k}\n{TS.WATER[k-1]}" for k in ks], fontsize=21)
+ax.set_xticks([1] + ks)
+xtl = ax.set_xticklabels([f"1\n{TS.WATER[0]}"] + [f"{k}\n{TS.WATER[k-1]}" for k in ks],
+                         fontsize=21)
+xtl[0].set_color("0.55")                                 # s1 = baseline (bar excluded)
 ax.set_xlim(0.35, 11.65)
-ax.annotate(f"wet peak\n$\\Delta N$ = {dN[6]:,}\n$A_{{wet}}$ = {Q['A_wet']:.2f}",
-            xy=(6, dN[6]), xytext=(7.2, dN[6]*0.86), fontsize=21, color="#7a1d12",
+ax.annotate(f"wet peak $\\Delta N$ = {dN[6]:,}\nwet window (s2-s6):\n"
+            f"$A_{{wet}}$ = {Q['A_wet']:.1f}$\\times$ dry rate",
+            xy=(6.42, dN[6]*0.985), xytext=(7.25, dN[6]*0.70), fontsize=21,
+            color="#7a1d12",
             arrowprops=dict(arrowstyle="->", color="#7a1d12", lw=2))
-ax.annotate(f"frozen after recession\n$A_{{frz}}$ = {Q['A_frz']:.3f}",
+ax.annotate(f"frozen after recession\n$A_{{frz}}$ = {Q['A_frz']:.4f}",
             xy=(9, dN[9] + 1200), xytext=(8.62, dN[6]*0.50), fontsize=21, color="#0b5394",
             arrowprops=dict(arrowstyle="->", color="#0b5394", lw=2))
 ax2 = ax.twinx()
@@ -100,7 +104,8 @@ axs[0].set_ylabel("y (m)")
 cb = fig.colorbar(im, ax=axs, label="Radial contact pressure (kPa)", shrink=.85,
                   extend="max")
 fig.suptitle("Lining external pressure - developed maps along the CURVED axis "
-             "(per-contact; x = perimeter station)", y=1.0)
+             "(per-contact; x = perimeter station; peak $\\approx$946 kPa, "
+             "f = 0.25 trend)", y=1.0)
 fig.savefig(OUT / "圖5-16_襯砌外壓展開圖.png", dpi=200, bbox_inches="tight")
 plt.close(fig)
 print("saved 圖5-16  vmax=%.0f kPa" % vmax)

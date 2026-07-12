@@ -1,0 +1,430 @@
+; ============================================================================
+; small_staged_v2.f3dat -- Alishan #46 SMALL model 11-STAGE staged creep. v2 (Claude 2026-07-02).
+; Supersedes OPUS small_staged.f3dat. Fixes (see RUN_STATUS.md sec.1-2):
+;   (1) T=0.8 unified threshold (from parameter.f3dat; was 0.6 -> 77% active at dry = runaway)
+;   (2) shell stress cap = SEGMENT-BOUNDARY secant E-reduction (Wade WadeCreepSupport method,
+;       applied BETWEEN 2.5-day creep sub-segments so the new E actually rebuilds element
+;       stiffness at next solve start; + struct.force.update() belt-and-braces).
+;       Caps BOTH compression (fc=41.2 MPa) and tension (ft=4.12 MPa); E floor 2.5 GPa
+;       (cracked-RC residual); damage is monotonic (E never restored). HARD GATE: if
+;       max stress stays > 2x cap for 3 consecutive segments -> abort remaining stages.
+;   (3) threshold evaluated ONCE per stage (fixed active set; validated recipe), no callbacks.
+;   (4) fluid phase solve budget 20000 -> 500 cycles (260529 n_wp original; pp field is
+;       initialize-dominated, quasi-static pp assumption per parameter sheet).
+;   (5) driven set = +-1.0 m box-face bands (consistent w/ small_bnd.txt 14,946 gps &
+;       Small_Initial fixes); all velocity fixes freed first (no stale pinned gps).
+;   Stage schedule (D5): dry1 W-110(30d) raise W-90/70/50/30(5d) wet W-10(30d)
+;                        drop W-30/50/70/90(5d) dry2 W-110(30d).  cwd = 05.
+;   Drive files: lg_disp_resid_sNN.txt (rigid-removed residual, make_resid.py).
+; ============================================================================
+program log-file 'small_s1_rerun.log'
+program log on
+model restore '../../04_InitialBalance/output/Small_Initial'
+call '../../04_InitialBalance/parameter.f3dat'
+[global crp_threshold = 1.00]   ; S1 RERUN OVERRIDE (Wade 07-10)
+[io.out('S1RERUN threshold override T=1.00')]
+call 'C:/Program Files/Itasca/Flac3d600/datafiles/Creep/SetKStrains.f3fis'
+model configure creep
+model largestrain off
+fish automatic-create on
+[global cum_days = 0.0]
+[global abort_flag = 0]
+[global capfail_run = 0]
+geometry import '../input/W-90.stl'
+geometry import '../input/W-70.stl'
+geometry import '../input/W-50.stl'
+geometry import '../input/W-30.stl'
+geometry import '../input/W-10.stl'
+zone water density [rho_w]
+[io.out('SSv2-0 restored Small_Initial; zones='+string(zone.num)+' gps='+string(gp.num)+' shells='+string(struct.num)+' T='+string(crp_threshold))]
+
+; --- free ALL stale velocity fixes, then tag driven band (+-1.0 m, 6 box faces) ---
+zone gridpoint free velocity
+fish define tag_driven
+    global ndriven = 0
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        local x = comp.x(p)
+        local y = comp.y(p)
+        local z = comp.z(p)
+        local onb = 0
+        if math.abs(x-1250.0) < 1.0 then
+            onb = 1
+        end_if
+        if math.abs(x-1350.0) < 1.0 then
+            onb = 1
+        end_if
+        if math.abs(y-850.0) < 1.0 then
+            onb = 1
+        end_if
+        if math.abs(y-950.0) < 1.0 then
+            onb = 1
+        end_if
+        if math.abs(z-1700.0) < 1.0 then
+            onb = 1
+        end_if
+        if math.abs(z-1800.0) < 1.0 then
+            onb = 1
+        end_if
+        if onb = 1 then
+            gp.group(g,'drive') = 'driven'
+            gp.vel(g) = vector(0.0,0.0,0.0)
+            gp.fix(g) = vector(1,1,1)      ; fix AT TAG TIME: phase-2 MC balance must never
+            ndriven = ndriven + 1          ; run on an unconstrained floating box (07-03 bug)
+        end_if
+    end_loop
+    io.out('SSv2-driven band gps tagged+fixed='+string(ndriven))
+end
+[tag_driven]
+
+; --- read stage drive file: header + rows 'x y z dx dy dz' ---
+fish define read_drive(fname)
+    local arr = array.create(1)
+    local st = file.open(fname,0,1)
+    ndata = 0
+    st = file.read(arr,1)
+    st = file.read(arr,1)
+    loop while st = 0
+        ndata = ndata + 1
+        st = file.read(arr,1)
+    end_loop
+    st = file.close
+    xdat  = array.create(ndata)
+    ydat  = array.create(ndata)
+    zdat  = array.create(ndata)
+    uxdat = array.create(ndata)
+    uydat = array.create(ndata)
+    uzdat = array.create(ndata)
+    st = file.open(fname,0,1)
+    st = file.read(arr,1)
+    local i = 0
+    st = file.read(arr,1)
+    loop while st = 0
+        i = i + 1
+        local ln = arr(1)
+        xdat(i)  = string.token(ln,1)
+        ydat(i)  = string.token(ln,2)
+        zdat(i)  = string.token(ln,3)
+        uxdat(i) = string.token(ln,4)
+        uydat(i) = string.token(ln,5)
+        uzdat(i) = string.token(ln,6)
+        st = file.read(arr,1)
+    end_loop
+    st = file.close
+    io.out('   SSv2-read '+fname+' ndata='+string(ndata))
+end
+
+; --- gradual velocity drive of 'driven' gps toward stage target over creep_time ---
+fish define apply_vel_idw(creep_time, radius)
+    loop foreach local g gp.list
+        if gp.group(g,'drive') = 'driven' then
+            local p = gp.pos(g)
+            local x = comp.x(p)
+            local y = comp.y(p)
+            local z = comp.z(p)
+            local sw = 0.0
+            local sux = 0.0
+            local suy = 0.0
+            local suz = 0.0
+            local dmin = 1e30
+            local i = 1
+            loop while i <= ndata
+                local dx = x - xdat(i)
+                local dy = y - ydat(i)
+                local dz = z - zdat(i)
+                local d2 = dx*dx + dy*dy + dz*dz
+                if d2 <= radius*radius then
+                    local w = 1.0/math.max(d2,1e-10)
+                    sw = sw + w
+                    sux = sux + uxdat(i)*w
+                    suy = suy + uydat(i)*w
+                    suz = suz + uzdat(i)*w
+                end_if
+                if d2 < dmin then
+                    dmin = d2
+                    global inear = i
+                end_if
+                i = i + 1
+            end_loop
+            local tx = 0.0
+            local ty = 0.0
+            local tz = 0.0
+            if sw > 0.0 then
+                tx = sux/sw
+                ty = suy/sw
+                tz = suz/sw
+            else
+                tx = uxdat(inear)
+                ty = uydat(inear)
+                tz = uzdat(inear)
+            end_if
+            local d = gp.disp(g)
+            gp.vel(g) = vector((tx-comp.x(d))/creep_time, (ty-comp.y(d))/creep_time, (tz-comp.z(d))/creep_time)
+            gp.fix(g) = vector(1,1,1)
+        end_if
+    end_loop
+end
+
+; --- Maxwell-only threshold gating (Kelvin always on), corrected MC envelope, ONCE per stage ---
+fish define do_threshold
+    local na = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            local s1 = -zone.stress.prin.x(z)
+            local s3 = -zone.stress.prin.z(z)
+            local pore = zone.pp(z)
+            local pmean = (s1 + s3)/2.0 - pore
+            local q = (s1 - s3)/2.0
+            local c = zone.prop(z,'cohesion')
+            local phi = zone.prop(z,'friction')
+            local q_th = crp_threshold*(c*math.cos(phi*math.degrad) + pmean*math.sin(phi*math.degrad))
+            if q >= q_th then
+                zone.prop(z,'viscosity-maxwell') = eta_m
+                na = na + 1
+            else
+                zone.prop(z,'viscosity-maxwell') = 1e100
+            end_if
+        end_if
+    end_loop
+    global n_active = na
+end
+
+; --- WadeCreepSupport shell cap (segment-boundary): secant E-reduction, comp+tension, floored ---
+[global sig_capC = shot_fc]
+[global sig_capT = shot_ft]
+[global sig_eps  = 0.01]
+[global e_floor  = 2.5e9]
+fish define shell_cap
+    command
+        structure shell recover surface (0,1,0)
+        structure shell recover stress depth-factor 0
+    endcommand
+    global n_capped = 0
+    global n_overfloor = 0
+    global sh_maxc = 0.0
+    global sh_maxt = 0.0
+    loop foreach local s struct.list
+        if struct.type(s) = 'shell' then
+            local smn = 1e30
+            local smx = -1e30
+            loop local k (0,3)
+                local sx = struct.shell.stress.prin.x(s,k)
+                local sz = struct.shell.stress.prin.z(s,k)
+                if sx < smn then
+                    smn = sx
+                end_if
+                if sz > smx then
+                    smx = sz
+                end_if
+            end_loop
+            local sc = 0.0
+            if smn < 0.0 then
+                sc = -smn
+            end_if
+            local stn = 0.0
+            if smx > 0.0 then
+                stn = smx
+            end_if
+            if sc > sh_maxc then
+                sh_maxc = sc
+            end_if
+            if stn > sh_maxt then
+                sh_maxt = stn
+            end_if
+            local scale = 1.0
+            if sc > (1.0+sig_eps)*sig_capC then
+                scale = sig_capC/sc
+            end_if
+            if stn > (1.0+sig_eps)*sig_capT then
+                if sig_capT/stn < scale then
+                    scale = sig_capT/stn
+                end_if
+            end_if
+            if scale < 1.0 then
+                local en = struct.shell.young(s)
+                local et = en*scale
+                if et < e_floor then
+                    et = e_floor
+                end_if
+                if et < en then
+                    struct.shell.young(s) = et
+                    n_capped = n_capped + 1
+                end_if
+                ; gross overshoot on a shell that still had reducible stiffness =
+                ; the cap mechanism itself is lagging (floor-bound residual ~2x ft is
+                ; accepted physics: fully-cracked RC at E_floor under imposed strain)
+                if en > 1.05*e_floor then
+                    local gross = 0
+                    if sc > 2.0*sig_capC then
+                        gross = 1
+                    end_if
+                    if stn > 2.0*sig_capT then
+                        gross = 1
+                    end_if
+                    n_overfloor = n_overfloor + gross
+                end_if
+            end_if
+        end_if
+    end_loop
+    local uu = struct.force.update()
+end
+; NOTE (07-03 autopsy): an iterative variant (cap -> creep-off 'model cycle 200' -> re-cap,
+; up to 5 rounds) INJECTED ENERGY and blew the model up (dmax 7.8mm -> 290mm during the
+; toggle rounds, tunnel EXPANDING). Repeated struct.force.update + process toggling under
+; fixed-dt creep hits the documented SEL instability case. Single cap per segment (this
+; version) was proven stable. Shell stress is INCREMENTAL-accumulative: the cap arrests
+; future growth (Wade's goal: no unreasonable suppression of creep) but does not relieve
+; already-accumulated stress -- capped-shell stress values are fictitious records; lining
+; force deliverables come from the coupled PFC model.
+
+; --- convergence sentinels (y885) + dmax ---
+fish define find_conv
+    global g_cr = null
+    global g_iv = null
+    global g_sr = null
+    global g_sl = null
+    local bc=1e20
+    local bi=1e20
+    local br=1e20
+    local bl=1e20
+    loop foreach local g gp.list
+        local p = gp.pos(g)
+        if comp.y(p) > 884.0 then
+        if comp.y(p) < 886.0 then
+            local dc=(comp.x(p)-1297.0)^2+(comp.z(p)-1752.0)^2
+            if dc<bc then
+                bc=dc
+                g_cr=g
+            end_if
+            local di=(comp.x(p)-1297.0)^2+(comp.z(p)-1743.0)^2
+            if di<bi then
+                bi=di
+                g_iv=g
+            end_if
+            local dr=(comp.x(p)-1303.0)^2+(comp.z(p)-1747.0)^2
+            if dr<br then
+                br=dr
+                g_sr=g
+            end_if
+            local dl=(comp.x(p)-1291.0)^2+(comp.z(p)-1747.0)^2
+            if dl<bl then
+                bl=dl
+                g_sl=g
+            end_if
+        end_if
+        end_if
+    end_loop
+end
+[find_conv]
+fish define vclose
+    vclose = (comp.z(gp.disp(g_cr))-comp.z(gp.disp(g_iv)))*1000.0
+end
+fish define hclose
+    hclose = (comp.x(gp.disp(g_sr))-comp.x(gp.disp(g_sl)))*1000.0
+end
+fish define dmax_all
+    local dm=0.0
+    loop foreach local g gp.list
+        local d=gp.disp(g)
+        local m=math.sqrt(comp.x(d)^2+comp.y(d)^2+comp.z(d)^2)
+        if m>dm then
+            dm=m
+        end_if
+    end_loop
+    dmax_all=dm
+end
+
+; --- initial burgers-mohr assignment (eta_m gated later; eta_k always on) ---
+zone cmodel assign burgers-mohr range group 'rock' slot 'mat'
+zone property bulk [_bk(E_S_1)] shear-maxwell [_gk(E_S_1)] shear-kelvin [_gk(E_S_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property bulk [_bk(E_S_2)] shear-maxwell [_gk(E_S_2)] shear-kelvin [_gk(E_S_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property bulk [_bk(E_S_3)] shear-maxwell [_gk(E_S_3)] shear-kelvin [_gk(E_S_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property bulk [_bk(E_S_4)] shear-maxwell [_gk(E_S_4)] shear-kelvin [_gk(E_S_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+zone property bulk [_bk(E_S_5)] shear-maxwell [_gk(E_S_5)] shear-kelvin [_gk(E_S_5)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+zone property bulk [_bk(E_S_6)] shear-maxwell [_gk(E_S_6)] shear-kelvin [_gk(E_S_6)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+model creep active off
+[io.out('SSv2-1 rock -> burgers-mohr (G_m=G_k, eta_k on, eta_m gated at T='+string(crp_threshold)+')')]
+
+; --- per-stage: fluid(500cyc) -> MC 1e-5 -> creep in 2.5-day segments + shell cap between ---
+fish define crp_stage(stg, wtname, fname, days)
+    if abort_flag = 1 then
+        io.out('SSv2-SKIP stage '+string(stg)+' (abort flag set)')
+    else
+    command
+        zone cmodel assign mohr-coulomb range group 'rock' slot 'mat'
+        zone property young [E_S_1] poisson [nu] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+        zone property young [E_S_2] poisson [nu] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+        zone property young [E_S_3] poisson [nu] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+        zone property young [E_S_4] poisson [nu] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+        zone property young [E_S_5] poisson [nu] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+        zone property young [E_S_6] poisson [nu] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+        zone gridpoint initialize pore-pressure 0
+        zone water set [wtname]
+        zone gridpoint initialize saturation 1
+        zone gridpoint initialize saturation 0 range geometry-space [wtname] count 0 direction (0,0,1)
+        zone gridpoint initialize pore-pressure 0 range geometry-distance 'tunnel_inner' gap 1.0
+        zone gridpoint fix pore-pressure range group 'East' or 'West' or 'North' or 'South' or 'Top' or 'Bottom'
+        model mechanical active off
+        model creep active off
+        model fluid active on
+        model solve ratio-flow 1e-4 or cycles 500
+    endcommand
+    io.out('   SSv2-stg'+string(stg)+' '+wtname+' fluid phase done (500cyc budget)')
+    command
+        model fluid active off
+        model mechanical active on
+        model creep active off
+        zone gridpoint initialize fluid-modulus 0
+        zone gridpoint initialize velocity 0 0 0
+        model solve ratio 1e-5 or cycles 40000
+    endcommand
+    io.out('   SSv2-stg'+string(stg)+' MC balance done')
+    command
+        zone cmodel assign burgers-mohr range group 'rock' slot 'mat'
+        ; NOTE: cmodel assign RESETS all properties -> strength MUST be re-set here
+        ; (OPUS port dropped cohesion/friction/tension -> c=phi=0 -> q_th=0 -> 100% active
+        ;  + zero-strength plastic collapse = the real 07-02 runaway root cause).
+        zone property bulk [_bk(E_S_1)] shear-maxwell [_gk(E_S_1)] shear-kelvin [_gk(E_S_1)] viscosity-kelvin [eta_k] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+        zone property bulk [_bk(E_S_2)] shear-maxwell [_gk(E_S_2)] shear-kelvin [_gk(E_S_2)] viscosity-kelvin [eta_k] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+        zone property bulk [_bk(E_S_3)] shear-maxwell [_gk(E_S_3)] shear-kelvin [_gk(E_S_3)] viscosity-kelvin [eta_k] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+        zone property bulk [_bk(E_S_4)] shear-maxwell [_gk(E_S_4)] shear-kelvin [_gk(E_S_4)] viscosity-kelvin [eta_k] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+        zone property bulk [_bk(E_S_5)] shear-maxwell [_gk(E_S_5)] shear-kelvin [_gk(E_S_5)] viscosity-kelvin [eta_k] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+        zone property bulk [_bk(E_S_6)] shear-maxwell [_gk(E_S_6)] shear-kelvin [_gk(E_S_6)] viscosity-kelvin [eta_k] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+        model creep active on
+    endcommand
+    read_drive(fname)
+    setKstrains
+    do_threshold
+    setKstrains
+    apply_vel_idw(days*86400.0, 60.0)
+    io.out('   SSv2-stg'+string(stg)+' creep start: active='+string(n_active))
+    local nch = math.ceiling(days/1.25)
+    local dch = days/nch
+    local ich = 0
+    loop while ich < nch
+        ich = ich + 1
+        cum_days = cum_days + dch
+        command
+            model creep timestep fix [crp_dt]
+            model solve creep time-total [cum_days*86400.0]
+        endcommand
+        shell_cap
+        io.out('SSv2-HIST stg='+string(stg)+' day='+string(cum_days)+' vclose='+string(vclose)+' hclose='+string(hclose)+' dmax='+string(dmax_all)+' active='+string(n_active)+' ncap='+string(n_capped)+' novf='+string(n_overfloor)+' maxC='+string(sh_maxc/1e6)+'MPa maxT='+string(sh_maxt/1e6)+'MPa')
+        if dmax_all > 0.20 then
+            abort_flag = 1
+            ich = nch
+            io.out('SSv2-ABORT kinematic runaway dmax>0.2m (stg '+string(stg)+')')
+        end_if
+    end_loop
+    io.out('SSv2-CHK stg'+string(stg)+' END vclose='+string(vclose)+'mm hclose='+string(hclose)+'mm dmax='+string(dmax_all)+' active='+string(n_active)+' maxC='+string(sh_maxc/1e6)+' maxT='+string(sh_maxt/1e6))
+    end_if
+end
+
+; ============================================================================
+; 11 stages
+; ============================================================================
+[crp_stage(1,'W-110','lg_disp_resid_s01.txt',30.0)]
+model save '../output/ss_01'
+[io.out('SM-S1-RERUN-DONE T1=1.00')]
+program log off
+program quit

@@ -25,6 +25,11 @@ __pycache__/
 05_One_Way_Simulation/process/sm_zf_s*.txt
 05_One_Way_Simulation/process/sm_gf_s*.txt
 05_One_Way_Simulation/process/ring3d_G4.txt
+# T=0.8 舊跑次備份（僅 lg_disp_s01.txt 為 plot_histories_drive 接縫閉合之生產輸入）
+05_One_Way_Simulation/process/_backup_T08run/*
+!05_One_Way_Simulation/process/_backup_T08run/lg_disp_s01.txt
+# 05/result 內部圖（make_result_figs 可重生；論文版在 00_Document/result）
+05_One_Way_Simulation/result/FIG_*.png
 # 第三方計畫文件（阿里山林鐵管理處等委辦成果，不上公開 repo）
 00_Document/202411_*/
 00_Document/*報告*/

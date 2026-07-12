@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 plot_small_convergence.py -- small-model 11-stage tunnel convergence history.
-Parses small_staged_v2.log (SSv2-HIST lines) -> 3-panel result figure.
+Parses small_staged_hist_merged.log (SSv2-HIST lines) -> 3-panel result figure.
 Styling (Wade 2026-07-08): English, Times New Roman, fonts ~3-4x default.
 Out: ../result/small_convergence_history_v2.png
 """
@@ -23,7 +23,7 @@ matplotlib.rcParams.update({
 })
 
 HERE = Path(__file__).parent
-LOG  = HERE / "small_staged_v2.log"
+LOG  = HERE / "small_staged_hist_merged.log"
 OUT  = HERE.parent / "result" / "small_convergence_history_v2.png"
 
 # 11-stage schedule: (day_start, day_end, water_level_m)

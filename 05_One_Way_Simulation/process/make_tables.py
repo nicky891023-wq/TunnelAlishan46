@@ -90,7 +90,7 @@ render_table("表5-2_隧道圍岩擾動尺度模型參數",
      ["Shell lining", "25", "fc=41.2 / ft=4.12 MPa", "-", "2400",
       "t=0.40 m, v=0.2"],
      ["Common", "v=0.25, sig_t=100 kPa", "eta_m=1.2e15, eta_k=2.4e13 Pa.s",
-      "T=0.8", "k x100 annulus", "threshold T=0.8 unified"]])
+      "T=0.8 (s2-11)", "k x100 annulus", "threshold T=0.8; initial dry s1 T=1.0"]])
 
 # ---- Table 5-3 coupled scale ----
 render_table("表5-3_圍岩襯砌互制尺度模型參數",

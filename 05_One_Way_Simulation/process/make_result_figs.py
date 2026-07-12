@@ -87,8 +87,13 @@ def main():
     dN    = {k: Ncum[k] - (Ncum[k-1] if k > 1 else 0) for k in STAGES}
     rate  = {k: dN[k] / DAYS[k-1] for k in STAGES}
     floor = min(rate[k] for k in STAGES if PHASE[k-1] in ("fall", "dry2"))
-    A_wet = rate[6] / max(np.mean([rate[k] for k in (2,3,4,5)]), 1e-9)
-    A_frz = np.mean([rate[k] for k in (8,9,10,11)]) / max(rate[6], 1e-9)
+    # A_wet/A_frz redefined (Wade 07-12): both referenced to the wet-season mean rate.
+    #   r_wet  = mean daily rate over the wet window s2-s6 (rise + wet peak)
+    #   A_wet  = r_wet / r_dry1  (wet acceleration vs initial dry s1)
+    #   A_frz  = r_dry2 / r_wet  (post-recession freeze: final dry s11 vs wet)
+    r_wet = sum(dN[k] for k in (2, 3, 4, 5, 6)) / sum(DAYS[k-1] for k in (2, 3, 4, 5, 6))
+    A_wet = r_wet / max(rate[1], 1e-9)
+    A_frz = rate[11] / max(r_wet, 1e-9)
 
     # ---------- FIG-A : damage-evolution history (money plot) ----------
     fig, ax = plt.subplots(figsize=(19, 11))
@@ -107,7 +112,7 @@ def main():
     ax3.plot(STAGES, Dtot, "r--", lw=3)
     ax3.set_ylabel("Cumulative damage density (%)", color="r"); ax3.tick_params(axis="y", colors="r")
     ax.set_title(f"Lining damage evolution (f=0.25, trend)   "
-                 f"$A_{{wet}}$={A_wet:.2f}   $A_{{frz}}$={A_frz:.2f}")
+                 f"$A_{{wet}}$={A_wet:.2f}   $A_{{frz}}$={A_frz:.4f}")
     fig.savefig(OUT / "FIG_A_damage_history.png", dpi=200); plt.close(fig)
 
     # ---------- FIG-B : crack distribution, crown-centred fine map (6 selected) ----------
@@ -218,7 +223,8 @@ def main():
     except Exception as e:
         print("FIG-G skipped (check cs_s*_pmap.txt format):", e)
 
-    json.dump({"A_wet": A_wet, "A_frz": A_frz, "floor_per_day": floor,
+    json.dump({"A_wet": A_wet, "A_frz": A_frz, "r_wet_per_day": r_wet,
+               "floor_per_day": floor,
                "N_cum": Ncum, "dN": dN, "rate_per_day": rate,
                "D_total_pct": Dtot[-1]},
               open(OUT / "quant_summary.json", "w"), indent=2)
