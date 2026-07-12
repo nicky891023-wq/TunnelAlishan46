@@ -65,7 +65,9 @@ def panel_c(png):
     sub = ring[::4]
     pl.add_mesh(pv.PolyData(sub), color="#a86e3c", point_size=2.2,
                 render_points_as_spheres=True)
-    feet = ring[ring[:, 2] < 1745.4][::2]
+    # v6 grade-following anchored band: z <= rim(y)+0.41, rim(y)=1743.97+0.0372(y-860)
+    z_top = 1743.97 + 0.0372 * (ring[:, 1] - 860.0) + 0.41
+    feet = ring[ring[:, 2] <= z_top][::2]
     pl.add_mesh(pv.PolyData(feet), color="#e0231c", point_size=3.2,
                 render_points_as_spheres=True)
     pl.camera_position = [(1215, 770, 1815), (CXR, CY, CZ), (0, 0, 1)]

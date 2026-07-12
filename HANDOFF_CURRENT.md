@@ -36,12 +36,56 @@ s7 36,470 / +1,509 ｜ s8 37,023 / +553 ｜ s9 37,503 / +480 ｜ s10 37,892 / +3
 3. 論文全文：**260711_TX碩論_Wade.docx**（00_Document/，Wade 核可之新摘要＋新第一章架構＋
    全部新數字；驗證 7 標記齊、零舊數殘留；產線 assemble→transplant_math→finalize 冪等）
 
-## 等 Wade 裁決的事項（勿自行決定）
+## 進行中（2026-07-12 下午，Wade 四項指令依序執行）
 
-1. **A_wet 定義**：式(5-1)原定義下新值=0.55（雨峰日速率<升水短脈衝平均）。現行文稿保留原式、
-   詮釋段改為事實敘述＋濕乾對比（644 vs 2.9 條/日，>200 倍）。是否改定義（如濕/乾季均速率比）由 Wade 定。
-2. GitHub push（等 Wade 說 push 再 push）
-3. f 靈敏度補充跑、06 雙向耦合開工
+1. ✅ A_wet 改定義（Wade 核定）：A_wet=r_wet(s2-6)/r_dry1(s1)=7.0、A_frz=r_dry2(s11)/r_wet=0.0046；
+   圖5-15/FIG_A/quant_summary/論文（260711 同檔）已全部更新
+2. ✅ 清理＋說明檔＋GitHub push（commit 06077ab；刪 couple_staged_v3-v5 等失敗變體；
+   RUN_STATUS/FIGURE_STATUS/WRITING_BRIEF/HANDOFF 均更至 v6 里程碑）
+3. ✅ **Ch5 深度審閱完成**：Codex（gpt-5.6-sol＋ultra；主程式 C:/Users/Wade/Tools/codex/
+   codex-x86_64-pc-windows-msvc.exe）審出 3 blocker＋~30 major（報告=draft/_CODEX_REVIEW_CH5.md），
+   Fable 已全章改寫 ch5.md（λ≡T 閉合、載入增量公式 v_i/d_i/Δd_i、方位序列改正、S3賣點刪除、
+   f=0.25 解讀範圍前置、A_wet 合成詮釋、三軌法/BPM標定/208萬分母、侷限拆模型簡化+推論範圍）
+   ＋跨章修正（ch1 水壓傳遞/水文年/鍵結顆粒；ch6 貢獻標題10字/315mm/221m/驗證→支持；摘要同）。
+   自檢 11/11 通過、docx 重建驗證（68圖/13數學段）。
+   ✅ Codex 複驗完成（16:36，draft/_CODEX_VERIFY_CH5.md）：0 ❌、核心修正全數確認；
+   它再抓 7 個新問題（130日≠100日算術錯、「不失真」「全域」「直接減緩」過強措辭、
+   3.2→3.0回彈矛盾、199m時點誤植、ch1滲流尺度限定）→ 已全數修掉並重建 docx。
+   殘餘 ⚠️（已知、屬補充深度非錯誤）：BPM標定細節/IDW參數/100×環帶厚度未列規格、
+   圖5-13分向逐階數值未擴、946kPa階段差值未列、段長個別超標；
+   180 kN/m 與 2.7 mm 兩值已由 v6 dump 代理精算驗證（wf_20a71150 journal），非臆造。
+4. ✅ 全文正式排版完成（formal_typeset.py，接在三步產線之後執行；產線現為四步：
+   assemble→transplant_math→finalize→formal_typeset，之後用 Word COM 更新欄位）：
+   A4＋範本邊界、H1-16pt/H2H3-14pt/行距對齊蔡承翰定稿、封面（郭婷軒/王泰典/115年7月）、
+   目錄＋圖目錄＋表目錄（TOC欄位，已用 Word COM 更新）、分節頁碼（前文小寫羅馬、封面無頁碼、
+   正文阿拉伯重編）、59圖+10表標題掛「圖標題/表標題」樣式、式(5-1)(5-2)轉真OMML分式＋右靠編號、
+   37處內文符號斜體/上下標（T λ f c φ E τ x y z g、η_m η_k、A_wet A_frz、r_wet rk、E_eq K0
+   fc ft、σ1′ σ3′ σθ′ p′、u_i v_i d_i R_i Δd_i、ΔN Δh Δpp ux dx dy dz、10^15/13）。
+   全文 96 頁，PDF 抽驗（封面/摘要/目錄/公式頁）全過。
+   ⚠️ 封面三項待 Wade 確認：英文題名（我擬）、Ting-Hsuan Kuo 英文拼名、日期115年7月。
+   ⚠️ Codex 複驗已排 16:36 自動補跑（背景任務 bczgs48e2，輸出 draft/_CODEX_VERIFY_CH5.md）。
+
+## 🆕 老師批改版到件（07-12 傍晚）
+
+00_Document/TTW/ 收到王泰典老師直接改寫版（初稿8_TT，無追蹤修訂）＋手寫新摘要。
+**已完成閱讀並記錄：TTW/TT批改閱讀紀錄_20260712.md**（架構對照/術語定版表/圖表重編對照/
+摘要要點/各章批改要點/與v6落差清單/待裁決核取清單）。重點：跨尺度・坡地尺度・隧道尺度
+等術語欽定、案例提前Ch3、摘要匿名化、Ch2恢復模型系譜圖、結論改條列式；
+TT內數值仍為舊跑次（無 s1 T=1.0/v6 錨定帶/A_wet 新定義）→ 合稿時以 v6 成果回填。
+**Wade 裁示（07-12 晚）：依老師版合稿。已完成 → 00_Document/260712_TX碩論_Wade.docx（98頁）：**
+TT 為基底＋摘要換老師五段版＋英文摘要改寫對齊＋Ch5 回填 v6 定量（雙門檻/黏滯係數/
+損傷14,570/密度1.70-1.83%/外壓946/推力1,030/內擠0.15/裂縫199-19-3）＋換圖17張
+（照TT編號）＋圖5-21掛新獨立累積圖＋新增圖5-22三維演化。
+合稿管線=00_Document/merge_260712.py（冪等，從TT原檔一鍵重建；換圖時清該繪圖srcRect、
+其他章刻意裁切不動）。⚠️教訓：全域刪srcRect會毀檔，必須只動換圖的繪圖元素。
+21:36 已排 Codex(gpt-5.6-sol ultra) 合稿審（任務書=TTW/_REVIEW_TASK_260712.md，
+全文匯出=TTW/_260712_fulltext.md，報告將落 TTW/_CODEX_REVIEW_260712.md）。
+
+## 金蟬交接須知（Wade：Fable 額度緊時由 GPT5.6 SOL ULTRA 接手）
+
+- Fable 額度每小時刷新；交接時把本檔＋draft/_CODEX_REVIEW_CH5.md＋WRITING_BRIEF.md 給接手者即可續作
+- 論文產線冪等：改 draft/chN.md → assemble_thesis → transplant_math → finalize_thesis（皆在 00_Document）
+- 鐵則不變：接手者只執行與回報，決策留 Wade
 
 ## 背景知識（需要時查）
 

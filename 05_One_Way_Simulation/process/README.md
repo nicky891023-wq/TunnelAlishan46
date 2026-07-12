@@ -1,3 +1,9 @@
+> **⚠ 2026-07-12 更新**：本 README 之「LIVE 主控」段落成文於 07-07，現況以
+> `../RUN_STATUS.md` 頂部 v6 里程碑為準——staged 主控＝`couple_staged_v6.f3dat`
+> （隨縱坡錨定帶＋接縫平移驅動）；s1 重跑鏈＝`gen_s1_reruns.py`＋`large/small_s1_rerun.f3dat`
+> （T=1.0，診斷=diag_T1_sweep）；傳遞鏈＝`couple_export_bnd_v4.f3dat`＋`exp_body.f3dat`
+> ＋`cpl_export_s01.f3dat`。v2 相關檔為 07-08 跑通戰史佐證，僅供追溯。
+
 # 05/process — 檔案地圖（2026-07-07 盤點）
 
 ## LIVE（staged 主鏈，勿動）

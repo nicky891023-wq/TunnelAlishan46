@@ -45,7 +45,9 @@ OUT  = HERE.parent / "result"
 CX, CZ = 1297.0, 1747.5
 TH_BINS = np.arange(0, 361, 15)          # 24 x 15deg
 Y_BINS  = np.arange(860, 911, 10)        # 5 x 10m
-FEET_Z  = 1745.30
+def feet_ztop(y):
+    # v6 grade-following anchored band top: rim(y)+0.41, rim=1743.97+0.0372(y-860)
+    return 1743.97 + 0.0372 * (np.asarray(y) - 860.0) + 0.41
 STAGES  = list(range(1, 12))
 WATER   = ["W-110","W-90","W-70","W-50","W-30","W-10","W-30","W-50","W-70","W-90","W-110"]
 DAYS    = [30, 5, 5, 5, 5, 30, 5, 5, 5, 5, 30]
@@ -59,7 +61,7 @@ def load_cracks(k):
 def sector_counts(d):
     x, y, z = d[:,0], d[:,1], d[:,2]
     th = np.degrees(np.arctan2(z-CZ, x-CX)) % 360
-    keep = z > FEET_Z
+    keep = z > feet_ztop(y)
     H, _, _ = np.histogram2d(th[keep], y[keep], bins=[TH_BINS, Y_BINS])
     return H  # 24 x 5
 

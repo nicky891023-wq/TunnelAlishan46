@@ -35,14 +35,17 @@ import pyvista as pv
 from sklearn.cluster import DBSCAN
 from scipy.spatial import cKDTree
 from PIL import Image
+import tunnel_frame as tf
 
 pv.OFF_SCREEN = True
 HERE = Path(__file__).parent
 OUT  = HERE.parent / "result" / "FIG_D_crack_normal_evolution_3D.gif"
-CX, CY, CZ = 1297.0, 885.0, 1747.5
+CX, CY, CZ = 1298.85, 885.0, 1747.5     # corrected ring centre (07-10)
 WATER = ["W-110","W-90","W-70","W-50","W-30","W-10","W-30","W-50","W-70","W-90","W-110"]
 PHASE = ["dry1","rise","rise","rise","rise","wet","fall","fall","fall","fall","dry2"]
-AGE1  = 25855.0          # stage-1 baseline cutoff (exclude service-history damage)
+# stage-1 baseline cutoff = max age in the CURRENT v6 s1 dump (not hardcoded: the rerun
+# changed the s1 cycle span)
+AGE1 = float(np.loadtxt(HERE / "cs_s1_cracks.txt", skiprows=1, ndmin=2)[:, 5].max())
 
 YMIN, YMAX = 860.0, 910.0
 YSTEP  = 1.0            # XZ cross-section slab thickness (Wade: connect every 1 m)
@@ -62,9 +65,11 @@ DENS_R = 0.35
 TUBE_R = 0.10          # thinner tubes (Wade: 裂縫細一些)
 NFRAMES  = 72          # frames per stage; 360 orbit = one stage
 FRAME_MS = 70          # ms/frame -> 72*0.070 = 5.0 s per rotation
-RADIUS, ELEV, ZOOM = 52.0, 24.0, 1.05
-WIN = (1000, 720)
+RADIUS, ELEV, ZOOM = 52.0, 24.0, 1.42   # measured: side-on ring width 64.5% at 1.05 -> ~92%
+WIN = (1280, 800)      # wide letterbox: the low flat ring fills the frame, less blank sky
+FONT = "times"         # standard spec (Wade 07-12): TNR English, large fonts
 TEST = "--test" in sys.argv
+MONTAGE = "--montage" in sys.argv
 
 # crack TYPE: 0 circumferential(red) / 1 oblique(blue) / 2 longitudinal(green)
 COL  = {0: "#e00000", 1: "#1f6fe0", 2: "#2ca02c"}
@@ -80,8 +85,10 @@ w  = cs[:, 5] > AGE1
 P   = cs[w, :3]
 AGE = cs[w, 5]
 X, Y, Z = P[:, 0], P[:, 1], P[:, 2]
-THETA = np.degrees(np.arctan2(X - CX, Z - CZ))          # hoop angle from crown (deg)
-R     = np.sqrt((X - CX)**2 + (Z - CZ)**2)
+# hoop angle/radius about the LOCAL ring centre (plan curve cx(y) + 3.74% grade z0(y))
+RX, RZ = X - tf.cx_of(Y), Z - tf.z0_of(Y)
+THETA = np.degrees(np.arctan2(RX, RZ))                  # hoop angle from crown (deg)
+R     = np.sqrt(RX**2 + RZ**2)
 AGE_END = {k: float(np.loadtxt(HERE / f"cs_s{k}_cracks.txt", skiprows=1, ndmin=2)[:, 5].max())
            for k in range(1, 12)}
 
@@ -213,7 +220,7 @@ def cam_position(az):
     a = np.radians(az)
     return (CX + RADIUS*np.cos(a), CY + RADIUS*np.sin(a), CZ + ELEV)
 
-def render_stage(pl, k, az):
+def render_stage(pl, k, az, annotate=True):
     pl.clear(); pl.set_background("white")
     pl.add_points(ring, color="#c4c4c4", point_size=2.0, opacity=0.24,
                   render_points_as_spheres=False)
@@ -225,12 +232,20 @@ def render_stage(pl, k, az):
                         show_scalar_bar=False)
     pl.camera.focal_point = (CX, CY, CZ); pl.camera.up = (0, 0, 1)
     pl.camera.position = cam_position(az); pl.reset_camera(); pl.camera.zoom(ZOOM)
-    total = sum(tot.values())
-    tag = ("baseline (water cycle not started)" if total < 0.5 else
-           f"circumf(red)={tot[0]:.0f} m   oblique(blue)={tot[1]:.0f} m   longit(green)={tot[2]:.0f} m")
-    pl.add_text(f"Stage {k}  {WATER[k-1]} ({PHASE[k-1]})\n"
-                f"circumferential=XZ-section arcs, oblique/longit=directional streaks\n{tag}",
-                position="upper_left", font_size=13, color="black")
+    if annotate:
+        total = sum(tot.values())
+        pl.add_text(f"Stage {k}   {WATER[k-1]} ({PHASE[k-1]})",
+                    position="upper_left", font_size=22, color="#1a2433", font=FONT)
+        tag = ("baseline - water cycle not started" if total < 0.5 else
+               f"circumferential {tot[0]:.0f} m    oblique {tot[1]:.0f} m    "
+               f"longitudinal {tot[2]:.0f} m")
+        pl.add_text(tag, position=(18, WIN[1] - 116), font_size=15,
+                    color="#3a4656", font=FONT)
+        for i, (t, lab) in enumerate(((0, "circumferential (XZ-section arcs)"),
+                                      (1, "oblique (directional streaks)"),
+                                      (2, "longitudinal"))):
+            pl.add_text(lab, position=(18, 88 - 32 * i), font_size=15,
+                        color=COL[t], font=FONT)
     return pl.screenshot(return_img=True)
 
 if TEST:
@@ -246,6 +261,41 @@ if TEST:
     imgs = [render_stage(pl, k, 35) for k in (1, 4, 6, 11)]
     pl.close()
     Image.fromarray(np.concatenate(imgs, axis=1)).save(HERE / "_FIG_D_normal_preview.png")
+    sys.exit(0)
+
+if MONTAGE:
+    # thesis 圖5-20: static 2x2 stage montage (clean frames + TNR typography)
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import thesis_style as TS
+    TS.apply()
+    KS = (1, 4, 6, 11)
+    pl = pv.Plotter(off_screen=True, window_size=(1400, 1000))
+    frames = {k: render_stage(pl, k, 35, annotate=False) for k in KS}
+    pl.close()
+    fig, axs = plt.subplots(2, 2, figsize=(22, 15.5))
+    for ax, k in zip(axs.ravel(), KS):
+        img = frames[k]
+        g = img.mean(axis=2)
+        rows = np.where((g < 250).any(1))[0]; cols = np.where((g < 250).any(0))[0]
+        ax.imshow(img[rows[0]:rows[-1] + 1, cols[0]:cols[-1] + 1])
+        ax.axis("off")
+        lab = {1: "(a) s1  W-110 (initial dry) - baseline",
+               4: "(b) s4  W-50 (rising)",
+               6: "(c) s6  W-10 (wet peak)",
+               11: "(d) s11  W-110 (final dry) - frozen"}[k]
+        ax.set_title(lab, loc="left", fontsize=24)
+    fig.legend(handles=[plt.Line2D([0], [0], color=COL[0], lw=5, label="circumferential"),
+                        plt.Line2D([0], [0], color=COL[1], lw=5, label="oblique"),
+                        plt.Line2D([0], [0], color=COL[2], lw=5, label="longitudinal")],
+               loc="lower center", ncol=3, fontsize=22, frameon=False)
+    fig.suptitle("3D crack-trace evolution through the water cycle "
+                 "(s1 baseline excluded; classification and statistics follow Fig. 5-19)",
+                 y=0.995)
+    fig.savefig(HERE.parent / "result" / "圖5-20_襯砌裂縫三維演化.png",
+                dpi=170, bbox_inches="tight")
+    print("saved 圖5-20 montage")
     sys.exit(0)
 
 frames = []

@@ -1,1 +1,0 @@
-QObject::connect: Cannot connect (null)::triggered() to pfc::PFCModule::onHelp()

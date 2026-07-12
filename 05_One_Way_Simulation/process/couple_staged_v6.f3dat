@@ -1,5 +1,5 @@
 ; ============================================================================
-; couple_staged_v2.f3dat -- COUPLED model 11-stage lining response (Phase C, 2026-07-03).
+; couple_staged_v6.f3dat -- COUPLED model 11-stage lining response (Phase C, 2026-07-03).
 ;   Restores Couple_Initial_G (STEP G: incremental-elastic rock with FREE interior,
 ;   feet anchored, FREE inner face, end platens DELETED), then per stage k = 1..11:
 ;     (1) read cpl_resid_sNN.txt (small-model couple-box boundary residual, Kabsch-

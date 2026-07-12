@@ -28,8 +28,17 @@ __pycache__/
 # T=0.8 舊跑次備份（僅 lg_disp_s01.txt 為 plot_histories_drive 接縫閉合之生產輸入）
 05_One_Way_Simulation/process/_backup_T08run/*
 !05_One_Way_Simulation/process/_backup_T08run/lg_disp_s01.txt
+# 渲染中繼圖（render_*_model.py 產出、plot_schematics 讀入；可重生）
+05_One_Way_Simulation/process/_cp_*.png
+05_One_Way_Simulation/process/_lg_*.png
+05_One_Way_Simulation/process/_sm_*.png
 # 05/result 內部圖（make_result_figs 可重生；論文版在 00_Document/result）
 05_One_Way_Simulation/result/FIG_*.png
+# 大型 GIF（make_crack_normal_gif.py 可重生；56MB 逼近 GitHub 上限）
+05_One_Way_Simulation/result/FIG_*.gif
+00_Document/method_report_assets/crack_evolution_3D.gif
 # 第三方計畫文件（阿里山林鐵管理處等委辦成果，不上公開 repo）
 00_Document/202411_*/
 00_Document/*報告*/
+# 老師批改區（含未發表論文全文與批改稿；政策同 draft/）
+00_Document/TTW/

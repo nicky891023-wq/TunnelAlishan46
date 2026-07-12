@@ -1,0 +1,84 @@
+**********************************************
+* Logging started at 週日 七月 12 17:50:05 2026
+* By flac3d Version 6.00 Release 069
+* 
+* 
+* Job Title: 
+**********************************************
+flac3d>
+flac3d>model restore '../../04_InitialBalance/output/Large_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 12:48:52 2026
+Total Cycles: 6958  Super Cycles: 6958
+Title: Alishan #46 LARGE far-field model -- TET (4-layer conformal geology, DEM top)
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('INITSLICE restored Large_Initial zones='+string(zone.num))]
+INITSLICE restored Large_Initial zones=511988
+flac3d>fish define dump_slice
+   Def>    local f = file.open(fnm,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x z szz sxx pp state'
+   Def>    local st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        local p = zone.pos(z)
+   Def>        if math.abs(comp.y(p)-ycen) < yhw then
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.pp(z))+' '+string(zone.state(z,1))
+   Def>            st = file.write(a,1)
+   Def>            n = n + 1
+   Def>        endif
+   Def>    endloop
+   Def>    st = file.close
+   Def>    io.out('INITSLICE-DONE '+fnm+' rows='+string(n))
+   Def>end
+flac3d>[global ycen = 900.0]
+flac3d>[global yhw  = 12.0]
+flac3d>[global fnm  = 'lg_init_slice.txt']
+flac3d>[dump_slice]
+INITSLICE-DONE lg_init_slice.txt rows=9843
+0 (integer)
+flac3d>
+flac3d>model restore '../../04_InitialBalance/output/Small_Initial'
+********************************************
+Save file created by FLAC3D 6.00.69.0
+on 週四 七月 2 15:44:02 2026
+Total Cycles: 23278  Super Cycles: 23278
+Title: Alishan #46 SMALL near-field -- CONFORMAL rock(6-layer)+lining ring, Route C
+Customer: 
+        : 
+********************************************
+flac3d>fish automatic-create on
+flac3d>[io.out('INITSLICE restored Small_Initial zones='+string(zone.num))]
+INITSLICE restored Small_Initial zones=1433466
+flac3d>fish define dump_slice
+   Def>    local f = file.open(fnm,1,1)
+   Def>    local a = array.create(1)
+   Def>    a(1) = 'x z szz sxx pp state'
+   Def>    local st = file.write(a,1)
+   Def>    local n = 0
+   Def>    loop foreach local z zone.list
+   Def>        local p = zone.pos(z)
+   Def>        if math.abs(comp.y(p)-ycen) < yhw then
+   Def>            a(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.pp(z))+' '+string(zone.state(z,1))
+   Def>            st = file.write(a,1)
+   Def>            n = n + 1
+   Def>        endif
+   Def>    endloop
+   Def>    st = file.close
+   Def>    io.out('INITSLICE-DONE '+fnm+' rows='+string(n))
+   Def>end
+flac3d>[global ycen = 885.0]
+flac3d>[global yhw  = 1.5]
+flac3d>[global fnm  = 'sm_init_slice.txt']
+flac3d>[dump_slice]
+INITSLICE-DONE sm_init_slice.txt rows=47063
+0 (integer)
+flac3d>
+flac3d>program log off
+**********************************************
+* Logging ended at 週日 七月 12 17:50:16 2026
+**********************************************

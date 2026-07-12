@@ -1,0 +1,59 @@
+; export_init_slices.f3dat -- initial-state cross-section dumps for the presentation QA
+;   figures (07-12 asset overhaul): Large_Initial y=900 slab, Small_Initial y=885 slab.
+;   Columns: x z szz sxx pp state   (stress Pa, pp Pa; state = plastic bitmask)
+;   cwd = process/, bare filename. Verify via THIS log: 2x INITSLICE-DONE.
+program log-file 'export_init_slices.log'
+program log on
+
+model restore '../../04_InitialBalance/output/Large_Initial'
+fish automatic-create on
+[io.out('INITSLICE restored Large_Initial zones='+string(zone.num))]
+fish define dump_slice
+    local f = file.open(fnm,1,1)
+    local a = array.create(1)
+    a(1) = 'x z szz sxx pp state'
+    local st = file.write(a,1)
+    local n = 0
+    loop foreach local z zone.list
+        local p = zone.pos(z)
+        if math.abs(comp.y(p)-ycen) < yhw then
+            a(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.pp(z))+' '+string(zone.state(z,1))
+            st = file.write(a,1)
+            n = n + 1
+        endif
+    endloop
+    st = file.close
+    io.out('INITSLICE-DONE '+fnm+' rows='+string(n))
+end
+[global ycen = 900.0]
+[global yhw  = 12.0]
+[global fnm  = 'lg_init_slice.txt']
+[dump_slice]
+
+model restore '../../04_InitialBalance/output/Small_Initial'
+fish automatic-create on
+[io.out('INITSLICE restored Small_Initial zones='+string(zone.num))]
+fish define dump_slice
+    local f = file.open(fnm,1,1)
+    local a = array.create(1)
+    a(1) = 'x z szz sxx pp state'
+    local st = file.write(a,1)
+    local n = 0
+    loop foreach local z zone.list
+        local p = zone.pos(z)
+        if math.abs(comp.y(p)-ycen) < yhw then
+            a(1) = string(comp.x(p))+' '+string(comp.z(p))+' '+string(zone.stress.zz(z))+' '+string(zone.stress.xx(z))+' '+string(zone.pp(z))+' '+string(zone.state(z,1))
+            st = file.write(a,1)
+            n = n + 1
+        endif
+    endloop
+    st = file.close
+    io.out('INITSLICE-DONE '+fnm+' rows='+string(n))
+end
+[global ycen = 885.0]
+[global yhw  = 1.5]
+[global fnm  = 'sm_init_slice.txt']
+[dump_slice]
+
+program log off
+program quit
