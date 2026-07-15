@@ -42,3 +42,11 @@ __pycache__/
 00_Document/*報告*/
 # 老師批改區（含未發表論文全文與批改稿；政策同 draft/）
 00_Document/TTW/
+# 06 雙向鏈大型可再生中繼資料（run_t5 管線自 .f3sav 重生；registry ~95MB）
+06_Two_Way_Simulation/process/cpl_bond_registry.txt
+06_Two_Way_Simulation/process/cpl_bnd_*.txt
+06_Two_Way_Simulation/process/cpl_resid_*.txt
+06_Two_Way_Simulation/process/cpl_wall_*.txt
+06_Two_Way_Simulation/process/cs_s*_*.txt
+06_Two_Way_Simulation/process/shell_registry.txt
+06_Two_Way_Simulation/output/t5/

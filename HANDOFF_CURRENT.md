@@ -1,12 +1,38 @@
-# 交接 RUNBOOK（CURRENT，2026-07-12 Fable 末次更新）— 接手者唯一入口
+# 交接 RUNBOOK（CURRENT，2026-07-14 Fable 末次更新）— 接手者唯一入口
 
 > **授權範圍（Wade 裁示，恆常有效）**：接手者**只監控回報，決策全給 Wade**。
 > 照著寫好的步驟做＝執行，不是決策。任何偏離（判準亮紅、腳本報錯、數字違反預期）
 > ＝停下、整理現況、回報 Wade 裁決。不即興修腳本、不即興調參數。
 
-## 現況一覽（2026-07-12）
+## 🔴 進行中：06 雙向耦合 26-tick 鏈（2026-07-14 起跑）
 
-**v6 重跑（兩問題修正版）已全部完成、下游全部更新完畢。**無運轉中之 FLAC 作業。
+Wade 指令：小模/耦合模雙向、每 5 天交替傳遞（小模圍岩變形→耦合模襯砌外力；
+耦合模襯砌變形→小模圍岩反力=D→E 殼勁度折減）。大模不重跑（沿用 05 v6 驅動檔）。
+
+**管線（全在 06/process，一律 cd 到該目錄操作）**：
+- 總指揮 `run_t5.py`：`python run_t5.py status`（看進度）→ `smoke` → `stage0` →
+  `ticks [N]`（斷點續跑：manifest=06/output/t5/manifest.json，committed tick 自動跳過）
+- FLAC 腳本由 `build_06_scripts.py` 從 05 原始碼切片生成（cs06_stage0 / cs06_kernel /
+  ss06_kernel / ss06_t1_init / exp06_body / track_reattach）；逐 tick 側檔由 run_t5 生成
+- 資料工具：make_cpl_resid06（Kabsch，已驗證與 05 產線逐位一致）→
+  make_damage_map_v2（24×5 格損傷圖：registry 分母/CONTROL-0 扣除/護帶/單調）→
+  make_shellE（E=E0(1−D)，地板 2.5 GPa）
+- **fail-closed**：任何 gate 亮紅→鏈自動停、manifest 記 failed_*→整理現況回報 Wade，
+  不重跑不調參。裂縫單 tick 增量 ≥30,000（v6 shatter 規則）由 Wade 裁 DRIVE_SCALE
+- 06 專屬鐵則：tick 腳本**不可**呼叫 track_init（會清累積裂縫 DFN；用 track_reattach）；
+  **不可**在 tick 間重呼 apply_vel_idw / tag_driven（毀掉恆定邊界速度）；
+  位移歸零只在 stage-0；存檔滾動保留（keep={t00,1,6,10,11,16,20,21,26}+最新2）
+- ⚠️ log 判讀教訓（07-15）：FLAC 對 call 進來的檔案**逐行回顯定義**（"Def> io.out('SS06-ABORT…')"），
+  對 log 做子字串搜尋會誤中定義文字（誤殺）或被定義文字誤放行（漏檢）。gate 一律用
+  「行首錨定 / 帶數字」的 regex 比對**執行輸出**；另外耦合模單一 cycle 區塊靜默可達
+  ~70 分鐘（1.35 s/cyc），staleness 看門狗已分級（stage0/耦合/小模=150/120/60 分）
+- tick 內斷點續跑：小模或耦合任一段已有「自身 log marker＋存檔」即自動重用不重跑（maybe_done）
+- 預估：每 tick ≈ 45–60 分（小模+耦合各一次 console，中間 65s 授權緩衝）→ 全鏈 20–26 h
+- 里程碑回報點：t01（identity 對 05 s1 前 5 天）、t06（乾季末）、t11–t16（雨峰）、t26
+
+## 現況一覽（2026-07-12 基線）
+
+**v6 重跑（兩問題修正版）已全部完成、下游全部更新完畢。**
 
 - 問題1（s1 門檻過廣）：大/小模 s1 以 T=1.0 重跑完成（大模活化 117,621→3,315；小模 422,854→24,935）；
   s2-11 驅動檔以接縫平移法保留增量（原檔備份於 05/process/_backup_T08run/）

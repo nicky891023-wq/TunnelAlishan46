@@ -1,0 +1,13 @@
+; ss06_smoke_b.f3dat -- GENERATED: identity shell-E write + stability check
+program log-file 'ss06_smoke_b.log'
+program log on
+model restore '../../04_InitialBalance/output/Small_Initial'
+call '../../04_InitialBalance/parameter.f3dat'
+fish automatic-create on
+call 'ss06_kernel.f3dat'
+[apply_shellE('shellE_identity.txt')]
+model cycle 50
+[io.out('SS06-SMOKEB dmax='+string(dmax_all))]
+[io.out('SS06-SMOKEB-DONE')]
+program log off
+program quit

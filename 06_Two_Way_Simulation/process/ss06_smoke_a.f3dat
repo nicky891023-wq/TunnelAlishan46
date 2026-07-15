@@ -1,0 +1,13 @@
+; ss06_smoke_a.f3dat -- GENERATED: registry + export smoke (read-only)
+program log-file 'ss06_smoke_a.log'
+program log on
+model restore '../../04_InitialBalance/output/Small_Initial'
+call '../../04_InitialBalance/parameter.f3dat'
+fish automatic-create on
+call 'ss06_kernel.f3dat'
+call 'exp06_body.f3dat'
+[exp_shellreg('shell_registry.txt')]
+[exp_bnd('cpl_bnd_smoke.txt')]
+[io.out('SS06-SMOKEA-DONE')]
+program log off
+program quit

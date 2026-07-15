@@ -1,0 +1,489 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+build_06_scripts.py -- generate the 06 two-way FLAC3D scripts by SLICING the
+proven 05 sources verbatim (marker-string extraction; zero hand transcription).
+
+Generates into 06/process/:
+  cs06_stage0.f3dat   coupled stage-0 rebuild (G4 restore + v6 REBAND + CONTROL-0
+                      + bond registry dump + save cs06_t00)
+  cs06_kernel.f3dat   coupled per-tick FISH defs (reloaded every tick; restore wipes FISH)
+  track_reattach.fis  add_crack def + callback re-attach ONLY (never track_init per tick:
+                      its 'fracture delete' would wipe the cumulative crack DFN)
+  ss06_kernel.f3dat   small-model per-tick FISH defs: 05 defs verbatim + crp_prologue
+                      (= crp_stage phases 1-3, run once per stage) + crp_tick (5-day
+                      creep chunks) + shell_monitor (cap -> monitor-only) + apply_shellE
+                      (D->E cell-table feedback, single write + force.update)
+  exp06_body.f3dat    exp_bnd/exp_wall defs only (no auto-run tail)
+Copies fracture_track_v3.fis + couple_qa_v2.fis into 06/process (bare-name calls).
+
+Design invariants (from 05 archaeology, wf_1133b00b-7cc):
+  * apply_vel_idw is called ONCE per stage (prologue) => constant boundary velocity;
+    mid-stage ticks only advance the creep clock. NEVER re-call it between ticks.
+  * tag_driven / zone gridpoint free velocity: t=1 ONLY (re-tagging zeroes gp.vel!)
+  * datum zeroing: stage-0 only, both models.
+  * cell frame shared FISH<->python: theta = atan2(x-1297, z-1747.5) deg in [0,360),
+    isec = int(theta/15)+1 (24 sectors); iband = int((y-860)/10)+1 clamped [1,5].
+"""
+import io
+import shutil
+import sys
+from pathlib import Path
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+ROOT = Path(r"C:/Users/Wade/Desktop/Tunnel_TX")
+P05 = ROOT / "05_One_Way_Simulation" / "process"
+P06 = ROOT / "06_Two_Way_Simulation" / "process"
+OUT = ROOT / "06_Two_Way_Simulation" / "output" / "t5"
+OUT.mkdir(parents=True, exist_ok=True)
+
+CS_SRC = (P05 / "couple_staged_v6.f3dat").read_text(encoding="utf-8", errors="ignore").splitlines()
+SS_SRC = (P05 / "small_staged_v2.f3dat").read_text(encoding="utf-8", errors="ignore").splitlines()
+
+
+def idx(lines, marker, start=0):
+    for i in range(start, len(lines)):
+        if marker in lines[i]:
+            return i
+    raise SystemExit(f"MARKER NOT FOUND: {marker!r}")
+
+
+def slice_between(lines, m_start, m_end, incl_end=True, extra=0):
+    a = idx(lines, m_start)
+    b = idx(lines, m_end, a + 1)
+    return lines[a: b + (1 if incl_end else 0) + extra]
+
+
+def slice_before(lines, m_start, m_stop):
+    """from m_start line up to (exclusive) m_stop line, trailing ';' comments stripped"""
+    a = idx(lines, m_start)
+    b = idx(lines, m_stop, a + 1)
+    out = lines[a:b]
+    while out and (out[-1].strip() == "" or out[-1].strip().startswith(";")):
+        out.pop()
+    return out
+
+
+# ============================ coupled-side blocks ============================
+CS_SETUP = slice_between(CS_SRC, "program load module 'pfc'", "call 'couple_qa_v2.fis'")
+CS_GLOBALS = slice_before(CS_SRC, "[global NSUB", "[io.out('CS-0 restored")
+CS_HELLO = [CS_SRC[idx(CS_SRC, "[io.out('CS-0 restored")]]
+CS_REBAND = slice_between(CS_SRC, "ANCHOR RE-BAND (Wade 07-10, staged v3)", "CS-REBAND-DONE")
+CS_DATUM = slice_between(CS_SRC, "---- crack tracking on", "zone gridpoint initialize displacement (0,0,0)")
+CS_KERNEL = slice_before(CS_SRC, "---- tag + fix the driven outer-boundary gps", "fish define zero_targets")
+CS_CONTROL0 = slice_between(CS_SRC, "fish define zero_targets", "CS-CONTROL0 GATE:")
+
+REG_DUMP = """
+; ---- bond registry: damage-map denominator, frozen at committed stage-0 ----
+;      breakable = intact linearpbond (pb_state=3) with pb_ten < 1e10 (excludes
+;      the anchored feet strip). Python bins these into the 24x5 (sector,y-band)
+;      cells; cells with 0 breakable bonds are INVALID (no feedback there).
+fish define reg_dump(fname)
+    local fb = file.open(fname,1,1)
+    local a = array.create(1)
+    a(1) = 'x y z breakable'
+    local st = file.write(a,1)
+    local nb = 0
+    local nanch = 0
+    loop foreach local c contact.list('ball-ball')
+        if contact.model(c) = 'linearpbond' then
+            if contact.prop(c,'pb_state') = 3 then
+                local p = contact.pos(c)
+                local brk = 1
+                if contact.prop(c,'pb_ten') > 1e10 then
+                    brk = 0
+                    nanch = nanch + 1
+                else
+                    nb = nb + 1
+                end_if
+                a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(brk)
+                st = file.write(a,1)
+            end_if
+        end_if
+    end_loop
+    st = file.close
+    io.out('CS06-REGDUMP '+fname+' breakable='+string(nb)+' anchored='+string(nanch))
+end
+[reg_dump('cpl_bond_registry.txt')]
+""".splitlines()
+
+stage0 = (
+    ["; cs06_stage0.f3dat -- GENERATED by build_06_scripts.py from couple_staged_v6.f3dat",
+     ";   (verbatim v6 conditioning: REBAND anneal + drift cleanup + quiet + track_init",
+     ";    + datum + tag driven + CONTROL-0), then bond-registry dump + save cs06_t00.",
+     "program log-file 'cs06_stage0.log'",
+     "program log on"]
+    + CS_SETUP + CS_GLOBALS + CS_HELLO + [""]
+    + CS_REBAND + [""] + CS_DATUM
+    + ["",
+       "; ---- mid-checkpoint: conditioning done (anneal ~3 h). If anything later fails,",
+       ";      resume with cs06_stage0b_resume.f3dat instead of redoing the anneal. ----",
+       "model save '../output/t5/cs06_reband'",
+       "[io.out('CS06-REBAND-SAVED')]"]
+    + [""] + CS_KERNEL + [""] + CS_CONTROL0 + [""]
+    + ["; ---- t00 baseline observables (same exporters as per-tick dumps) ----",
+       "[export_pmap('cs06_t00_pmap.txt')]",
+       "[export_cwall('cs06_t00_cwall.txt')]"]
+    + REG_DUMP
+    + ["",
+       "model save '../output/t5/cs06_t00'",
+       "[io.out('CS06-STAGE0-DONE')]",
+       "program log off",
+       "program quit"]
+)
+(P06 / "cs06_stage0.f3dat").write_text("\n".join(stage0) + "\n", encoding="utf-8")
+
+# resume variant: restore the post-conditioning checkpoint, redo defs (restore wipes
+# FISH), re-attach crack callback (DFN empty at this point; reattach never wipes),
+# then the identical CONTROL-0 + baseline dumps + registry + final save tail.
+stage0b = (
+    ["; cs06_stage0b_resume.f3dat -- GENERATED: resume stage-0 from cs06_reband",
+     ";   (post-REBAND checkpoint). Same tail as cs06_stage0.f3dat after the anneal.",
+     "program log-file 'cs06_stage0b.log'",
+     "program log on",
+     "program load module 'pfc'",
+     "program load module 'wallzone'",
+     "model restore '../output/t5/cs06_reband'",
+     "model largestrain on",
+     "model mechanical timestep scale",
+     "fish automatic-create on",
+     "call 'track_reattach.fis'",
+     "call 'couple_qa_v2.fis'"]
+    + CS_GLOBALS + [""] + CS_KERNEL + [""] + CS_CONTROL0 + [""]
+    + ["; ---- t00 baseline observables (same exporters as per-tick dumps) ----",
+       "[export_pmap('cs06_t00_pmap.txt')]",
+       "[export_cwall('cs06_t00_cwall.txt')]"]
+    + REG_DUMP
+    + ["",
+       "model save '../output/t5/cs06_t00'",
+       "[io.out('CS06-STAGE0-DONE')]",
+       "program log off",
+       "program quit"]
+)
+(P06 / "cs06_stage0b_resume.f3dat").write_text("\n".join(stage0b) + "\n", encoding="utf-8")
+
+kernel_cs = (
+    ["; cs06_kernel.f3dat -- GENERATED: per-tick coupled FISH defs (v6 verbatim).",
+     ";   Reloaded after every restore (restore wipes FISH). Contains [tag_cpl_driven]",
+     ";   re-run (idempotent: group/fix persist; gp.vel zeroing = correct pre-ramp state)."]
+    + CS_GLOBALS + [""] + CS_KERNEL
+)
+(P06 / "cs06_kernel.f3dat").write_text("\n".join(kernel_cs) + "\n", encoding="utf-8")
+
+# ============================ track_reattach.fis ============================
+FT_SRC = (P05 / "fracture_track_v3.fis").read_text(encoding="utf-8", errors="ignore").splitlines()
+ADD_CRACK = slice_before(FT_SRC, "fish define add_crack", "fish define track_init")
+reattach = (
+    ["; track_reattach.fis -- GENERATED: per-tick crack-tracking re-attach.",
+     ";   add_crack def = fracture_track_v3.fis verbatim. UNLIKE the v3 initializer",
+     ";   this does NOT wipe the fracture DFN / results map / counters -- the",
+     ";   cumulative crack DFN must survive all 26 ticks. Callback remove-when-absent",
+     ";   is safe (v6's first initializer call did the same on a clean model)."]
+    + ADD_CRACK
+    + ["",
+       "fish define track_reattach",
+       "    command",
+       "        fish callback remove add_crack event bond_break",
+       "        fish callback add add_crack event bond_break",
+       "    endcommand",
+       "    io.out('CS06-TRACK-REATTACH ok')",
+       "end",
+       "[track_reattach]"]
+)
+(P06 / "track_reattach.fis").write_text("\n".join(reattach) + "\n", encoding="utf-8")
+
+# ============================ small-side kernel ============================
+SS_TAG = slice_before(SS_SRC, "fish define tag_driven", "[tag_driven]")
+SS_READ = slice_before(SS_SRC, "; --- read stage drive file", "; --- gradual velocity drive")
+SS_AVI = slice_before(SS_SRC, "; --- gradual velocity drive", "; --- Maxwell-only threshold")
+SS_THR = slice_before(SS_SRC, "; --- Maxwell-only threshold", "; --- WadeCreepSupport shell cap")
+SS_CAPG = slice_before(SS_SRC, "[global sig_capC", "fish define shell_cap")
+SS_CONV = slice_before(SS_SRC, "; --- convergence sentinels", "[find_conv]")
+SS_VH = slice_before(SS_SRC, "fish define vclose", "; --- initial burgers-mohr")
+SS_BURG = slice_before(SS_SRC, "; --- initial burgers-mohr assignment", "; --- per-stage: fluid(500cyc)")
+
+a = idx(SS_SRC, "zone cmodel assign mohr-coulomb range group 'rock' slot 'mat'") - 1
+assert SS_SRC[a].strip() == "command", f"prologue start anchor wrong: {SS_SRC[a]!r}"
+b = idx(SS_SRC, "creep start: active=")
+SS_PRO = SS_SRC[a: b + 1]
+
+NEW_DEFS = """
+; ---- shell stress MONITOR (05 secant cap disarmed: 06 has a single damage source,
+;      the coupled D->E feedback; the cap remains as observability + abort signal) ----
+fish define shell_monitor
+    command
+        structure shell recover surface (0,1,0)
+        structure shell recover stress depth-factor 0
+    endcommand
+    global n_wouldcap = 0
+    global sh_maxc = 0.0
+    global sh_maxt = 0.0
+    loop foreach local s struct.list
+        if struct.type(s) = 'shell' then
+            local smn = 1e30
+            local smx = -1e30
+            loop local k (0,3)
+                local sx = struct.shell.stress.prin.x(s,k)
+                local sz = struct.shell.stress.prin.z(s,k)
+                if sx < smn then
+                    smn = sx
+                end_if
+                if sz > smx then
+                    smx = sz
+                end_if
+            end_loop
+            local sc = 0.0
+            if smn < 0.0 then
+                sc = -smn
+            end_if
+            local stn = 0.0
+            if smx > 0.0 then
+                stn = smx
+            end_if
+            if sc > sh_maxc then
+                sh_maxc = sc
+            end_if
+            if stn > sh_maxt then
+                sh_maxt = stn
+            end_if
+            if sc > (1.0+sig_eps)*sig_capC then
+                n_wouldcap = n_wouldcap + 1
+            else if stn > (1.0+sig_eps)*sig_capT then
+                n_wouldcap = n_wouldcap + 1
+            end_if
+        end_if
+    end_loop
+end
+
+; ---- recount active creep zones from restored zone props (n_active is FISH-global,
+;      wiped by restore; the actual gate lives in viscosity-maxwell and persists) ----
+fish define count_active
+    local na = 0
+    loop foreach local z zone.list
+        if zone.group(z,'mat') = 'rock' then
+            if zone.prop(z,'viscosity-maxwell') < 1e50 then
+                na = na + 1
+            end_if
+        end_if
+    end_loop
+    global n_active = na
+end
+
+; ---- D->E feedback: read 24x5 cell table 'isec iband E' (1 header line), write
+;      struct.shell.young once per tick + single struct.force.update (the proven
+;      05 cap cadence wrote E every 1.25 d; once per 5 d is strictly gentler).
+;      Cell frame MUST match make_damage_map_v2.py:
+;      theta = atan2(x-1297, z-1747.5) in deg wrapped to [0,360); isec=int(th/15)+1;
+;      iband = int((y-860)/10)+1 clamped to [1,5] (out-of-ring y -> guard bands=E0). ----
+fish define apply_shellE(fname)
+    local arr = array.create(1)
+    local st = file.open(fname,0,1)
+    st = file.read(arr,1)
+    global Ecell = array.create(24,5)
+    st = file.read(arr,1)
+    loop while st = 0
+        local ln = arr(1)
+        local i1 = int(string.token(ln,1))
+        local i2 = int(string.token(ln,2))
+        Ecell(i1,i2) = float(string.token(ln,3))
+        st = file.read(arr,1)
+    end_loop
+    st = file.close
+    global n_ewrite = 0
+    global n_echange = 0
+    loop foreach local s struct.list
+        if struct.type(s) = 'shell' then
+            local p = struct.pos(s)
+            local th = math.atan2(comp.x(p)-1297.0, comp.z(p)-1747.5)/math.degrad
+            if th < 0.0 then
+                th = th + 360.0
+            end_if
+            local is2 = int(th/15.0) + 1
+            if is2 > 24 then
+                is2 = 24
+            end_if
+            if is2 < 1 then
+                is2 = 1
+            end_if
+            local ib2 = int((comp.y(p)-860.0)/10.0) + 1
+            if ib2 < 1 then
+                ib2 = 1
+            end_if
+            if ib2 > 5 then
+                ib2 = 5
+            end_if
+            local enew = Ecell(is2,ib2)
+            if enew > 0.0 then
+                if struct.shell.young(s) # enew then
+                    n_echange = n_echange + 1
+                end_if
+                struct.shell.young(s) = enew
+                n_ewrite = n_ewrite + 1
+            end_if
+        end_if
+    end_loop
+    local uu = struct.force.update()
+    io.out('SS06-EAPPLY '+fname+' n_ewrite='+string(n_ewrite)+' n_echange='+string(n_echange))
+end
+
+; ---- one-time shell census (smoke test): centroid + young per shell element ----
+fish define exp_shellreg(fname)
+    local fb = file.open(fname,1,1)
+    local a = array.create(1)
+    a(1) = 'x y z young'
+    local st = file.write(a,1)
+    local ns = 0
+    loop foreach local s struct.list
+        if struct.type(s) = 'shell' then
+            local p = struct.pos(s)
+            a(1) = string(comp.x(p))+' '+string(comp.y(p))+' '+string(comp.z(p))+' '+string(struct.shell.young(s))
+            st = file.write(a,1)
+            ns = ns + 1
+        end_if
+    end_loop
+    st = file.close
+    io.out('SS06-SHELLREG '+fname+' n='+string(ns))
+end
+""".splitlines()
+
+CRP_TICK = """
+; ---- advance the creep clock by exactly days_add (1.25-day chunks, 05 cadence).
+;      NO re-aiming here: boundary gp velocities were set once at the stage prologue
+;      (constant-velocity law); ticks only extend model solve creep time-total. ----
+fish define crp_tick(stg, days_add)
+    if abort_flag = 1 then
+        io.out('SS06-SKIP tick (abort flag set)')
+    else
+    local nch = math.ceiling(days_add/1.25)
+    local dch = days_add/nch
+    local ich = 0
+    loop while ich < nch
+        ich = ich + 1
+        cum_days = cum_days + dch
+        command
+            model creep timestep fix [crp_dt]
+            model solve creep time-total [cum_days*86400.0]
+        endcommand
+        shell_monitor
+        count_active
+        io.out('SS06-HIST stg='+string(stg)+' day='+string(cum_days)+' vclose='+string(vclose)+' hclose='+string(hclose)+' dmax='+string(dmax_all)+' active='+string(n_active)+' nwould='+string(n_wouldcap)+' maxC='+string(sh_maxc/1e6)+'MPa maxT='+string(sh_maxt/1e6)+'MPa')
+        if dmax_all > 0.20 then
+            abort_flag = 1
+            ich = nch
+            io.out('SS06-ABORT kinematic runaway dmax>0.2m (stg '+string(stg)+')')
+        end_if
+    end_loop
+    end_if
+end
+""".splitlines()
+
+kernel_ss = (
+    ["; ss06_kernel.f3dat -- GENERATED: small-model per-tick FISH defs.",
+     ";   05 defs verbatim (tag_driven/read_drive/apply_vel_idw/do_threshold/sentinels)",
+     ";   + crp_prologue (= crp_stage phases 1-3 verbatim, ONCE per stage)",
+     ";   + crp_tick (5-day creep chunks) + shell_monitor + apply_shellE + exp_shellreg.",
+     ";   DEFS ONLY -- no state-touching executions except [find_conv] (read-only).",
+     ";   Requires parameter.f3dat call'd first (shot_fc/ft, crp_dt, E_S_i, eta_k...)."]
+    + [""] + SS_TAG + [""] + SS_READ + [""] + SS_AVI + [""] + SS_THR + [""]
+    + SS_CAPG + [""] + SS_CONV + [""] + SS_VH + [""]
+    + NEW_DEFS + [""]
+    + ["; ---- stage prologue: crp_stage(stg,wtname,fname,days) phases 1-3 VERBATIM",
+       ";      (fluid 500cyc -> MC 1e-5 rebalance -> burgers-mohr + strengths re-set",
+       ";       -> read_drive/setKstrains/do_threshold/setKstrains -> apply_vel_idw",
+       ";       with the FULL stage duration => constant boundary velocity). ----",
+       "fish define crp_prologue(stg, wtname, fname, days)"]
+    + SS_PRO
+    + ["end", ""]
+    + CRP_TICK
+    + ["", "[find_conv]"]
+)
+(P06 / "ss06_kernel.f3dat").write_text("\n".join(kernel_ss) + "\n", encoding="utf-8")
+
+# ============================ exp06_body (defs only) ============================
+EXP_SRC = (P05 / "exp_body.f3dat").read_text(encoding="utf-8", errors="ignore").splitlines()
+EXP_DEFS = slice_before(EXP_SRC, "; exp_body.f3dat", "[exp_bnd('cpl_bnd_s'+CUR")
+exp06 = (
+    ["; exp06_body.f3dat -- GENERATED: exp_bnd/exp_wall defs from 05 exp_body.f3dat,",
+     ";   WITHOUT the auto-run tail (06 ticks call exp_bnd/exp_wall with tick names)."]
+    + EXP_DEFS
+)
+(P06 / "exp06_body.f3dat").write_text("\n".join(exp06) + "\n", encoding="utf-8")
+
+# ============================ t1 one-time init ============================
+t1init = (
+    ["; ss06_t1_init.f3dat -- GENERATED: one-time chain start (tick 1 ONLY).",
+     ";   SS run-start verbatim: WT geometry imports (from 05/input; sets persist in",
+     ";   every later save), water density, free stale velocity fixes + tag driven",
+     ";   band, initial burgers-mohr assignment. NEVER call on t>=2 (re-tagging",
+     ";   zeroes the driven-band velocities mid-stage).",
+     "geometry import '../../05_One_Way_Simulation/input/W-90.stl'",
+     "geometry import '../../05_One_Way_Simulation/input/W-70.stl'",
+     "geometry import '../../05_One_Way_Simulation/input/W-50.stl'",
+     "geometry import '../../05_One_Way_Simulation/input/W-30.stl'",
+     "geometry import '../../05_One_Way_Simulation/input/W-10.stl'",
+     "zone water density [rho_w]",
+     "zone gridpoint free velocity",
+     "[tag_driven]"]
+    + SS_BURG
+    + ["[io.out('SS06-T1INIT done (geometry+water+tag+burgers)')]"]
+)
+(P06 / "ss06_t1_init.f3dat").write_text("\n".join(t1init) + "\n", encoding="utf-8")
+
+# ============================ copies ============================
+for fn in ("fracture_track_v3.fis", "couple_qa_v2.fis"):
+    shutil.copy2(P05 / fn, P06 / fn)
+
+# ============================ self-checks ============================
+def must(path, *needles):
+    t = (P06 / path).read_text(encoding="utf-8")
+    for n in needles:
+        assert n in t, f"{path}: missing {n!r}"
+    return t
+
+def must_not(path, *needles):
+    t = (P06 / path).read_text(encoding="utf-8")
+    for n in needles:
+        assert n not in t, f"{path}: must NOT contain {n!r}"
+
+must("cs06_stage0.f3dat", "reband_strengthen", "wedge_setstrength", "drift_cleanup",
+     "quiet_check", "[track_init]", "tag_cpl_driven", "fish define cs_stage",
+     "CS-CONTROL0 GATE", "reg_dump('cpl_bond_registry.txt')",
+     "model save '../output/t5/cs06_reband'",
+     "model save '../output/t5/cs06_t00'", "CS06-STAGE0-DONE")
+must("cs06_stage0b_resume.f3dat", "model restore '../output/t5/cs06_reband'",
+     "call 'track_reattach.fis'", "tag_cpl_driven", "CS-CONTROL0 GATE",
+     "reg_dump('cpl_bond_registry.txt')", "model save '../output/t5/cs06_t00'")
+must_not("cs06_stage0b_resume.f3dat", "reband_strengthen", "[track_init]",
+         "drift_cleanup", "zone gridpoint initialize displacement")
+must("cs06_kernel.f3dat", "[global NSUB", "[global DRIVE_SCALE = 0.25]",
+     "fish define tag_cpl_driven", "[tag_cpl_driven]", "fish define read_drive",
+     "fish define set_targets", "fish define set_sub_vel", "fish define hold_driven",
+     "fish define ball_dmax", "fish define gp_dmax", "fish define cs_stage")
+must_not("cs06_kernel.f3dat", "zero_targets", "track_init", "model restore", "model save")
+must("track_reattach.fis", "fish define add_crack", "callback add add_crack event bond_break")
+must_not("track_reattach.fis", "fracture delete", "clear-map", "track_init")
+t = must("ss06_kernel.f3dat", "fish define tag_driven", "fish define read_drive",
+         "fish define apply_vel_idw", "fish define do_threshold",
+         "fish define crp_prologue(stg, wtname, fname, days)",
+         "apply_vel_idw(days*86400.0, 60.0)", "fish define crp_tick",
+         "fish define shell_monitor", "fish define apply_shellE",
+         "fish define exp_shellreg", "fish define count_active", "[find_conv]",
+         "[global sig_capC", "fish define vclose", "fish define dmax_all")
+must_not("ss06_kernel.f3dat", "\n[tag_driven]", "zone gridpoint free velocity",
+         "fish define shell_cap", "struct.force.update()\nend\n; NOTE (07-03")
+_code = [ln for ln in t.splitlines() if not ln.strip().startswith(";")]
+assert sum("struct.force.update" in ln for ln in _code) == 1, \
+    "force.update must appear ONLY in apply_shellE (code lines)"
+must("exp06_body.f3dat", "fish define exp_bnd", "fish define exp_wall")
+must_not("exp06_body.f3dat", "[exp_bnd('cpl_bnd_s'+CUR")
+must("ss06_kernel.f3dat", "zone cmodel assign mohr-coulomb")
+assert "model creep active on" in t, "prologue must re-enable creep"
+
+must("ss06_t1_init.f3dat", "geometry import", "zone water density [rho_w]",
+     "[tag_driven]", "zone cmodel assign burgers-mohr", "model creep active off")
+must_not("ss06_t1_init.f3dat", "apply_vel_idw", "model solve")
+
+for fn in ("cs06_stage0.f3dat", "cs06_kernel.f3dat", "track_reattach.fis",
+           "ss06_kernel.f3dat", "exp06_body.f3dat", "ss06_t1_init.f3dat"):
+    print(f"OK {fn:24s} {len((P06/fn).read_text(encoding='utf-8').splitlines()):4d} lines")
+print("BUILD OK ->", P06)

@@ -1,0 +1,24 @@
+; ss06_t1_init.f3dat -- GENERATED: one-time chain start (tick 1 ONLY).
+;   SS run-start verbatim: WT geometry imports (from 05/input; sets persist in
+;   every later save), water density, free stale velocity fixes + tag driven
+;   band, initial burgers-mohr assignment. NEVER call on t>=2 (re-tagging
+;   zeroes the driven-band velocities mid-stage).
+geometry import '../../05_One_Way_Simulation/input/W-90.stl'
+geometry import '../../05_One_Way_Simulation/input/W-70.stl'
+geometry import '../../05_One_Way_Simulation/input/W-50.stl'
+geometry import '../../05_One_Way_Simulation/input/W-30.stl'
+geometry import '../../05_One_Way_Simulation/input/W-10.stl'
+zone water density [rho_w]
+zone gridpoint free velocity
+[tag_driven]
+; --- initial burgers-mohr assignment (eta_m gated later; eta_k always on) ---
+zone cmodel assign burgers-mohr range group 'rock' slot 'mat'
+zone property bulk [_bk(E_S_1)] shear-maxwell [_gk(E_S_1)] shear-kelvin [_gk(E_S_1)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_1] friction [fr_S_1] tension [ten_r] range group 'layer1' slot 'type'
+zone property bulk [_bk(E_S_2)] shear-maxwell [_gk(E_S_2)] shear-kelvin [_gk(E_S_2)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_2] friction [fr_S_2] tension [ten_r] range group 'layer2' slot 'type'
+zone property bulk [_bk(E_S_3)] shear-maxwell [_gk(E_S_3)] shear-kelvin [_gk(E_S_3)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_3] friction [fr_S_3] tension [ten_r] range group 'layer3' slot 'type'
+zone property bulk [_bk(E_S_4)] shear-maxwell [_gk(E_S_4)] shear-kelvin [_gk(E_S_4)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_4] friction [fr_S_4] tension [ten_r] range group 'layer4' slot 'type'
+zone property bulk [_bk(E_S_5)] shear-maxwell [_gk(E_S_5)] shear-kelvin [_gk(E_S_5)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_5] friction [fr_S_5] tension [ten_r] range group 'layer5' slot 'type'
+zone property bulk [_bk(E_S_6)] shear-maxwell [_gk(E_S_6)] shear-kelvin [_gk(E_S_6)] viscosity-maxwell 1e100 viscosity-kelvin [eta_k] cohesion [co_S_6] friction [fr_S_6] tension [ten_r] range group 'layer6' slot 'type'
+model creep active off
+[io.out('SSv2-1 rock -> burgers-mohr (G_m=G_k, eta_k on, eta_m gated at T='+string(crp_threshold)+')')]
+[io.out('SS06-T1INIT done (geometry+water+tag+burgers)')]
