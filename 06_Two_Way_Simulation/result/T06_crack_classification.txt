@@ -1,0 +1,4 @@
+three-track crack lengths (m), ends trimmed 2 m
+05 one-way s11 (age>AGE1): circ=199.2 obl=18.9 long=3.3
+06 two-way t26 (age>60247): circ=344.4 obl=25.9 long=18.7
+06 two-way t26 (full): circ=343.6 obl=28.9 long=18.7

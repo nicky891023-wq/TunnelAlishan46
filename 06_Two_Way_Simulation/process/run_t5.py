@@ -308,9 +308,12 @@ def gate_coupled(t, txt, m):
         g["ok"] = False
         g["why"].append(f"gp_dmax {g['gp_dmax']} outside (1e-7, 0.05) -- frozen rock "
                         "or runaway")
-    if g["ball_dmax"] > 0.05:
+    # ball.disp is CUMULATIVE from the stage-0 datum; v6-accepted trajectory reached
+    # 0.069 by s3 and plateaued at 0.074 by s11 (spalled-ball drift into the cavity,
+    # Wade-approved). Gate at 2x the v6 ceiling to catch genuine shatter only.
+    if g["ball_dmax"] > 0.15:
         g["ok"] = False
-        g["why"].append(f"ball_dmax {g['ball_dmax']}")
+        g["why"].append(f"ball_dmax {g['ball_dmax']} > 0.15 (2x v6 ceiling 0.074)")
     return g
 
 
