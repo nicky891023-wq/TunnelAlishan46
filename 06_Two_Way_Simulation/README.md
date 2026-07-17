@@ -1,7 +1,18 @@
-# 06_Two_Way_Simulation — 雙向強耦合（架構已定案，待 05 完成後開工）
+# 06_Two_Way_Simulation — 雙向耦合 ✅ 已完成（T5 26-tick 鏈，2026-07-17）
 
-> **架構文件：`docs/METHOD_TWO_WAY.md`（2026-07-07 Fable 定案 v1）**——整合 01–05 全部
-> 實戰經驗（含 12 次失敗教訓、數值鐵則、成本估算）。開工前先讀它的 §7 checklist。
+> **執行版策略＝`docs/STRATEGY_TWOWAY_EXEC.md`**（Wade 5 天交替指令的落地）；
+> 原架構=`docs/METHOD_TWO_WAY.md`；審查=`SOLAR.md`（GPT5.6_SOL）。
+> 管線：`process/build_06_scripts.py`（自 05 原始碼切片生成 FLAC 腳本）＋
+> `process/run_t5.py`（總指揮：gates／原子 manifest／斷點續跑）＋
+> `make_cpl_resid06 / make_damage_map_v2 / make_shellE`（資料鏈）＋
+> `make_result_figs06 / classify06`（成果）。
+>
+> **終態（day 130，26/26 committed，zero gate 失敗）**：裂縫 107,479（單向 v6 之
+> 2.83×、密度 5.17%）；三軌 環344.4/斜25.9/縱18.7 m（環向主導 95% 型態保持）；
+> D̂max=19.45%（右肩–右腰帶）；乾季凍結/雨峰前載/退水衝擊相位與 v6 同構；
+> s2 +24,543＝自洽鏈接縫背載一次性釋放（t08 回穩）。保真度：t06 驅動殘差與
+> 05 s01 四位一致、t01 active=24,935 精確。成果圖表＝`result/`；
+> 逐 tick 記錄＝`output/t5/manifest.json`。⚖ 待 Wade：L0 關回饋對照鏈。
 
 ## 一句話
 單向鏈漏掉「開裂→環軟化→收斂加大→更多開裂」的漸進互制；06 把耦合模量到的
