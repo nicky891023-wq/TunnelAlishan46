@@ -20,12 +20,23 @@
 3. TUST 投稿規格調查（字數/圖數/格式/近年同主題文章的架構與審稿重點）
 4. 架構討論 → 逐節大綱 → 圖表定版 → 英文初稿 → 內審（Codex）→ 投稿包
 
-## 資料夾規劃（隨進度長出）
+## 資料夾結構（07-18 起，Word 審閱制——Wade 於 Word 中批改決策）
 
 ```
 07_SCI_TUST/
-  PAPER_PLAN_20260716.md   企劃書 v0（IJRMMS 標竿版，待 TUST 校準）
-  refs/                    文獻與 TUST 目標文章分析（待建）
-  figures/                 論文專用圖（自 00_Document/result、06/result 精選改版）
-  draft/                   逐節英文草稿（待建）
+  Chapter00_總綱/       00 題目賣點材料｜01 圖表總覽｜02 參考文獻總集APA｜
+                        03 摘要關鍵字｜04 碩論濃縮對照表（解析解已砍）
+  Chapter01_前言/       子節架構/ 段落核心/ Figure/ Table/ Reference/（各一 docx）
+  Chapter02_研究方法/   同上
+  Chapter03_研究案例/   同上
+  Chapter04_數值模擬/   同上（單向成果；雙向在 Ch05）
+  Chapter05_討論/       同上（5.1 雙向、5.2 參數物理意義、5.3 工程含義）
+  Chapter06_結論/       同上（5 貢獻＋2 限制；無圖表文獻）
+  build_review_docs.py  審閱文件產生器（冪等；依 Wade 批改迭代重建）
+  01_ARCHITECTURE.md    內部主控索引（docx 為審閱正本）
+  PAPER_PLAN_20260716.md 企劃書 v0（歷史檔）
+  refs/REFS_SEED_VERIFIED.md 文獻種子（36 篇、TUST 61%）
 ```
+
+審閱流程：Wade 在 docx 上批改（LibreOffice/Word 皆可）→ 告知 Fable →
+更新 build_review_docs.py 內容 → 重建 → 下一輪。
