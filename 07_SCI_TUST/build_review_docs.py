@@ -106,18 +106,26 @@ d = new_doc()
 H(d, "文章題目、賣點、材料（框架首頁 v1，2026-07-18）")
 P(d, "說明：本頁為全文之錨，仿 IJRMMS 前作的框架首頁迭代法——此頁穩定前不動正文。"
      "請直接在 Word 中批改、圈選、加註。", size=11)
-H(d, "一、題目（三選一，可混搭）", 2)
-P(d, "T-A（穩健、TUST maintenance 範疇直擊）：", bold=True)
-P(d, "Cross-scale numerical simulation of groundwater-cycle-driven lining cracking "
-     "in an operating mountain railway tunnel", indent=True)
-P(d, "營運山岳鐵路隧道受地下水循環驅動之襯砌開裂跨尺度數值模擬", indent=True)
-P(d, "T-B（機理隱喻、搶眼）：", bold=True)
-P(d, "Groundwater cycling as a damage pump: cross-scale simulation of intermittent "
-     "time-dependent lining cracking in a mountain railway tunnel", indent=True)
-P(d, "T-C（方法前置）：", bold=True)
-P(d, "From slope-scale seepage to discrete lining cracks: a cross-scale FDM–DEM "
-     "simulation of an operating railway tunnel under cyclic groundwater loading", indent=True)
-DEC(d, "選 T-A / T-B / T-C？或指示混搭方向。（建議 T-A 起跑，T-B 留給討論章概念圖）")
+H(d, "一、題目（v2，Wade 07-19 裁示後修正：案例＋機制入題，方法字全退回賣點層）", 2)
+P(d, "構式範本＝團隊自家 Q1：Chiu, Lee & Wang (2017, TUST, 被引94)「Lining crack "
+     "evolution of an operational tunnel influenced by slope instability」＝"
+     "【現象+案例】influenced by【原因】，零方法字。", size=11)
+P(d, "N-A（系列構式直接繼承，換驅動源——首選）：", bold=True)
+P(d, "Lining crack evolution of an operating mountain railway tunnel influenced by "
+     "cyclic groundwater fluctuation", indent=True)
+P(d, "營運山岳鐵路隧道襯砌裂縫受地下水位循環升降影響之演化", indent=True)
+P(d, "與 2017 前作形成明確系列感（slope instability → cyclic groundwater "
+     "fluctuation）。", size=10.5, indent=True)
+P(d, "N-B（機制入題，接前作「滯動」術語＝理論＋案例雙系列繼承）：", bold=True)
+P(d, "Lining cracking of an operating mountain railway tunnel driven by groundwater-"
+     "fluctuation-induced intermittent time-dependent deformation", indent=True)
+P(d, "地下水位升降引致滯動（起閉）依時變形驅動之營運山岳鐵路隧道襯砌開裂", indent=True)
+P(d, "N-C（現象前置＋機制副標）：", bold=True)
+P(d, "Lining crack evolution in an operating mountain railway tunnel under cyclic "
+     "groundwater fluctuation: intermittent time-dependent deformation as the "
+     "driving mechanism", indent=True)
+DEC(d, "N-A / N-B / N-C？（我推 N-A：最短、系列感最強；56 篇 Q1 題目解剖統計出爐後"
+       "會附驗證數據）")
 H(d, "二、賣點（5 項，按主打順序）", 2)
 for i, s in enumerate([
     "跨尺度因果鏈完整量化：地下水年循環（坡地尺度）→近場滲流→門檻滯動潛變→襯砌離散開裂"
@@ -184,61 +192,16 @@ DEC(d, "15 圖可否？（可併 Fig7+8 成 14 張；上限 16）表 5 張可否
 save(d, "Chapter00_總綱", "01_圖表總覽.docx")
 
 d = new_doc()
-H(d, "參考文獻總集（APA 7；建置中 v0.1）")
-P(d, "現況：36 篇（V=Crossref 已逐 DOI 驗證之 TUST 15 篇；C=IJRMMS 藏書可複用 21 篇）。"
-     "TUST 佔 22/36=61%（目標 ≥50% ✓）。禁 MDPI。缺口：L3 耦合方法 4–6 篇、"
-     "L4 滲流 HM 2–3 篇、L6 BPM 標定 2–3 篇 → 補齊後 45–48 篇。", size=11)
-P(d, "分類軸：L1 水文→襯砌｜L2 依時變形與潛變本構｜L3 連續-離散耦合與 BPM｜"
-     "L4 隧道–邊坡互制與滲流 HM｜L5 營運隧道維養案例｜L6 支援（劣化/標定/韌性）", size=11)
-for cat, items in [
-    ("L1 水文→襯砌載重與劣化", [
-     "[V] An, P., Fan, L., Ma, S., Zhang, J., Huang, Z., & Fu, H. (2026). Water pressure distribution around tunnels in pipeline-type karst and lining response characteristics induced by rainfall. Tunnelling and Underground Space Technology, 107691. https://doi.org/10.1016/j.tust.2026.107691",
-     "[V] Chen, J., Hu, T., Hu, X., & Jia, K. (2024). Study on the influence of crack depth on the safety of tunnel lining structure. Tunnelling and Underground Space Technology, 143, 105470. https://doi.org/10.1016/j.tust.2023.105470",
-     "[V] Liu, D., Shang, Q., Li, M., Zuo, J., Gao, Y., & Xu, F. (2022). Cracking behaviour of tunnel lining under bias pressure strengthened using FRP Grid-PCM method. Tunnelling and Underground Space Technology, 123, 104436. https://doi.org/10.1016/j.tust.2022.104436",
-     "[C] Fahimifar, A., & Zareifard, M. R. (2009). A theoretical solution for analysis of tunnels below groundwater considering the hydraulic–mechanical coupling. Tunnelling and Underground Space Technology.（DOI 複驗中）",
-     "[C] Tarifard, A., Görög, P., & Török, Á. (2022). Long-term assessment of creep and water effects on tunnel lining loads in weak rock. Geomechanics and Geophysics for Geo-Energy and Geo-Resources, 8, 31.（DOI 複驗中）"]),
-    ("L2 依時變形與潛變本構", [
-     "[V] Zhang, S., Rodriguez-Dono, A., Song, F., & Zhou, Z. (2025). Time-dependent tunnel deformations: Insights from in-situ tests and numerical analyses. Tunnelling and Underground Space Technology, 157, 106319. https://doi.org/10.1016/j.tust.2024.106319",
-     "[V] Mao, Y., Liu, F., Li, Y., Zhao, F., He, M., & Tao, Z. (2026). Deep tunnel deformation analysis based on large-scale physical test and fractional derivative creep model. Tunnelling and Underground Space Technology, 170, 107383. https://doi.org/10.1016/j.tust.2025.107383",
-     "[V] Wang, X., Iura, T., Jiang, Y., Wang, Z., & Liu, R. (2021). Deformation and mechanical characteristics of tunneling in squeezing ground: A case study of the west section of the Tawarazaka Tunnel. Tunnelling and Underground Space Technology, 103697. https://doi.org/10.1016/j.tust.2020.103697",
-     "[V] Chang, Z., Yan, C., Xie, W., Lu, Z., Lan, H., & Mei, H. (2024). Large-scale field tunnel model and time-dependent floor heave induced by humidification. Tunnelling and Underground Space Technology, 145, 105615. https://doi.org/10.1016/j.tust.2024.105615",
-     "[C] Tsai, C.-H., Li, H.-H., & Wang, T.-T. (in review). Numerical simulation and mechanical interpretation of intermittent time-dependent deformation in tunnels. IJRMMS.（⚖ 引用方式待 TT）",
-     "[C] Sulem, J., Panet, M., & Guenot, A. (1987). An analytical solution for time-dependent displacements in a circular tunnel. IJRMMS & Geomech. Abstr., 24(3), 155–164.",
-     "[C] Paraskevopoulou, C., & Diederichs, M. (2018). Analysis of time-dependent deformation in tunnels using the Convergence-Confinement Method. Tunnelling and Underground Space Technology.",
-     "[C] Arora, K., & Gutierrez, M. (2021). Viscous-elastic-plastic response of tunnels in squeezing ground conditions. IJRMMS, 146, 104888.",
-     "[C] Hu, K., & Gutierrez, M. (2022). Adaptive support system for tunnels in viscoelastic Burgers rock. Transportation Geotechnics, 35, 100775."]),
-    ("L3 連續-離散耦合與 BPM 襯砌（缺口軸）", [
-     "[V] Yan, X., Yu, H., Chen, Z., Jiang, W., & Li, T. (2023). A multiscale analysis of adjacent fault dislocation mechanism induced by tunnel excavation based on continuous-discrete coupling method. Tunnelling and Underground Space Technology, 140, 105263. https://doi.org/10.1016/j.tust.2023.105263",
-     "[V] Wang, Z., Wang, J., Sun, G., Lin, S., Liu, Z., & Zheng, H. (2026). Coupled thermo-mechanical simulation of lining cracking evolution using FDEM. Tunnelling and Underground Space Technology, 107460. https://doi.org/10.1016/j.tust.2026.107460",
-     "[C] Zheng, C., Zhu, X., & Zhang, Z. (2024). Damage evolution of tunnel lining under creep action considering interlayer effect in gently inclined layered surrounding rock. Engineering Failure Analysis, 162, 108392.（模板論文）",
-     "[C] Cai, M., Kaiser, P. K., Tasaka, Y., Maejima, T., Morioka, H., & Minami, M. (2004). Generalized crack initiation and crack damage stress thresholds of brittle rock masses. IJRMMS.",
-     "（缺）PFC/BPM 混凝土開裂標定、continuum–DEM 橋接 4–6 篇——蒐集中"]),
-    ("L4 隧道–邊坡互制與滲流 HM", [
-     "[V] Xin, C., Shuai, Y., Song, D., & Liu, X. (2024). Dynamic interaction and failure mechanism in tunnel-slope systems. Tunnelling and Underground Space Technology, 152, 105940. https://doi.org/10.1016/j.tust.2024.105940",
-     "[V] Tian, Y., Xin, C., Song, D., & Liu, X. (2026). Dynamic failure mechanism of a high-steep rock mass slope containing a weak interlayer at the tunnel portal and damage evolution of lining. Tunnelling and Underground Space Technology, 107586. https://doi.org/10.1016/j.tust.2026.107586",
-     "[V] Tian, X., Song, Z., & Zhang, Y. (2021). Monitoring and reinforcement of landslide induced by tunnel excavation: A case study from Xiamaixi tunnel. Tunnelling and Underground Space Technology, 110, 103796. https://doi.org/10.1016/j.tust.2020.103796",
-     "[C] Li et al. (2021). Saturation-loss cycle triaxial creep tests on soft rock. Natural Hazards.（作者群 DOI 複驗中）",
-     "[C] Yan et al. (2020). Modified Nishihara model for deep rock under water-rock interaction. IJRMMS.（複驗中）",
-     "（缺）降雨入滲邊坡 HM／水位循環×地下結構 2–3 篇——蒐集中"]),
-    ("L5 營運隧道維養/調查/監測案例", [
-     "[V] Wang, T.-T., Chiu, Y.-C., & Li, K.-J. (2024). Index for assessing spalling in tunnel lining based on displacement monitoring and crack mapping. Tunnelling and Underground Space Technology, 153, 105975. https://doi.org/10.1016/j.tust.2024.105975（TT 前作＝系列直接前身）",
-     "[V] Moradi, P., Asadi, M. J., Ebrahimzadeh, N., & Yarahmadi, B. (2021). Ilam tunnels inspection, maintenance, and rehabilitation: A case study. Tunnelling and Underground Space Technology, 110, 103814. https://doi.org/10.1016/j.tust.2021.103814",
-     "[V] Ou, X., Tang, C., Qu, T., Xu, S., Zhou, Y., & Tian, J. (2025). Towards digitalized maintenance of operating tunnels. Tunnelling and Underground Space Technology, 157, 106345. https://doi.org/10.1016/j.tust.2024.106345",
-     "[C] Sharifzadeh, M., Tarifard, A., & Moridi, M. A. (2013). Time-dependent behavior of tunnel lining in weak rock mass based on displacement back analysis. Tunnelling and Underground Space Technology, 38, 348–356.",
-     "[C] Kovačević, M. S. et al. (2021). Long-term tunnel deformation in karstic rock mass (PSO-ANN). Tunnelling and Underground Space Technology, 110, 103838.",
-     "[C] Yin et al. (2022). Modified Burgers creep of grouting-reinforced body and long-term effect on tunnel operation. Tunnelling and Underground Space Technology, 127, 104537.",
-     "[C] Barla, G., Debernardi, D., & Sterpi, D. (2012). Time-dependent modeling of tunnels in squeezing conditions. International Journal of Geomechanics.",
-     "[C] Wu et al. (2024). Time-dependent rock-yielding-support interaction in deep soft rock (St-Martin-La-Porte). IJNAMG.（複驗中）",
-     "[C] Liu, Song, & Chu (2022). Time-dependent safety of tunnel lining in weak rock strata. Int. J. Mining Science and Technology."]),
-    ("L6 支援（劣化機制/韌性/標定）", [
-     "[C] Ma et al. (2023). Squeezing rock + nonuniform steel corrosion in RC lining of mountain tunnels. Computers and Geotechnics.（複驗中）",
-     "[C] Wang et al. (2023). Progressive failure of tunnel lining induced by creep. Engineering Failure Analysis.（複驗中）",
-     "[C] Shu et al. (2025) / Zhu & Zhang (2025) / Chen et al. (2026). Lining resilience 系列. Tunnelling and Underground Space Technology.（複驗中）",
-     "（缺）混凝土 DEM 開裂/斷裂能標定 2–3 篇——蒐集中"]),
-]:
-    H(d, cat, 2)
-    for it in items:
-        P(d, it, size=10.5, indent=True)
+H(d, "參考文獻總集（APA 7；v2＝主庫 REFS_MASTER 全量）")
+P(d, "主庫 56 篇（TUST 31 篇=55%，目標 ≥50% ✓）；全數 Crossref 逐 DOI 驗證＋即時"
+     "被引數、零 MDPI。⚖ 略超 40–50 目標：請圈刪 5–8 篇（候選=L3/L6 低引或低階期刊），"
+     "或授權依「引用×相關×期刊等級」自裁。", size=11)
+_master = (ROOT / "refs" / "REFS_MASTER.md").read_text(encoding="utf-8").splitlines()
+for _ln in _master:
+    if _ln.startswith("## "):
+        H(d, _ln[3:], 2)
+    elif _ln.startswith("- ["):
+        P(d, _ln[2:].replace("**[TUST]**", "[TUST]"), size=10.5, indent=True)
 save(d, "Chapter00_總綱", "02_參考文獻總集_APA.docx")
 
 d = new_doc()
