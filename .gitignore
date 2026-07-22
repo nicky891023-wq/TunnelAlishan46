@@ -50,3 +50,6 @@ __pycache__/
 06_Two_Way_Simulation/process/cs_s*_*.txt
 06_Two_Way_Simulation/process/shell_registry.txt
 06_Two_Way_Simulation/output/t5/
+
+# 出版社 PDF（版權：僅留本機，不上 repo）
+07_SCI_TUST/References/PDF/

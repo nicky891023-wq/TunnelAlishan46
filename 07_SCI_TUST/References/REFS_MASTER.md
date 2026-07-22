@@ -1,6 +1,6 @@
 # REFS_MASTER（主文獻庫 v2，2026-07-18）
 
-> 56 篇；TUST 31 篇（55%，目標 ≥50% ✓）；V=Crossref 逐 DOI 驗證、
+> 57 篇；TUST 31 篇（55%，目標 ≥50% ✓）；V=Crossref 逐 DOI 驗證、
 > S=特殊（前作 in review）。禁 MDPI ✓（全庫零 MDPI）。被引數=Crossref 當日值。
 > 解析解家族依 Wade 裁示僅留 Sulem 1987（脈絡一句）＋Fahimifar 2009（D3 對照）。
 
@@ -54,7 +54,9 @@
 - [V] **[TUST]** (被引 28) Xin, C., Shuai, Y., Song, D., & Liu, X. (2024). Dynamic interaction and failure mechanism in tunnel-slope systems: Mitigation insights from shaking table tests and numerical analysis. Tunnelling and Underground Space Technology, 152, 105940. https://doi.org/10.1016/j.tust.2024.105940
 - [V] **[TUST]** (被引 0) Tian, Y., Xin, C., Song, D., & Liu, X. (2026). Dynamic failure mechanism of a high-steep rock mass slope containing a weak interlayer at the tunnel portal and damage evolution of lining subjected to strong earthquakes. Tunnelling and Underground Space Technology, 107586. https://doi.org/10.1016/j.tust.2026.107586
 
-## L5 營運隧道維養/案例（10 篇，TUST 6）
+## L5 營運隧道維養/案例（11 篇，TUST 6）
+
+- [V] (被引 109) Wang, T.-T. (2010). Characterizing crack patterns on tunnel linings associated with shear deformation induced by instability of neighboring slopes. Engineering Geology, 115, 80-95. https://doi.org/10.1016/j.enggeo.2010.06.010　★血緣錨：老師裂縫型態分類原典（Causse 2015 的病理分類來源；4.3 對照方法學依據）
 
 - [V] **[TUST]** (被引 181) Sharifzadeh, M.; Tarifard, A.; Moridi, M.A. (2013). Time-dependent behavior of tunnel lining in weak rock mass based on displacement back analysis method. Tunnelling and Underground Space Technology, 38, 348-356. https://doi.org/10.1016/j.tust.2013.07.014
 - [V] (被引 148) Barla, G.; Debernardi, D.; Sterpi, D. (2012). Time-Dependent Modeling of Tunnels in Squeezing Conditions. International Journal of Geomechanics, 12(6), 697-710. https://doi.org/10.1061/(ASCE)GM.1943-5622.0000163

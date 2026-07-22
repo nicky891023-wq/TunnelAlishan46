@@ -1,53 +1,92 @@
-# Causse, Cojean & Fleurisson (2015) — 寫作工藝筆記
+# Causse, Cojean & Fleurisson (2015) — 寫作工藝筆記（全文精讀版）
 
 > Causse Lionel; Cojean Roger; Fleurisson Jean-Alain (2015). Interaction between tunnel and unstable slope – Influence of time-dependent behavior of a tunnel excavation in a deep-seated gravitational slope deformation. *Tunnelling and Underground Space Technology*, 50, 270–281. DOI: 10.1016/j.tust.2015.07.018
+> 機構：Mines ParisTech – Geosciences Research Department。收稿 2014-02-28 → 修訂 2015-04-09 → 接受 2015-07-20（審 17 個月，改稿週期長）。
+> Keywords: Unstable slopes; Tunnels; Damages; Numerical simulations; Parametric studies; Interaction tunnel-ground; Time-dependent behavior; Glacial retreat; Creep
 
-**access = abstract-only（實際為 metadata-only）**
-取得程序記錄：① DOI 非 LOCAL；② 本機 `Wade_TD_SCI/Reference/**`（含 trash）Glob 無 Causse 相符檔；③ OpenAlex `best_oa_location` = null、`is_oa=false`、`any_repository_has_fulltext=false`（closed）；④ Crossref `abstract=null`；Semantic Scholar 回報「abstract 欄位被出版社 elided」。**連摘要都不可合法免費取得**。本筆記僅依：題目全文、書目 metadata、被引數（OpenAlex 49 / 主庫記錄 44）、同作者系列著作 metadata（Crossref 驗證）。凡標「⛔ 全文不可得」之節，未做任何臆造。
+**access = full-pdf**（2026-07-22 依本機 PDF `07_SCI_TUST/References/PDF/1-s2.0-S0886779815001431-main.pdf` 全 12 頁精讀重寫；取代 2026-07-22 稍早之 metadata-only 版本。前版 (b)–(g) 之「⛔ 全文不可得」全數作廢回填；前版誤記「參考文獻 12 筆」，實為 14 筆。）
 
 ---
 
-## (a) 題目解剖 ✅（可完整分析）
+## (a) 題目解剖
 
-**題目原文**：Interaction between tunnel and unstable slope – Influence of time-dependent behavior of a tunnel excavation in a deep-seated gravitational slope deformation（約 21 字，偏長）
+**題目原文**：Interaction between tunnel and unstable slope – Influence of time-dependent behavior of a tunnel excavation in a deep-seated gravitational slope deformation（20 字，偏長）
 
-- **開頭元素＝現象／互制關係**（非案例、非方法、非結論）：主標以「Interaction between A and B」開場，直接把兩個工程對象（隧道 × 不穩定邊坡）的互制拋出，先佔領問題空間。
-- **雙層構式**：`主標（互制現象·對象對）–破折號–副標（Influence of 機制變因 in 地質場景）`。副標三件事一次做完：機制變因（time-dependent behavior of a tunnel excavation）＋地質場景（deep-seated gravitational slope deformation, DSGSD）＋隱含研究性質（influence → 參數/機制探討）。
-- **無方法詞**：題目完全不出現 numerical / model / simulation / FDM / FEM 等字眼；「time-dependent behavior」是**機制詞**而非方法詞。方法（數值模擬）被留給摘要與內文。
-- **時間維度明示於題**：「time-dependent」放進副標，讓論文在 long-term / creep / 依時行為檢索軸上可見。
-- **系列題策略（Crossref 驗證）**：同作者同年另有 IAEG 會議版 *Interactions Between Tunnels and Unstable Slopes: Role of Excavation*（Engineering Geology for Society and Territory Vol. 2, Springer, DOI: 10.1007/978-3-319-09057-3_34）。主標詞組「tunnel(s) × unstable slope(s) interaction」跨會議版/期刊版重複使用，副標輪替（Role of Excavation → Influence of time-dependent behavior…），以固定主標建立 niche 識別度、以副標切分各篇貢獻。
-- **成效佐證**：被引 44–49（2015 年刊出），在「隧道×邊坡互制」窄 niche 屬高能見度，顯示「現象先行、無方法詞」的題目在 TUST 此軸線有效。
+- **開頭元素＝互制現象（對象對）**：主標 `Interaction between A and B` 先佔問題空間；副標 `Influence of 機制變因 in 地質場景` 一次交代機制（time-dependent behavior of a tunnel excavation）＋場景（DSGSD）。
+- **全文驗證：題目零方法詞**。numerical / FLAC / parametric 全部下放到 keywords（Numerical simulations、Parametric studies）與摘要——**檢索面靠 keywords 補方法軸，題目專責現象軸**。這個分工在全文確認成立。
+- **題目其實「隱藏」了兩大核心自變數**：內文真正操作的是（i）隧道位置 1.0D–10D、（ii）襯砌架設延遲 2–5 天，題目一個都沒寫，只用 time-dependent behavior 一詞統包。題目賣機制框架、不賣參數細節。
+- **系列題策略（全文佐證）**：內文引用同作者 2014 IAEG 會議版 *Interactions between tunnels and unstable slopes – role of excavation*，且明講分工——會議版處理軟岩「隧道開挖誘發邊坡旋動」情境（Fig. 14 case 1），本篇處理硬岩「冰川退縮卸載下的既有潛變坡」情境（case 2）。固定主標詞組佔 niche、副標與場景切分各篇貢獻，是有意識的系列切割。
 
-## (b) 文章架構 ⛔ 全文不可得
+## (b) 文章架構（節序與比重；全文 12 頁）
 
-無法確證節序與比重。僅可靠事實：全文 12 頁（pp. 270–281），屬 TUST 標準研究論文篇幅；OpenAlex 索引參考文獻 12 筆（索引可能不全，不作為文獻量結論）。
+| 節 | 頁幅 | 佔比 | 內容 |
+|---|---|---|---|
+| 1. Introduction | ~0.75 頁 | ~7% | 6 段，見 (c) |
+| 2. Material and methods | ~2.25 頁 | ~20% | 2.1 CVISC（Burger-creep 黏塑性）模型；2.2 臨界時間步（Eq. 2）；2.3 模型描述（源自 Apuani et al. 2007 的 DSGSD 片麻岩坡，H=1240 m、36°、冰川三步瞬時融退各 500 年；隧道 D=6 m）；2.4 模擬流程（編號 (1)–(6) 清單）；2.5 結果表徵（Huang et al. 2010 的 I_d–θ 準則，Eq. 3） |
+| 3. Results and discussion | ~7.5 頁 | ~60% | 3.1 坡面位移；3.2 隧道壁位移與應變（3.2.1 無支撐期壁位移、3.2.2 襯砌形狀百年演化、3.2.3 襯砌應變）；3.3 襯砌應力（3.3.1 軸力）；3.4 襯砌損害機制對應 |
+| 4. Conclusions | ~0.5 頁 | ~5% | 5 段，無 limitations、無 future work |
+| References | 14 筆 | — | 極精簡；TUST 自引 5 筆 |
 
-## (c) 前言手法 ⛔ 全文不可得
+- **Results 與 discussion 合併**，佔六成篇幅；沒有獨立 Discussion 節，機制詮釋逐小節內嵌。
+- **兩條掃描軸貫穿全部結果節**：每個 3.x 小節都先掃「隧道位置 1.0D–10D（延遲固定 5 天）」再掃「延遲 2–5 天（位置固定 1.5D）」，(a)/(b) 雙聯圖版式（Figs. 7、8、11、12 全是此構圖）。**參數研究的敘事骨架＝固定一軸掃另一軸，圖版與文字完全同構**，讀者可預測下一小節長相。
+- 方法節有「文獻模型再精細化」策略：直接借 Apuani et al. (2007) 已發表的坡體模型與 Table 1 參數，只加密網格＋放進隧道——把模型合理性外包給前人，方法節省下大量辯護篇幅。
 
-段數、各段角色、缺口 staging、貢獻句式均無法分析。僅能自題目層推斷其問題定位（見 (a)、(e)），不臆造內文。
+## (c) 前言手法（6 段，~0.75 頁）
 
-## (d) 結果敘事 ⛔ 全文不可得
+| 段 | 角色 |
+|---|---|
+| 1 | 現象開場＋首句即引文獻（隧道開挖可誘發滑坡, Koizumi et al. 2010）→ 立刻對比：冰退、河蝕下邊坡不需人為擾動也會動 → 監測用於分辨自然/人為驅動。**第一段就把「雙驅動並存、需要分離」的問題框架立起來** |
+| 2 | 問題精煉：舊隧道反算研究須把「地質地貌演化因子」與「開挖工法因子」分開——這就是全文的隱形論綱 |
+| 3 | 分類文獻：互制型態取決於隧道在坡中的位置（穿切／斜交／淺埋平行），各型病理已被 Wang (2010) 鑑別 |
+| 4 | 聚焦淺埋平行型：損害率取決於襯砌—坡面/滑動面距離（Koizumi; Ashtiani）；給出關鍵前人門檻——距離 <1.5D 互制顯著增強。**把前人的量化結論當缺口的墊腳石** |
+| 5 | 工程序列因子：開挖→支撐兩步、NATM 無支撐段、Panet (1995) 關係式 τa=d/Va（Eq. 1 竟放在前言！）——把「延遲」這個自變數在前言就數學化 |
+| 6 | 貢獻段：「this parametric study deals with the influence of delay…」＋研究對象（襯砌應力應變位移演化×坡面位移） |
 
-圖領句、量化方式、機制詮釋均無法分析。
+- **缺口 staging 是「軟式」的**：全文找不到 "however, no study has…" 句型。缺口靠排列暗示——前人給了位置分類（段3）、距離門檻（段4）、延遲關係式（段5），第 6 段直接宣告本文把「時間相依流變 × 施工延遲 × 隧道位置」放進同一參數研究，讓讀者自行補完「前人沒同時做」的推論。
+- **貢獻句式**：主詞是 "this parametric study"，動詞是 deals with / put in evidence（後者全文反覆出現，是他們的貢獻動詞）；無新穎性形容詞、無 for the first time。
+- 前言引文僅 6 篇左右，每篇都有明確功能位（開場、分類、門檻、公式），零裝飾性引用。
 
-## (e) 貢獻凸顯 ⛔ 內文不可得；題目層可談
+## (d) 結果敘事
 
-題目層面的貢獻定位手法可確認：把「依時行為」設為互制問題的主變因寫進副標——貢獻宣示從題目就開始，讀者未開摘要即知本篇在系列中的增量（相對會議版的「Role of Excavation」，期刊版增量＝時間維度＋DSGSD 場景）。內文中貢獻句的位置與措辭無法分析。
+- **小節開場句型＝比較宣告**：先一句話講「本小節比較什麼、固定什麼」（例：3.1 開頭先列 1.0D–10D 全部工況、延遲固定 5 天），再點圖（Fig. 5 shows…），然後才進數字。圖領句是「影響方向」而非數據本身。
+- **量化貨幣＝位移速率的數量級**：全文用 destabilization rate 的 10 的冪次講故事——施工相位 10⁻¹–10⁻²、襯砌架設一年後 10⁻²–10⁻³、百年後略高於冰退背景值（10⁻⁴ 量級）。**不糾纏絕對位移值（模型本來就是概念性的），改用「速率相對背景值」讓概念模型也能給出硬結論**。
+- **角度座標 θ 作為第二種量化語言**：壁位移極值 θ=67.5°（上坡側拱肩）/247.5°（下坡側仰拱）、主位移軸垂直於坡移方向 β≈166°、I_d–θ 曲線極值位置——所有襯砌結果都錨定在 θ 上，讓跨圖（Figs. 7–12）可互相對位。
+- **機制詮釋固定收尾**：每組數據後接「此位置對應圍岩最大剪應變、垂直於坡移方向」一類的力學歸因；小節以 "To conclude," 微結論收束（3.2.1、3.2.2、3.2.3 皆有），關鍵微結論句如 1.5D 最臨界在 3.2.1 就先講、Conclusions 再重講——**重要結論至少出現三次（小節微結論、3.x 末、第 4 節）**。
+- **Firstly/Secondly/Thirdly 顯式路標**滿場飛，敘事層級全靠它撐。
+- **誠實負結果照登**：3.2.3 末明寫「襯砌形狀變形與元素應變的對應關係並不成立」；I_d 極值也「不能像 Huang et al. (2010) 那樣反推荷載方向」並解釋原因（坡移疊加）。負結果被當成機制洞察來寫，不藏。
 
-## (f) 缺陷包裝 ⛔ 全文不可得
+## (e) 貢獻凸顯
 
-limitations 的位置與淡化策略無法分析。
+- **一個可帶走的數字**：1.5D 安全距離。摘要末句、3.2.1 微結論、3.4、Conclusions 反覆敲打；參數掃了 8 個位置、4 種延遲，最後全文濃縮成單一門檻值＋「延遲越長越不利」一句話。**headline number 策略是本文被引 44–49 的核心資產**。
+- 貢獻動詞群：set/put in evidence、permit to identify、can be interpreted——把參數研究包裝成「診斷工具」：Conclusions 末段宣稱藉本框架「各案例研究中鑑別出的襯砌異常成因得以被詮釋」，即把純數值成果外推為病理反算的解讀鑰匙，接上第 3.4 節的裂縫機制圖（Fig. 13）與案例文獻（Wang 2010 的裂縫紋理分類）。
+- 摘要寫法特殊：前半近乎小型文獻回顧（三種隧道—坡位置關係、1.5D、施工因子），後半才講本文——摘要自帶 staging，讀者不讀前言也能懂缺口。
 
-## (g) 圖表數與類型 ⛔ 全文不可得
+## (f) 缺陷包裝
 
-無法計數。
+- **無 limitations 節、Conclusions 零自我批評**。缺陷全部改裝成「刻意的參數化選擇」內嵌於方法節：
+  - 5 天延遲明知不合實務 →寫成「此不現實的延遲是刻意選擇，用以彰顯低速互制情境下的開挖影響」——**把弱點反轉為實驗設計**。
+  - 情境外推性 → 引自己 2014 會議文切割：「冰川卸載與軟岩旋動情境非常不同」，等於宣告本文結論只管 case 2，軟岩歸另一篇——**用系列文互相圈定適用域，代替 limitations**。
+  - 片麻岩中挖隧道是否值得研究 → 先發制人一句 "not unrealistic" ＋ Shrestha & Broch (2008) 硬岩擠壓案例背書。
+  - 網格敏感性 → 承認 Table 3/4 數值落差來自坡面網格粗細不同，一句帶過，不做收斂研究。
+- **完全沒提的**：無任何實際隧道監測資料驗證（純概念模型）；地下水全程缺席（摘要明明點名 hydrological contexts，模型卻是乾的）；冰川三步「瞬時」融退各代表 500 年的粗暴時間壓縮；2D 平面應變的三維侷限；均質無節理岩體；seismic contexts 摘要提了內文零著墨。**摘要把 geological/hydrological/seismic 列成互制因子清單，實際只做了力學潛變一軸——清單式摘要幫它撐大了外延**。
+
+## (g) 圖表數與類型
+
+**14 圖 + 5 表**（圖多表重，結果圖高度模組化）：
+
+- Fig. 1 流變模型示意（CVISC＝Kelvin+Maxwell+M-C）；Fig. 2 模型幾何（總體＋三個 study zone 放大）；Fig. 3 開挖節點 θ 定義；Fig. 4 I_d 準則定義（向量示意＋範例曲線）——**方法節 4 張全是示意/定義圖，先把座標語言教會讀者**。
+- Fig. 5、6 坡面位移軌跡圖（位移 ×100 誇大疊在坡面幾何上）；Figs. 7、8 隧道斷面位移/形狀疊圖（×5 誇大，(a) 位置軸 (b) 延遲軸雙聯）；Figs. 9、10 I_d–θ 曲線；Figs. 11、12 應變/軸力極座標蛛網圖（同樣 (a)(b) 雙聯）；Fig. 13 三種裂縫損害機制示意（inner lining pinch／invert raising／vault plane，含開閉裂縫與內外襯拉壓標註）；Fig. 14 損害位置—坡移方向總結示意圖（case 1 軟岩 vs case 2 硬岩）。
+- **收尾用示意圖而非數據圖**（Figs. 13–14）：把數值結果翻譯回工程師語言（裂縫型態、位置），這兩張是全文「可被案例研究引用」的介面。
+- Tables 1–2 輸入參數（岩體/襯砌）；Tables 3–5 結果彙整（速率×位置×時間矩陣、軸力極值）——把 8 位置 × 多時間點的海量數據收進表，圖只畫代表性工況。
+- 品質瑕疵：Fig. 10 圖例整段是法文（"Tunnel à 1,5D de la surface du versant"…）、全文英文多處生硬——2015 年的 TUST 讓它過了，說明 niche 與機制清晰度權重高於語言拋光；但不可倚賴今日仍然如此。
 
 ## (h) 對我們的啟示（營運山岳鐵路隧道襯砌裂縫 × 地下水位循環 × 跨尺度 FDM-DEM）
 
-1. **題目構式直接可借**：`互制現象主標 – Influence of 機制變因 + 場景副標`、全程無方法詞。套用：*Interaction between lining cracks and groundwater level cycling – Influence of …*（FDM-DEM 留給摘要/前言/方法節，不進題目）。本篇被引表現證明 TUST 此軸「現象先行」題目吃得開。
-2. **時間相位缺口正好留給我們**：本篇談的是「**開挖期**」隧道依時行為對 DSGSD 邊坡的影響；我們談「**營運期**」襯砌裂縫在地下水位循環下的長期互制。前言缺口 staging 可直接踩：Causse et al. 建立了開挖期依時互制 → 營運期跨數十年的循環水文荷載互制仍缺 → 我們補位。此文即我們 REFS_MASTER L4 軸（隧道–邊坡互制與滲流 HM）的錨點文獻之一。
-3. **系列發表策略**：會議版先佔題（主標詞組固定）、期刊版沿用主標擴展副標。我們可仿作：以固定主標詞組（如 lining crack – groundwater cycling interaction）貫穿系列稿（會議→TUST→後續），累積 niche 識別度。
-4. **時間性明示於題**：「time-dependent」入題提高依時/長期檢索能見度；我們題目宜明示「cyclic groundwater level」或「long-term」，讓時間維度與水文循環雙關鍵詞都落在題目檢索面上。
+1. **P4 缺口句可以寫到「指名道姓」的精度**：Causse et al. (2015) 做的是「開挖期」依時互制——驅動力是單向冰川卸載＋開挖應力釋放，時間變數是施工延遲（2–5 天）與其後百年潛變，**模型全程無地下水**（摘要點名 hydrological contexts 但未實作）。我們的缺口句可寫成三段式：(i) 開挖期依時互制與 1.5D 安全距離已由 Causse et al. 建立；(ii) 但其驅動為單調卸載下的力學潛變，水文作用缺席；(iii) 營運期襯砌裂縫在地下水位「循環」荷載下的跨數十年演化仍未量化——我們補位。這比前版筆記的「開挖期 vs 營運期」對比更鋒利：多了「單調 vs 循環」「乾模型 vs HM 耦合」兩個正交差異軸。
+2. **文獻血緣直接可用**：本文的襯砌病理分類（前言段 3）與裂縫紋理概念（3.4 節 "crack texture"）全數錨定在 Wang, T.T. (2010, Eng. Geol. 115, 80–95)——即本團隊之學術血脈。前言可寫「Causse et al. 以 Wang (2010) 之裂縫—坡移機制分類為詮釋框架完成參數研究；本文自同一分類體系出發，反向以實測裂縫×水位資料約束跨尺度模型」，形成「他們用我們的分類做正演，我們做反演＋驗證」的天然對照結構。
+3. **可直接移植的表徵工具**：θ 錨定的極座標蛛網圖（應變/軸力 vs θ，Figs. 11–12）、I_d–θ 準則（Eq. 3, Huang et al. 2010）、位移軌跡誇大疊圖（Figs. 5–6）、以及「速率相對背景值的數量級」量化語言——對我們的裂縫開合率 vs 水位循環期敘事特別合用（例：裂縫開合速率在豐水期較枯水期高 10^x）。收尾記得學 Figs. 13–14：**最後兩張圖必須是給隧道工程師看的裂縫機制示意，不是數值雲圖**。
+4. **headline number 工程**：本文把 8×4 參數矩陣壓成「1.5D＋延遲越長越糟」兩句話。我們必須預先設計自己的單一可帶走數字（如臨界水位振幅、裂縫擴展的臨界循環數、或裂縫帶—坡面距離門檻），並在摘要末句、結果微結論、Conclusions 三處重複——結論不重複三次等於沒寫。
+5. **缺陷包裝學一半、防一半**：學——把簡化寫成「刻意的參數化選擇以彰顯機制」、用系列文互相圈定適用域（我們的會議版/期刊版切割可仿）、負結果當機制洞察正面寫。防——本文零現場驗證、乾模型、2D，這正是我們的差異化武器：實測裂縫監測×水位記錄×跨尺度 FDM-DEM 驗證鏈是 Causse 完全沒有的，方法對照表裡應設「validation against field monitoring」一欄讓對手掛零。另注意：2015 年可容忍的英文粗糙與法文圖例，2026 年的 TUST 不會再容忍，語言拋光不可省。
 
 ---
-*筆記生成：2026-07-22。若日後經機構訂閱取得全文，應回填 (b)–(g) 節並將 access 升級為 full-subscription。*
+*筆記重寫：2026-07-22（full-pdf 精讀，12/12 頁）。取代同日 metadata-only 版。*
