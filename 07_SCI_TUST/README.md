@@ -35,7 +35,7 @@
   build_review_docs.py  審閱文件產生器（冪等；依 Wade 批改迭代重建）
   01_ARCHITECTURE.md    內部主控索引（docx 為審閱正本）
   PAPER_PLAN_20260716.md 企劃書 v0（歷史檔）
-  refs/REFS_SEED_VERIFIED.md 文獻種子（36 篇、TUST 61%）
+  References/REFS_SEED_VERIFIED.md 文獻種子（36 篇、TUST 61%）
 ```
 
 審閱流程：Wade 在 docx 上批改（LibreOffice/Word 皆可）→ 告知 Fable →

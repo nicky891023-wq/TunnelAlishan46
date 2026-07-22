@@ -126,7 +126,7 @@ def save(d, name):
 # ========================== 00 題目賣點材料 v3 ==========================
 d = new_doc()
 H(d, "文章題目、賣點、材料（框架首頁 v3，2026-07-22；56 篇精讀後重寫）")
-P(d, "本版依全庫 56 篇逐篇精讀之數據重寫（統計見 refs/reading_notes/_SYN_title_anatomy.md）。"
+P(d, "本版依全庫 56 篇逐篇精讀之數據重寫（統計見 References/reading_notes/_SYN_title_anatomy.md）。"
      "文書規則自本版起落地：段落末黃底重點、引用文獻藍字、⟦R:圖XX⟧ 紅字、⟦G:表XX⟧ 綠字。",
   size=11, point="本頁=全文之錨；此頁不穩不動正文")
 
@@ -223,16 +223,16 @@ save(d, "01_圖表總覽.docx")
 d = new_doc()
 H(d, "參考文獻總集（APA 7；v3＝56 篇全量＋閱讀狀態）")
 P(d, "標記：★＝全文精讀（23 篇）；☆＝摘要級（33 篇，Elsevier 付費牆——補件優先序見 "
-     "refs/ACCESS_LIST.md，⚖ 請以校園權限下載放入 Wade_TD_SCI/Reference/ 我即補讀）。"
+     "References/ACCESS_LIST.md，⚖ 請以校園權限下載放入 Wade_TD_SCI/Reference/ 我即補讀）。"
      "TUST 31/56=55%（達標 ≥50%）；零 MDPI；全數 Crossref 逐 DOI 驗證。"
      "正文引用時一律 author-year 藍字，如 ⟦B:(Chiu et al., 2017)⟧、⟦B:(Fahimifar & Zareifard, 2009)⟧。",
-  size=11, point="正式引用格式=Elsevier name-year；本檔為總庫、逐篇筆記在 refs/reading_notes/")
+  size=11, point="正式引用格式=Elsevier name-year；本檔為總庫、逐篇筆記在 References/reading_notes/")
 import json as _json
 import re as _re
-_acc = _json.loads((ROOT / "refs" / "_tools" / "_access_levels.json").read_text(encoding="utf-8"))
-_master = (ROOT / "refs" / "REFS_MASTER.md").read_text(encoding="utf-8").splitlines()
+_acc = _json.loads((ROOT / "References" / "_tools" / "_access_levels.json").read_text(encoding="utf-8"))
+_master = (ROOT / "References" / "REFS_MASTER.md").read_text(encoding="utf-8").splitlines()
 _doi2id = {}
-for _it in _json.loads((ROOT / "refs" / "_tools" / "_reading_list.json").read_text(encoding="utf-8")):
+for _it in _json.loads((ROOT / "References" / "_tools" / "_reading_list.json").read_text(encoding="utf-8")):
     _doi2id[_it["doi"].lower()] = _it["id"]
 for _ln in _master:
     if _ln.startswith("## "):
@@ -241,6 +241,8 @@ for _ln in _master:
         _m = _re.search(r"10\.[\d.]+/[^\s]+", _ln)
         _id = _doi2id.get((_m.group(0).rstrip(").") if _m else "").lower(), "")
         _star = "★" if _acc.get(_id, "").startswith("full") else "☆"
+        if "Tsai" in _ln and "in review" in _ln:
+            _star = "★"
         _body = _re.sub(r"^- \[\w\](\s*\*\*\[TUST\]\*\*)?\s*", "", _ln)
         _tust = " [TUST]" if "**[TUST]**" in _ln else ""
         P(d, f"{_star}{_tust} {_body}", size=10, indent=True)
@@ -289,7 +291,7 @@ save(d, "04_碩論濃縮對照表.docx")
 # ========================== 05 寫作工藝手冊（新） ==========================
 d = new_doc()
 H(d, "寫作工藝手冊（56 篇精讀萃取；本檔即文書規則示範）")
-P(d, "來源：refs/reading_notes/ 三份綜合報告（_SYN_title_anatomy／_SYN_intro_moves／"
+P(d, "來源：References/reading_notes/ 三份綜合報告（_SYN_title_anatomy／_SYN_intro_moves／"
      "_SYN_packaging），本手冊為落筆版摘要；細節與逐篇證據回查原檔。",
   size=11, point="這一頁是「怎麼寫」的作戰卡，寫作時貼在螢幕邊")
 

@@ -1,4 +1,4 @@
-# refs/ 導覽（2026-07-22 重整）
+# References/ 導覽（2026-07-22 重整）
 
 ```
 REFS_MASTER.md        主文獻庫（56 篇、六軸 L1-L6、APA、DOI、被引數、TUST 55%）
