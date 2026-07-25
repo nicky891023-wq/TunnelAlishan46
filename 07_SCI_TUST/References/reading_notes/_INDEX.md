@@ -50,6 +50,7 @@
 | L5 | Yin, Z.; Zhang, X.; Li, X.; Zhang, | 2022 | TUST | 改良 Burgers＋數值（注漿加固體長期效應） | 全文（在庫PDF/手稿） | [Yin_2022](./Yin_2022.md) |
 | L5 | Ma, G.; He, Z.; He, C.; Kang, X.;  | 2023 | Computers and Geotechnics | 數值（擠壓＋鋼筋不均勻腐蝕×襯砌性能） | 全文（在庫PDF/手稿） | [Ma_2023](./Ma_2023.md) |
 | L5 | Wang, Y.; Liu, Y.; Wang, Z.-F.; Zh | 2023 | Engineering Failure Analys | 案例＋反算數值（圍岩潛變→襯砌漸進破壞） | 全文（在庫PDF/手稿） | [Wang_2023](./Wang_2023.md) |
+| L5 | Wang, T.-T. | 2010 | Engineering Geology | ★血緣錨：裂縫型態分類原典（三軸分類×展開圖慣例×型態反演坡移） | 全文（在庫PDF） | [WangTT_2010](./WangTT_2010.md) |
 | L5 | Wang, T.-T., Chiu, Y.-C., & Li, K. | 2024 | TUST | 現地監測＋裂縫圖譜（襯砌剝落評估指標） | 全文（合法OA） | [WangTT_2024](./WangTT_2024.md) |
 | L5 | Wu, K.; Song, J.; Zhao, N.; Shao,  | 2024 | International Journal for  | 解析＋監測（讓壓支撐依時互制） | 全文（在庫PDF/手稿） | [Wu_2024](./Wu_2024.md) |
 | L5 | Moradi, P. et al. | 2021 | TUST | 維養檢測評估案例（制度型） | 摘要級 | [Moradi_2021](./Moradi_2021.md) |
