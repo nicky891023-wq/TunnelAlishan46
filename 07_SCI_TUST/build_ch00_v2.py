@@ -354,25 +354,28 @@ save(d, "01_圖表總覽.docx")
 
 # ========================== 02 參考文獻主庫：內部證據台帳 ==========================
 d = new_doc()
-H(d, "參考文獻主庫與證據台帳（內部工作版；57 篇）")
-P(d, "主庫目前為 57 篇，其中 TUST 31 篇。這一份是把書目、蒐集分箱與證據可用性放在一起的"
+H(d, "參考文獻主庫與證據台帳（內部工作版；59 篇）")
+P(d, "主庫目前為 59 篇，其中 TUST 31 篇（53%）；全文精讀 50 篇（85%）。這一份是把書目、蒐集分箱與證據可用性放在一起的"
      "內部工作檔，不是可直接投稿的 APA 7 參考文獻表。正式寫稿時應另輸出純書目清單，移除"
-     " [A/B/B*/C]、[TUST] 與 L1–L6，並統一作者名、卷期、article number、online-first 狀態及"
+     " [A/B/B*/C]、[TUST] 與分類標頭，並統一作者名、卷期、article number、online-first 狀態及"
      " APA 標點；Crossref 驗證只證明書目存在，不等於全文已核讀。", size=11,
   point="先分清『書目存在』與『內容已核讀』，再決定一篇文獻能承擔多強的句子")
 TBL(d, ["等級", "數量", "Access／review 狀態", "暫定 citation readiness"], [
-    ["A", "17", "本機出版社 PDF 已直接取得；逐篇核讀狀態另查 note", "引用方法、數據或結論前須回看原文精確頁面"],
+    ["A", "27", "本機出版社 PDF 已直接取得；逐篇核讀狀態另查 note", "引用方法、數據或結論前須回看原文精確頁面"],
     ["B", "22", "FABLE 已以合法全文或本機全文完成全文筆記", "可作核心或支撐文獻；關鍵數字仍回查原文"],
     ["B*", "1", "本團隊 in-review 全文", "只作 research lineage／本文差異，不作唯一外部證據"],
-    ["C", "17", "abstract／metadata／題名層級", "只作背景或檢索線索；不得推論章節、圖表及未載數字"],
+    ["C", "9", "abstract／metadata／題名層級", "只作背景或檢索線索；不得推論章節、圖表及未載數字"],
 ], size=9.3, widths=[0.65, 0.65, 2.65, 2.75])
 P(d, "A† 表示 PDF 已存在但 FABLE 全文筆記尚待同步。正文引用採 Elsevier name-year；"
      "本檔為總庫，逐篇證據仍以 References/reading_notes/ 與原始 PDF 為準。", size=10.5,
   point="核心因果句優先由 A/B 的不同研究團隊交叉支撐；C 不得承擔『前人如何做、結果多少』")
-P(d, "L1–L6 只是檢索分箱，不是直接證據類別：Liu D. (2022) 是偏壓下 FRP 補強；Xin (2024)"
-     " 與 Tian (2026) 是動力／地震坡隧案例；L5 同時包含依時性能與反分析；L6 多數為岩石 BPM"
-     " 理論與標定，只有個別文獻直接處理混凝土。因此分箱名稱不得被拿來代替逐篇內容判讀。",
-  size=10.5, point="一篇文獻只能支撐其研究對象、荷載路徑、材料與方法實際涵蓋的命題")
+P(d, "分類（v3，2026-07-25）依本文題目之因果鏈與賣點對位，非主題關鍵字分箱："
+     "〔B1 驅動：地下水位變動〕→〔B2 機制：圍岩依時變形〕→〔D 結果：襯砌損傷〕，發生於"
+     "〔A 對象：營運山岳隧道〕，以〔C1/C2 方法：跨尺度耦合與離散元標定〕研究，"
+     "並以〔E 坡隧互制對照組〕界定本文縫隙。**每類標明判準與引用位置，歸屬可被逐篇檢核；"
+     "但分類僅指出「該文獻在本文中的角色」，仍不得代替其研究對象、荷載路徑與材料的實際涵蓋範圍。**",
+  size=10.5, point="分類＝引用位置；證據力仍依 A/B/C 分級與逐篇筆記判讀")
+
 import json as _json
 import re as _re
 _acc = _json.loads((ROOT / "References" / "_tools" / "_access_levels.json").read_text(encoding="utf-8"))
@@ -381,28 +384,22 @@ _doi2id = {}
 for _it in _json.loads((ROOT / "References" / "_tools" / "_reading_list.json").read_text(encoding="utf-8")):
     _doi2id[_it["doi"].lower()] = _it["id"]
 _direct_pdf = {
+    # 本機出版社 PDF 已取得且已完成全文精讀（A 級）
     "WangTT_2010", "Liu_2023", "Bai_2022", "Lionel_2015", "Yuqi_2018",
     "Liu_2019", "WangX_2021", "TianX_2021", "Weixin_2023", "Zhou_2024",
     "Xin_2024", "TianY_2026", "Sulei_2022", "Zheng_2024", "Potyondy_2004",
-    "Vazaios_2019", "Lisjak_2015",
+    "Vazaios_2019", "Lisjak_2015", "Rasmussen_2024", "Wang_2020", "Cho_2007",
+    "Yoon_2007", "WangZ_2026", "Bai_2025", "Chang_2024", "Kunjie_2025",
+    "Nitka_2018", "Wu_2016",
 }
-_note_sync_pending = {"Liu_2019", "WangTT_2010"}
-_heading_map = {
-    "L1 水文→襯砌載重與劣化（8 篇，TUST 6）":
-        "L1 隧道水力載重、排水劣化與襯砌反應（檢索分箱；8 篇，TUST 6）",
-    "L3 連續-離散耦合與 BPM 襯砌（12 篇，TUST 6）":
-        "L3 連續–離散方法、FDEM 與 BPM 襯砌（檢索分箱；12 篇，TUST 6）",
-    "L4 隧道–邊坡互制與滲流 HM（10 篇，TUST 8）":
-        "L4 坡隧互制、水–岩／滲流 HM 與動力邊界案例（檢索分箱；10 篇，TUST 8）",
-    "L5 營運隧道維養/案例（11 篇，TUST 6）":
-        "L5 營運、依時性能與維養案例（檢索分箱；11 篇，TUST 6）",
-    "L6 DEM/BPM 標定與混凝土開裂（8 篇，TUST 0）":
-        "L6 DEM／BPM 理論、標定與混凝土案例（檢索分箱；8 篇，TUST 0）",
-}
+_note_sync_pending = set()
+_heading_map = {}
 for _ln in _master:
     if _ln.startswith("## "):
         _heading = _ln[3:]
         H(d, _heading_map.get(_heading, _heading), 2)
+    elif _ln.startswith("- **"):
+        P(d, _ln[2:].replace("**", "").strip(), size=10, point=None)
     elif _ln.startswith("- ["):
         _m = _re.search(r"10\.[\d.]+/[^\s]+", _ln)
         _id = _doi2id.get((_m.group(0).rstrip(").") if _m else "").lower(), "")
