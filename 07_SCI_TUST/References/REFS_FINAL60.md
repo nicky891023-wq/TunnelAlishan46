@@ -1,6 +1,6 @@
 # REFS_FINAL60｜正式參考清單（自 88 篇工作庫精選）
 
-> **60 篇；TUST 39 篇（65%）；已全文精讀 43 篇（72%）**
+> **60 篇；TUST 39 篇（65%）；已全文精讀 49 篇（82%）**
 > 原則：TUST 全留；非 TUST 依「角色不可替代 → 已全文 → 被引×相關性」精選。
 > ✔＝已全文精讀；○＝尚未全文（清單見 READING_GAP.md）。
 
@@ -40,7 +40,7 @@
 
 - ✔ (被引 178) Sulem, J.; Panet, M.; Guenot, A. (1987). An analytical solution for time-dependent displacements in a circular tunnel. International Journal of Rock Mechanics and Mining Sciences & Geomechanics Abstracts, 24(3), 155-164. https://doi.org/10.1016/0148-9062(87)90523-7　※2A｜依時收斂解析原典（系譜句起點）
 - ✔ **[TUST]** (被引 167) Paraskevopoulou, C.; Diederichs, M. (2018). Analysis of time-dependent deformation in tunnels using the Convergence-Confinement Method. Tunnelling and Underground Space Technology, 71, 62-80. https://doi.org/10.1016/j.tust.2017.07.001
-- ○ **[TUST]** (被引 163) Fahimifar, A., Monshizadeh Tehrani, F., Hedayat, A., & Vakilzadeh, A. (2010). Analytical solution for the excavation of circular tunnels in a visco-elastic Burger's material under hydrostatic stress field. Tunnelling and Underground Space Technology, 25(4), 297-304. https://doi.org/10.1016/j.tust.2010.01.002
+- ✔ **[TUST]** (被引 163) Fahimifar, A., Monshizadeh Tehrani, F., Hedayat, A., & Vakilzadeh, A. (2010). Analytical solution for the excavation of circular tunnels in a visco-elastic Burger's material under hydrostatic stress field. Tunnelling and Underground Space Technology, 25(4), 297-304. https://doi.org/10.1016/j.tust.2010.01.002
 
 ### 2B｜修正力學模式（5 篇，TUST 2）
 
@@ -54,7 +54,7 @@
 
 ### 3A｜近場滲流解析（7 篇，TUST 7）
 
-- ○ **[TUST]** (被引 132) Huangfu, M., Wang, M. S., Tan, Z. S., & Wang, X. Y. (2010). Analytical solutions for steady seepage into an underwater circular tunnel. Tunnelling and Underground Space Technology, 25 (4), 391-396. https://doi.org/10.1016/j.tust.2010.02.002
+- ✔ **[TUST]** (被引 132) Huangfu, M., Wang, M. S., Tan, Z. S., & Wang, X. Y. (2010). Analytical solutions for steady seepage into an underwater circular tunnel. Tunnelling and Underground Space Technology, 25 (4), 391-396. https://doi.org/10.1016/j.tust.2010.02.002
 - ✔ **[TUST]** (被引 94) Fahimifar, A.; Zareifard, M.R. (2009). A theoretical solution for analysis of tunnels below groundwater considering the hydraulic-mechanical coupling. Tunnelling and Underground Space Technology, 24(6), 634-646. https://doi.org/10.1016/j.tust.2009.06.002
 - ○ **[TUST]** (被引 51) Shin, Y. J., Kim, B. M., Shin, J. H., & Lee, I. M. (2010). The ground reaction curve of underwater tunnels considering seepage forces. Tunnelling and Underground Space Technology, 25 (4), 315-324. https://doi.org/10.1016/j.tust.2010.01.005
 - ○ **[TUST]** (被引 38) Yu Jun; Li Dongkai; Zheng Jingfan; Zhang Zhizhong; He Zhen; Fan Yong (2023). Analytical study on the seepage field of different drainage and pressure relief options for tunnels in high water-rich areas. Tunnelling and Underground Space Technology, 134, 105018. https://doi.org/10.1016/j.tust.2023.105018
@@ -72,8 +72,8 @@
 
 ### 4A｜多源地質資料整合（3 篇，TUST 2）
 
-- ○ **[TUST]** (被引 96) Shi, C., & Wang, Y. (2022). Data-driven construction of Three-dimensional subsurface geological models from limited Site-specific boreholes and prior geological knowledge for underground digital twin. Tunnelling and Underground Space Technology, 126, 104493. https://doi.org/10.1016/j.tust.2022.104493
-- ○ **[TUST]** (被引 83) Pan, D., Xu, Z., Lu, X., Zhou, L., & Li, H. (2020). 3D scene and geological modeling using integrated multi-source spatial data: Methodology, challenges, and suggestions. Tunnelling and Underground Space Technology, 100, 103393. https://doi.org/10.1016/j.tust.2020.103393
+- ✔ **[TUST]** (被引 96) Shi, C., & Wang, Y. (2022). Data-driven construction of Three-dimensional subsurface geological models from limited Site-specific boreholes and prior geological knowledge for underground digital twin. Tunnelling and Underground Space Technology, 126, 104493. https://doi.org/10.1016/j.tust.2022.104493
+- ✔ **[TUST]** (被引 83) Pan, D., Xu, Z., Lu, X., Zhou, L., & Li, H. (2020). 3D scene and geological modeling using integrated multi-source spatial data: Methodology, challenges, and suggestions. Tunnelling and Underground Space Technology, 100, 103393. https://doi.org/10.1016/j.tust.2020.103393
 - ○ (被引 83) Guo, J., Wang, X., Wang, J., Dai, X., Wu, L., & Li, C., et al. (2021). Three-dimensional geological modeling and spatial analysis from geotechnical borehole data using an implicit surface and marching tetrahedra algorithm. Engineering Geology, 284, 106047. https://doi.org/10.1016/j.enggeo.2021.106047　※4A｜隱式曲面＋marching tetrahedra 由鑽孔建模（技術程序）
 
 ### 4B｜區域尺度—場址尺度（2 篇，TUST 1）
@@ -83,8 +83,8 @@
 
 ### 4C｜地質模型數值量化（2 篇，TUST 1）
 
-- ○ **[TUST]** (被引 97) Fabozzi, S., Biancardo, S. A., Veropalumbo, R., & Bilotta, E. (2021). I-BIM based approach for geotechnical and numerical modelling of a conventional tunnel excavation. Tunnelling and Underground Space Technology, 108, 103723. https://doi.org/10.1016/j.tust.2020.103723
-- ○ (被引 84) Liu, L. L., Cheng, Y. M., Pan, Q. J., & Dias, D. (2020). Incorporating stratigraphic boundary uncertainty into reliability analysis of slopes in spatially variable soils using one-dimensional conditional Markov chain model. Computers and Geotechnics, 118, 103321. https://doi.org/10.1016/j.compgeo.2019.103321　※4C｜地層界面不確定性（本文離散化之誠實陳述依據）
+- ✔ **[TUST]** (被引 97) Fabozzi, S., Biancardo, S. A., Veropalumbo, R., & Bilotta, E. (2021). I-BIM based approach for geotechnical and numerical modelling of a conventional tunnel excavation. Tunnelling and Underground Space Technology, 108, 103723. https://doi.org/10.1016/j.tust.2020.103723
+- ✔ (被引 84) Liu, L. L., Cheng, Y. M., Pan, Q. J., & Dias, D. (2020). Incorporating stratigraphic boundary uncertainty into reliability analysis of slopes in spatially variable soils using one-dimensional conditional Markov chain model. Computers and Geotechnics, 118, 103321. https://doi.org/10.1016/j.compgeo.2019.103321　※4C｜地層界面不確定性（本文離散化之誠實陳述依據）
 
 ## 5｜跨尺度數值方法
 
