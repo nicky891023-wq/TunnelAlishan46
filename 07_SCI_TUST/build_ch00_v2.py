@@ -369,12 +369,14 @@ TBL(d, ["等級", "數量", "Access／review 狀態", "暫定 citation readiness
 P(d, "A† 表示 PDF 已存在但 FABLE 全文筆記尚待同步。正文引用採 Elsevier name-year；"
      "本檔為總庫，逐篇證據仍以 References/reading_notes/ 與原始 PDF 為準。", size=10.5,
   point="核心因果句優先由 A/B 的不同研究團隊交叉支撐；C 不得承擔『前人如何做、結果多少』")
-P(d, "分類（v4，Wade 07-25 定義）：五類串成一條回顧主線——**營運隧道案例與監測 → "
-     "地下水及有效應力機制 → 圍岩依時力學模式 → 跨尺度數值傳遞 → 襯砌損傷與維護對策**；"
-     "第 5 類因涵蓋面較廣再分 5A 受力與裂縫演化／5B 鍵結顆粒模型標定／5C 劣化與補強。"
-     "每類標明蒐集範圍、支撐目的、檢索詞與本文引用位置，逐篇歸屬可檢核；一篇只放一類。"
+P(d, "分類（v5，Wade 07-25 定義＋子類）：五類串成一條回顧主線——**營運隧道案例與監測 → "
+     "地下水及有效應力機制 → 圍岩依時力學模式 → 跨尺度數值傳遞 → 襯砌損傷與維護對策**。"
+     "每類再分子類，一個子類＝一個明確的寫作角色（判準＋引用位置），一篇只放一個子類；"
      "分類指出「該文獻在本文中的角色」，仍不得代替其研究對象、荷載路徑與材料之實際涵蓋範圍。",
-  size=10.5, point="分類＝回顧主線上的位置；證據力另依 A/B/C 分級與逐篇筆記判讀")
+  size=10.5, point="子類＝寫作角色；證據力另依 A/B/C 分級與逐篇筆記判讀")
+P(d, "⚠ 已知缺口：子類 4C（三維工程地質模型建置）目前 0 篇——賣點 3「多尺度三維地質模型」"
+     "在前言將無文獻支撐，建議補 2–3 篇（檢索詞：3D engineering geological model／"
+     "geological modelling with borehole integration）。", size=10.5, point="缺口已標示，待補")
 
 import json as _json
 import re as _re
@@ -398,9 +400,16 @@ for _ln in _master:
     if _ln.startswith("## "):
         _heading = _ln[3:]
         H(d, _heading_map.get(_heading, _heading), 2)
-    elif _ln.startswith("- **"):
-        _p = P(d, _ln[2:].replace("**", "").strip(), size=10, point=None)
-        _p.paragraph_format.left_indent = Pt(12)
+    elif _ln.startswith("### "):
+        _hp = d.add_paragraph()
+        _run(_hp, _ln[4:].strip(), 12, bold=True)
+        _hp.paragraph_format.left_indent = Pt(8)
+        _hp.paragraph_format.space_before = Pt(6)
+        _hp.paragraph_format.space_after = Pt(2)
+        _hp.paragraph_format.keep_with_next = True
+    elif _ln.startswith("- **") or _ln.startswith("- 判準") or _ln.startswith("- 引用位置"):
+        _p = P(d, _ln[2:].replace("**", "").strip(), size=9.8, point=None)
+        _p.paragraph_format.left_indent = Pt(16)
         _p.paragraph_format.space_after = Pt(1)
     elif _ln.startswith("- ["):
         _m = _re.search(r"10\.[\d.]+/[^\s]+", _ln)
