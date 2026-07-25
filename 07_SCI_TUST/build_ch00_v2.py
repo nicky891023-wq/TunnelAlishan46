@@ -369,12 +369,12 @@ TBL(d, ["等級", "數量", "Access／review 狀態", "暫定 citation readiness
 P(d, "A† 表示 PDF 已存在但 FABLE 全文筆記尚待同步。正文引用採 Elsevier name-year；"
      "本檔為總庫，逐篇證據仍以 References/reading_notes/ 與原始 PDF 為準。", size=10.5,
   point="核心因果句優先由 A/B 的不同研究團隊交叉支撐；C 不得承擔『前人如何做、結果多少』")
-P(d, "分類（v3，2026-07-25）依本文題目之因果鏈與賣點對位，非主題關鍵字分箱："
-     "〔B1 驅動：地下水位變動〕→〔B2 機制：圍岩依時變形〕→〔D 結果：襯砌損傷〕，發生於"
-     "〔A 對象：營運山岳隧道〕，以〔C1/C2 方法：跨尺度耦合與離散元標定〕研究，"
-     "並以〔E 坡隧互制對照組〕界定本文縫隙。**每類標明判準與引用位置，歸屬可被逐篇檢核；"
-     "但分類僅指出「該文獻在本文中的角色」，仍不得代替其研究對象、荷載路徑與材料的實際涵蓋範圍。**",
-  size=10.5, point="分類＝引用位置；證據力仍依 A/B/C 分級與逐篇筆記判讀")
+P(d, "分類（v4，Wade 07-25 定義）：五類串成一條回顧主線——**營運隧道案例與監測 → "
+     "地下水及有效應力機制 → 圍岩依時力學模式 → 跨尺度數值傳遞 → 襯砌損傷與維護對策**；"
+     "第 5 類因涵蓋面較廣再分 5A 受力與裂縫演化／5B 鍵結顆粒模型標定／5C 劣化與補強。"
+     "每類標明蒐集範圍、支撐目的、檢索詞與本文引用位置，逐篇歸屬可檢核；一篇只放一類。"
+     "分類指出「該文獻在本文中的角色」，仍不得代替其研究對象、荷載路徑與材料之實際涵蓋範圍。",
+  size=10.5, point="分類＝回顧主線上的位置；證據力另依 A/B/C 分級與逐篇筆記判讀")
 
 import json as _json
 import re as _re
@@ -399,7 +399,9 @@ for _ln in _master:
         _heading = _ln[3:]
         H(d, _heading_map.get(_heading, _heading), 2)
     elif _ln.startswith("- **"):
-        P(d, _ln[2:].replace("**", "").strip(), size=10, point=None)
+        _p = P(d, _ln[2:].replace("**", "").strip(), size=10, point=None)
+        _p.paragraph_format.left_indent = Pt(12)
+        _p.paragraph_format.space_after = Pt(1)
     elif _ln.startswith("- ["):
         _m = _re.search(r"10\.[\d.]+/[^\s]+", _ln)
         _id = _doi2id.get((_m.group(0).rstrip(").") if _m else "").lower(), "")
