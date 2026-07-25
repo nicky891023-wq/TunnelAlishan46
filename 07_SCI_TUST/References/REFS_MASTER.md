@@ -1,6 +1,6 @@
 # REFS_MASTER（主文獻庫 v2，2026-07-18）
 
-> 57 篇；TUST 31 篇（55%，目標 ≥50% ✓）；V=Crossref 逐 DOI 驗證、
+> 59 篇；TUST 31 篇（55%，目標 ≥50% ✓）；V=Crossref 逐 DOI 驗證、
 > S=特殊（前作 in review）。禁 MDPI ✓（全庫零 MDPI）。被引數=Crossref 當日值。
 > 解析解家族依 Wade 裁示僅留 Sulem 1987（脈絡一句）＋Fahimifar 2009（D3 對照）。
 
@@ -70,6 +70,9 @@
 - [V] **[TUST]** (被引 12) Wang, T.-T., Chiu, Y.-C., & Li, K.-J. (2024). Index for assessing spalling in tunnel lining based on displacement monitoring and crack mapping. Tunnelling and Underground Space Technology, 153, 105975. https://doi.org/10.1016/j.tust.2024.105975
 
 ## L6 DEM/BPM 標定與混凝土開裂（8 篇，TUST 0）
+
+- [V] (被引 180) Nitka, M., & Tejchman, J. (2018). A three-dimensional meso-scale approach to concrete fracture based on combined DEM with X-ray μCT images. Cement and Concrete Research, 107, 11-29. https://doi.org/10.1016/j.cemconres.2018.02.006　★混凝土 DEM 標定依據（全庫唯一非岩石之離散元標定）
+- [V] (被引 263) Wu, S., & Xu, X. (2016). A study of three intrinsic problems of the classic discrete element method using flat-joint model. Rock Mechanics and Rock Engineering, 49, 1813-1830. https://doi.org/10.1007/s00603-015-0890-z　★BPM 三內在問題之修正（接 Cho 2007「問題」的「解法」端）
 
 - [V] (被引 4545) D.O. Potyondy; P.A. Cundall (2004). A bonded-particle model for rock. International Journal of Rock Mechanics and Mining Sciences, 41, 1329-1364 (issue 8). https://doi.org/10.1016/j.ijrmms.2004.09.011
 - [V] (被引 1014) N. Cho; C.D. Martin; D.C. Sego (2007). A clumped particle model for rock. International Journal of Rock Mechanics and Mining Sciences, 44, 997-1010 (issue 7). https://doi.org/10.1016/j.ijrmms.2007.02.002

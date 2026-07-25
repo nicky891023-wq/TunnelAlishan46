@@ -1,8 +1,8 @@
-# 全文取得狀況（2026-07-25 第四波補讀完成）
+# 全文取得狀況（2026-07-25 第五波完成）
 
-**全文精讀 48 篇／摘要級 9 篇（總 57）**
+**全文精讀 50 篇／摘要級 9 篇（總 59）**
 
-## 已全文精讀（48）
+## 已全文精讀（50）
 
 - An, P. et al. (2026) — An_2026
 - Bai, Yifan; Li, Xiaojing; Yang, Weimin; Xu (2022) — Bai_2022
@@ -22,6 +22,7 @@
 - Liu, B.; Song, Y.; Chu, Z. (2022) — Liu_2022
 - Liu, Chang; Zhang, Dingli; Fang, Qian; Zha (2023) — Liu_2023
 - Ma, G.; He, Z.; He, C.; Kang, X.; Wang, S. (2023) — Ma_2023
+- Nitka, M., & Tejchman, J. (2018) — Nitka_2018
 - Paraskevopoulou, C.; Diederichs, M. (2018) — Paraskevopoulou_2018
 - D.O. Potyondy; P.A. Cundall (2004) — Potyondy_2004
 - Rasmussen, Leandro Lima; Min, Ki-Bok (2024) — Rasmussen_2024
@@ -41,6 +42,7 @@
 - Wang, Tuo; Huang, Hongwei; Zhang, Fengshou (2020) — Wang_2020
 - Wang, Y.; Liu, Y.; Wang, Z.-F.; Zhang, X.; (2023) — Wang_2023
 - Sun Weixin; Han Fucheng; Zhang Yanmei; Zha (2023) — Weixin_2023
+- Wu, S., & Xu, X. (2016) — Wu_2016
 - Wu, K.; Song, J.; Zhao, N.; Shao, Z. (2024) — Wu_2024
 - Xin, C. et al. (2024) — Xin_2024
 - Chiu Ya-Chu; Lee Chia-Han; Wang Tai-Tien (2017) — Ya-Chu_2017
@@ -53,9 +55,7 @@
 - Zheng, C.; Zhu, X.; Zhang, Z. (2024) — Zheng_2024
 - Zhou, Zongqing; Gao, Tian; Sun, Jiwei; Gao (2024) — Zhou_2024
 
-## 待補全文（9）
-
-> 皆為前言「一句一人動詞鏈」中的一筆，摘要級足夠支撐該句；不影響 P1–P5 主論證。
+## 待補全文（9；皆為前言動詞鏈中的一筆，摘要級足夠）
 
 - Jingqi_2023 — doi:10.1016/j.tust.2023.105393
 - Jun_2023 — doi:10.1016/j.tust.2023.105018
@@ -67,7 +67,7 @@
 - Peng_2017 — doi:10.1016/j.ijrmms.2017.10.004
 - Potyondy_2015 — doi:10.1080/12269328.2014.998346
 
-## 尚未取得（非 Elsevier 平台，⚖ 可選）
+## 已放棄取得（校方無訂閱，另擇替代篇目已補讀）
 
-- Nitka & Tejchman (2015) Granular Matter 17:145–164 — DEM 混凝土單壓/單拉（**全庫唯一混凝土 BPM 標定依據**）https://doi.org/10.1007/s10035-015-0546-4
-- Potyondy (2015) Geosystem Engineering 18(1):1–28 — BPM 綜述（加分項；2004 原典已全文在手）https://doi.org/10.1080/12269328.2014.998346
+- Nitka & Tejchman (2015) Granular Matter → 替代：**Nitka & Tejchman (2018) Cem. Concr. Res.** ✓
+- Potyondy (2015) Geosystem Eng. → 替代：**Wu & Xu (2016) RMRE flat-joint** ✓

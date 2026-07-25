@@ -62,4 +62,5 @@
 | L6 | Jeoungseok Yoon | 2007 | International Journal of R | DEM 標定之實驗設計最佳化 | 摘要級 | [Yoon_2007](./Yoon_2007.md) |
 | L6 | David Oskar Potyondy | 2015 | Geosystem Engineering | BPM 綜述（現況與方向） | 摘要級 | [Potyondy_2015](./Potyondy_2015.md) |
 | L6 | M. Nitka; J. Tejchman | 2015 | Granular Matter | DEM 混凝土單壓/單拉模擬 | 摘要級 | [Nitka_2015](./Nitka_2015.md) |
+| L6 | M. Nitka; J. Tejchman | 2018 | Cement and Concrete Resea | ★混凝土 DEM 標定唯一權威（四相細觀＋μCT 幾何直取；壓縮標定→彎曲預測誤差1.8%） | 全文（在庫PDF） | [Nitka_2018](./Nitka_2018.md) |
 | L6 | Jun Peng; Louis Ngai Yuen Wong; Ce | 2017 | International Journal of R | BPM 晶粒模型粒徑比效應 | 摘要級 | [Peng_2017](./Peng_2017.md) |
