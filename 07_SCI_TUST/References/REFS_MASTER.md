@@ -1,9 +1,9 @@
-# REFS_MASTER（主文獻庫 v6，2026-07-25；六類架構，依 Wade 07-25 定義）
+# REFS_MASTER（主文獻庫 v7，2026-07-25；六類架構，依 Wade 07-25 定義）
 
 > **回顧主線**：營運隧道案例 → 圍岩依時變形 → 水力耦合分析 → 三維地質模型 →
 > 跨尺度數值方法 → 襯砌受力與損傷。
 > 每類含蒐集範圍與檢索詞；每子類含判準與引用位置。一篇只放一個子類。
-> 合計 71 篇；TUST 32 篇（45%）；全數 Crossref 逐 DOI 驗證、零 MDPI。
+> 合計 88 篇；TUST 39 篇（44%）；全數 Crossref 逐 DOI 驗證、零 MDPI。
 
 
 ## 1｜營運隧道案例（18 篇，TUST 12）
@@ -89,12 +89,12 @@
 - [V] **[TUST]** (被引 2) Mao, Y., Liu, F., Li, Y., Zhao, F., He, M., & Tao, Z. (2026). Deep tunnel deformation analysis based on large-scale physical test and fractional derivative creep model. Tunnelling and Underground Space Technology, 170, 107383. https://doi.org/10.1016/j.tust.2025.107383
 - [S] (被引 0) Tsai, C.-H., Li, H.-H., & Wang, T.-T. (in review). Numerical simulation and mechanical interpretation of intermittent time-dependent deformation in tunnels. IJRMMS (投稿中),  (⚖ 引用方式待 TT)
 
-## 3｜水力耦合分析（7 篇，TUST 7）
+## 3｜水力耦合分析（12 篇，TUST 10）
 
 - **蒐集與支撐**：地下水滲流場、有效應力與水位變動之力學效應，作為跨尺度分析之外部驅動與邊界條件。
 - **檢索詞**：hydro-mechanical coupling、transient seepage、effective stress、groundwater-level fluctuation
 
-### 3A｜近場滲流解析（4 篇，TUST 4）
+### 3A｜近場滲流解析（9 篇，TUST 7）
 
 - 判準：隧道近場滲流場、外水壓與水力—力學耦合之解析／數值解
 - 引用位置：§1 P2 驅動端、§3.1、§5.2 量級對照　⚠ 需擴充（目前僅 4 篇）
@@ -103,6 +103,12 @@
 - [V] **[TUST]** (被引 38) Yu Jun; Li Dongkai; Zheng Jingfan; Zhang Zhizhong; He Zhen; Fan Yong (2023). Analytical study on the seepage field of different drainage and pressure relief options for tunnels in high water-rich areas. Tunnelling and Underground Space Technology, 134, 105018. https://doi.org/10.1016/j.tust.2023.105018
 - [V] **[TUST]** (被引 33) Jia Jingqi; Chen Yun; Luo Hao; Ma Guowei (2023). Seepage stability analysis of a deep-buried tunnel in fractured rocks based on a non-Darcy hydro-mechanical coupled method. Tunnelling and Underground Space Technology, 142, 105393. https://doi.org/10.1016/j.tust.2023.105393
 - [V] **[TUST]** (被引 0) An, P., Fan, L., Ma, S., Zhang, J., Huang, Z., & Fu, H. (2026). Water pressure distribution around tunnels in pipeline-type karst and lining response characteristics induced by rainfall. Tunnelling and Underground Space Technology, 107691. https://doi.org/10.1016/j.tust.2026.107691
+
+- [V] **[TUST]** (被引 132) Huangfu, M., Wang, M. S., Tan, Z. S., & Wang, X. Y. (2010). Analytical solutions for steady seepage into an underwater circular tunnel. Tunnelling and Underground Space Technology, 25 (4), 391-396. https://doi.org/10.1016/j.tust.2010.02.002
+- [V] **[TUST]** (被引 51) Shin, Y. J., Kim, B. M., Shin, J. H., & Lee, I. M. (2010). The ground reaction curve of underwater tunnels considering seepage forces. Tunnelling and Underground Space Technology, 25 (4), 315-324. https://doi.org/10.1016/j.tust.2010.01.005
+- [V] **[TUST]** (被引 37) Zhang, Q., Shao, C., Wang, H. Y., Jiang, B. S., Jiang, Y. J., & Liu, R. C. (2020). A fully coupled hydraulic-mechanical solution of a circular tunnel in strain-softening rock masses. Tunnelling and Underground Space Technology, 99, 103375. https://doi.org/10.1016/j.tust.2020.103375
+- [V] (被引 8) Luo, S., Xu, M., Kang, X., Li, X., & Rao, L. (2022). Analytical solution of external water pressure on deep tunnel lining in horizontally layered hydrogeological structures. Bulletin of Engineering Geology and the Environment, 81 (6), 253. https://doi.org/10.1007/s10064-022-02741-9
+- [V] (被引 8) Wei, T., Wang, C., Zhao, Y., Bi, J., & Zhang, Y. (2025). A new semi–analytical method for elastic–strain softening circular tunnel with hydraulic–mechanical coupling. Engineering Geology, 344, 107826. https://doi.org/10.1016/j.enggeo.2024.107826
 
 ### 3B｜地下水位變動（3 篇，TUST 3）
 
@@ -113,28 +119,43 @@
 - [V] **[TUST]** (被引 33) Tang Kunjie; Qiu Junling; Lai Jinxing; Xue Fangchen; Wang Zhichao; Li Xing (2025). Experimental investigation on deformation-failure mechanisms of a shallow-bias large-section loess tunnel induced by rainfall. Tunnelling and Underground Space Technology, 157, 106253. https://doi.org/10.1016/j.tust.2024.106253
 - [V] **[TUST]** (被引 29) Chang, Z., Yan, C., Xie, W., Lu, Z., Lan, H., & Mei, H. (2024). Large-scale field tunnel model experience and time-dependent floor heave induced by humidification. Tunnelling and Underground Space Technology, 145, 105615. https://doi.org/10.1016/j.tust.2024.105615
 
-## 4｜三維地質模型（0 篇，TUST 0）　⚠ 全類 0 篇，亟需蒐集
+## 4｜三維地質模型（12 篇，TUST 4）
 
 - **蒐集與支撐**：多源地質資料整合、區域至場址尺度模型建置，以及地質模型轉為數值模型之量化程序。
 - **檢索詞**：3D engineering geological model、geological modelling with borehole integration、implicit geological modelling、geological model discretization
 
-### 4A｜多源地質資料整合（0 篇，TUST 0）　⚠ 待蒐集
+### 4A｜多源地質資料整合（4 篇，TUST 2）
 
 - 判準：地形、鑽孔、開挖面影像等多源資料之整合建模
 - 引用位置：§2.1、§3.3
 
 
-### 4B｜區域尺度—場址尺度（0 篇，TUST 0）　⚠ 待蒐集
+- [V] **[TUST]** (被引 96) Shi, C., & Wang, Y. (2022). Data-driven construction of Three-dimensional subsurface geological models from limited Site-specific boreholes and prior geological knowledge for underground digital twin. Tunnelling and Underground Space Technology, 126, 104493. https://doi.org/10.1016/j.tust.2022.104493
+- [V] **[TUST]** (被引 83) Pan, D., Xu, Z., Lu, X., Zhou, L., & Li, H. (2020). 3D scene and geological modeling using integrated multi-source spatial data: Methodology, challenges, and suggestions. Tunnelling and Underground Space Technology, 100, 103393. https://doi.org/10.1016/j.tust.2020.103393
+- [V] (被引 83) Guo, J., Wang, X., Wang, J., Dai, X., Wu, L., & Li, C., et al. (2021). Three-dimensional geological modeling and spatial analysis from geotechnical borehole data using an implicit surface and marching tetrahedra algorithm. Engineering Geology, 284, 106047. https://doi.org/10.1016/j.enggeo.2021.106047
+- [V] (被引 71) Zhang, Q., & Zhu, H. (2018). Collaborative 3D geological modeling analysis based on multi-source data standard. Engineering Geology, 246, 233-244. https://doi.org/10.1016/j.enggeo.2018.10.001
+
+### 4B｜區域尺度—場址尺度（4 篇，TUST 1）
 
 - 判準：區域至場址尺度之模型範圍界定與縮尺
 - 引用位置：§3.3
 
 
-### 4C｜地質模型數值量化（0 篇，TUST 0）　⚠ 待蒐集
+- [V] (被引 80) Parry, S., Baynes, F. J., Culshaw, M. G., Eggers, M., Keaton, J. F., & Lentfer, K., et al. (2014). Engineering geological models: an introduction: IAEG commission 25. Bulletin of Engineering Geology and the Environment, 73, 689-706. https://doi.org/10.1007/s10064-014-0576-x
+- [V] **[TUST]** (被引 32) Su, K., Zhang, Y. J., Chang, Z. H., Wu, H. G., Wang, T., & Zhou, W. (2019). Transverse extent of numerical model for deep buried tunnel excavation. Tunnelling and Underground Space Technology, 84, 373-380. https://doi.org/10.1016/j.tust.2018.11.034
+- [V] (被引 20) Longoni, L., Papini, M., Brambilla, D., Arosio, D., & Zanzi, L. (2016). The role of the spatial scale and data accuracy on deep-seated gravitational slope deformation modeling: The Ronco landslide, Italy. Geomorphology, 253, 74-82. https://doi.org/10.1016/j.geomorph.2015.09.030　（期刊定位：Geomorphology 為地表作用領域 Q1，非隧道類清單內）
+- [V] (被引 10) Sun, H., Sheng, L., Dai, Y., Li, X., Rui, Y., & Lu, L. (2025). 3D geological modeling of tunnel alignment in the complex mountainous region of Yongshan, China, based on multisource data fusion. Engineering Geology, 354, 108209. https://doi.org/10.1016/j.enggeo.2025.108209
+
+### 4C｜地質模型數值量化（4 篇，TUST 1）
 
 - 判準：地質模型轉為數值網格／材料分區之量化程序
 - 引用位置：§2.1
 
+
+- [V] **[TUST]** (被引 97) Fabozzi, S., Biancardo, S. A., Veropalumbo, R., & Bilotta, E. (2021). I-BIM based approach for geotechnical and numerical modelling of a conventional tunnel excavation. Tunnelling and Underground Space Technology, 108, 103723. https://doi.org/10.1016/j.tust.2020.103723
+- [V] (被引 84) Liu, L. L., Cheng, Y. M., Pan, Q. J., & Dias, D. (2020). Incorporating stratigraphic boundary uncertainty into reliability analysis of slopes in spatially variable soils using one-dimensional conditional Markov chain model. Computers and Geotechnics, 118, 103321. https://doi.org/10.1016/j.compgeo.2019.103321
+- [V] (被引 12) Bahrainian, S. S., & Daneh Dezfuli, A. (2014). A geometry-based adaptive unstructured grid generation algorithm for complex geological media. Computers & Geosciences, 68, 31-37. https://doi.org/10.1016/j.cageo.2014.03.017
+- [V] (被引 9) Li, Q., Fang, Q., Wang, J., Wang, G., & Shang, P. (2026). Data- and knowledge-driven three-dimensional geological reconstruction method for tunnel engineering. Journal of Rock Mechanics and Geotechnical Engineering, 18, 4318-4336. https://doi.org/10.1016/j.jrmge.2025.08.028
 
 ## 5｜跨尺度數值方法（19 篇，TUST 5）
 
@@ -208,4 +229,3 @@
 
 - [V] **[TUST]** (被引 34) Liu, D., Shang, Q., Li, M., Zuo, J., Gao, Y., & Xu, F. (2022). Cracking behaviour of tunnel lining under bias pressure strengthened using FRP Grid-PCM method. Tunnelling and Underground Space Technology, 123, 104436. https://doi.org/10.1016/j.tust.2022.104436
 - [V] (被引 19) Ma, G.; He, Z.; He, C.; Kang, X.; Wang, S.; Xu, G. (2023). Time-dependent performance assessment of mountain tunnels considering the hazards associated with squeezing so (full title: Time-dependent performance assessment of mountain tunnels considering the hazards associated with squeezing and nonuniform steel corrosion of RC lining). Computers and Geotechnics, 164, 105808. https://doi.org/10.1016/j.compgeo.2023.105808
-
